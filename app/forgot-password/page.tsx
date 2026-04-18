@@ -33,28 +33,31 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 p-4 transition-colors relative overflow-hidden">
+      {/* Decorative Background */}
+      <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-primary-200 dark:bg-primary-900 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors"></div>
+      
       <div className="w-full max-w-md relative z-10">
 
-        <Card className="p-8 shadow-xl bg-white border-slate-100 relative overflow-hidden">
+        <Card className="p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-100 dark:border-slate-800 transition-all">
           
           {step === "input" && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <KeyRound size={28} />
               </div>
-              <h1 className="text-2xl font-bold font-serif text-slate-900 mb-2 text-center">Reset your password</h1>
-              <p className="text-slate-500 text-sm text-center mb-8">
-                Type in your email and we'll send you a link to reset your password.
+              <h1 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-2 text-center transition-colors">Reset password</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm text-center mb-8 transition-colors">
+                Enter your email address and we'll send you a secure link to reset your password.
               </p>
 
               <form onSubmit={handleRequestReset} className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Email Address</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
                   <Input type="email" placeholder="john@example.com" required />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send Reset Link"}
+                <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                  {isLoading ? "Sending link..." : "Send Reset Link"}
                 </Button>
               </form>
             </div>
@@ -62,25 +65,25 @@ export default function ForgotPasswordPage() {
 
           {step === "reset" && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <KeyRound size={28} />
               </div>
-              <h1 className="text-2xl font-bold font-serif text-slate-900 mb-2 text-center">Set new password</h1>
-              <p className="text-slate-500 text-sm text-center mb-8">
-                Your new password must be different from previous used passwords.
+              <h1 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-2 text-center transition-colors">Set new password</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm text-center mb-8 transition-colors">
+                Please create a strong password that you don't use elsewhere.
               </p>
 
               <form onSubmit={handlePasswordSet} className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">New Password</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">New Password</label>
                   <Input type="password" placeholder="••••••••" required />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Confirm Password</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Confirm Password</label>
                   <Input type="password" placeholder="••••••••" required />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Updating..." : "Reset Password"}
+                <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                  {isLoading ? "Updating password..." : "Reset Password"}
                 </Button>
               </form>
             </div>
@@ -88,16 +91,16 @@ export default function ForgotPasswordPage() {
 
           {step === "success" && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300 text-center">
-              <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <CheckCircle2 size={32} />
               </div>
-              <h1 className="text-2xl font-bold font-serif text-slate-900 mb-2">Password reset</h1>
-              <p className="text-slate-500 text-sm mb-8">
-                Your password has been successfully reset. You can now log in with your new password.
+              <h1 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-2 transition-colors">Password reset successful</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 transition-colors">
+                Your password has been updated. You can now use your new credentials to sign in.
               </p>
 
               <Link href="/login">
-                <Button className="w-full">
+                <Button className="w-full h-11">
                   Return to login
                 </Button>
               </Link>
@@ -108,7 +111,7 @@ export default function ForgotPasswordPage() {
 
         {step !== "success" && (
           <div className="mt-8 text-center">
-            <Link href="/login" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
+            <Link href="/login" className="inline-flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
               <ArrowLeft size={16} className="mr-2" />
               Back to log in
             </Link>
@@ -119,3 +122,4 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+

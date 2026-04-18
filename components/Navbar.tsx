@@ -1,17 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { Languages, Menu, User, Settings as SettingsIcon, LogOut, Bookmark } from "lucide-react";
+import { Languages, Menu, User, Settings as SettingsIcon, LogOut, Bookmark, X, LayoutDashboard, History, ArrowLeft } from "lucide-react";
 import { Button } from "./Button";
 import { useStore } from "@/lib/store";
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { profile } = useStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
-  // Close dropdown when clicking outside
+  // Close dropdown/mobile menu when clicking outside or navigating
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -19,11 +23,20 @@ export function Navbar() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
+    setMobileMenuOpen(false);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [pathname]);
+
+  const navItems = [
+    { name: "Translate", href: "/translate", icon: Languages },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Saved Phrases", href: "/saved-phrases", icon: Bookmark },
+    { name: "History", href: "/history", icon: History },
+    { name: "Settings", href: "/settings/profile", icon: SettingsIcon },
+  ];
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-colors">
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-colors">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm">
@@ -31,6 +44,8 @@ export function Navbar() {
           </div>
           <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">Tafsiri</span>
         </Link>
+        
+        {/* Desktop Navigation */}
         <div className="hidden md:flex gap-6 items-center">
           <Link href="/about" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
             About
@@ -43,7 +58,7 @@ export function Navbar() {
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-900 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-800 transition-all dark:text-slate-200"
+              className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-900 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-800 transition-all dark:text-slate-100"
             >
               <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 border overflow-hidden flex items-center justify-center">
                 {profile.avatarUrl ? (
@@ -62,18 +77,18 @@ export function Navbar() {
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{profile.email}</p>
                 </div>
                 <div className="p-2 space-y-1">
-                  <Link href="/settings/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" onClick={() => setDropdownOpen(false)}>
+                  <Link href="/settings/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
                     <User size={16} /> Profile
                   </Link>
-                  <Link href="/saved-phrases" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" onClick={() => setDropdownOpen(false)}>
+                  <Link href="/saved-phrases" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
                     <Bookmark size={16} /> Saved Phrases
                   </Link>
-                  <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" onClick={() => setDropdownOpen(false)}>
+                  <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
                     <SettingsIcon size={16} /> Settings
                   </Link>
                 </div>
                 <div className="p-2 border-t border-slate-100 dark:border-slate-800">
-                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" onClick={() => setDropdownOpen(false)}>
+                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                     <LogOut size={16} /> Log out
                   </button>
                 </div>
@@ -81,10 +96,96 @@ export function Navbar() {
             )}
           </div>
         </div>
-        <button className="md:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md">
+
+        {/* Mobile menu button */}
+        <button 
+          onClick={() => setMobileMenuOpen(true)}
+          className="md:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+        >
           <Menu size={24} />
         </button>
       </div>
+
+      {/* Mobile Drawer Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="fixed inset-y-0 right-0 w-[280px] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="flex flex-col h-full">
+              {/* Drawer Header */}
+              <div className="p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                <Link href="/" className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm">
+                    <Languages size={18} />
+                  </div>
+                  <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">Tafsiri</span>
+                </Link>
+                <button 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* User Section (Mobile) */}
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full border bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+                    {profile.avatarUrl ? (
+                      <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-lg font-serif">{profile.name?.charAt(0) || "U"}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">{profile.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{profile.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Items (Mobile) */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-1">
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href || (item.href === '/settings/profile' && pathname.startsWith('/settings'));
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all group",
+                        isActive 
+                          ? "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400" 
+                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-50"
+                      )}
+                    >
+                      <item.icon 
+                        size={18} 
+                        className={cn(
+                          "transition-colors",
+                          isActive ? "text-primary-600 dark:text-primary-400" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                        )} 
+                      />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <Link href="/about" className="block px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50">About</Link>
+                <Link href="/support" className="block px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50">Support</Link>
+                <button className="flex w-full items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+                  <LogOut size={18} />
+                  Log out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
+

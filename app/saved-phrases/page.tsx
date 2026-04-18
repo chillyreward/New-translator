@@ -4,8 +4,9 @@ import { useStore } from "@/lib/store";
 import { Sidebar } from "@/components/Sidebar";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/Button";
-import { Search, Copy, Trash2, ArrowRight } from "lucide-react";
+import { Search, Copy, Trash2, ArrowRight, Bookmark, LayoutGrid } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export default function SavedPhrasesPage() {
   const { savedPhrases, removeSavedPhrase } = useStore();
@@ -18,84 +19,98 @@ export default function SavedPhrasesPage() {
   );
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
+    <div className="flex min-h-screen bg-white dark:bg-slate-950 transition-colors">
       <Sidebar />
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <Navbar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile Navbar */}
+        <div className="md:hidden sticky top-0 z-50">
+          <Navbar />
+        </div>
         
+        {/* Desktop Header */}
+        <header className="h-16 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-between px-8 shrink-0 hidden md:flex transition-colors">
+          <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">Saved Phrases</h1>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            <Bookmark size={14} /> {savedPhrases.length} Items
+          </div>
+        </header>
+
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-300">
+          <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">Saved Phrases</h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-1">Your personal collection of important translations.</p>
+              <div className="md:animate-in md:fade-in md:slide-in-from-left-4 duration-500">
+                <h1 className="text-2xl md:text-3xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">Your Phrasebook</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1">Your private collection of curated translations.</p>
               </div>
               
-              <div className="relative w-full md:w-72">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="relative w-full md:w-80">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search phrases..."
+                  placeholder="Search in phrases..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:border-primary-500 disabled:opacity-50 transition-colors"
+                  className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/50 transition-all dark:placeholder:text-slate-600"
                 />
               </div>
             </div>
 
             {filteredPhrases.length === 0 ? (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center shadow-sm">
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                  <Bookmark size={24} />
+              <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-3xl p-12 md:p-20 text-center shadow-sm backdrop-blur-sm">
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-300 dark:text-slate-700 shadow-inner">
+                  <Bookmark size={32} />
                 </div>
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-50 mb-2">No saved phrases found</h3>
-                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No phrases found</h3>
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-8 leading-relaxed">
                   {searchQuery 
                     ? "We couldn't find any phrases matching your search. Try different keywords."
-                    : "You haven't saved any phrases yet. Star translations to save them for later."}
+                    : "You haven't saved any phrases to your phrasebook yet. Start by translating something!"}
                 </p>
                 {!searchQuery && (
-                  <Button onClick={() => window.location.href = '/translate'}>
-                    Translate something now
+                  <Button onClick={() => window.location.href = '/translate'} className="px-8 h-12 font-bold uppercase tracking-widest text-xs">
+                    Start Translating
                   </Button>
                 )}
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredPhrases.map((phrase) => (
-                  <div key={phrase.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow group relative">
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-3">
-                      <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">{phrase.sourceLang}</span>
+                  <div key={phrase.id} className="bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex gap-2 z-10">
+                      <button 
+                        className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/90 dark:bg-slate-800/90 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 shadow-md border border-slate-100 dark:border-slate-700 transition-all"
+                        title="Copy translation"
+                        onClick={() => navigator.clipboard.writeText(phrase.translatedText)}
+                      >
+                        <Copy size={16} />
+                      </button>
+                      <button 
+                        className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/90 dark:bg-slate-800/90 text-slate-400 hover:text-red-500 shadow-md border border-slate-100 dark:border-slate-700 transition-all"
+                        title="Remove"
+                        onClick={() => removeSavedPhrase(phrase.id)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-4">
+                      <span className="bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{phrase.sourceLang}</span>
                       <ArrowRight size={12} />
                       <span className="bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 px-2 py-1 rounded-md">{phrase.targetLang}</span>
                     </div>
                     
-                    <div className="space-y-3 mb-6">
-                      <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">"{phrase.sourceText}"</p>
-                      <p className="text-lg font-medium text-slate-900 dark:text-slate-50 line-clamp-3">{phrase.translatedText}</p>
-                    </div>
-
-                    <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                      <button 
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
-                        title="Copy translation"
-                        onClick={() => navigator.clipboard.writeText(phrase.translatedText)}
-                      >
-                        <Copy size={14} />
-                      </button>
-                      <button 
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/40 transition-colors"
-                        title="Remove"
-                        onClick={() => removeSavedPhrase(phrase.id)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                    <div className="space-y-4 mb-4">
+                      <p className="text-sm text-slate-500 dark:text-slate-500 italic line-clamp-2">"{phrase.sourceText}"</p>
+                      <p className="text-xl font-bold text-slate-900 dark:text-white font-serif line-clamp-3 leading-relaxed">{phrase.translatedText}</p>
                     </div>
                     
-                    <p className="text-xs text-slate-400 absolute bottom-5 left-5">
-                      {new Date(phrase.dateSaved).toLocaleDateString()}
-                    </p>
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800/50">
+                       <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-widest">
+                        {new Date(phrase.dateSaved).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                      <LayoutGrid size={14} className="text-slate-100 dark:text-slate-800" />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -108,5 +123,3 @@ export default function SavedPhrasesPage() {
   );
 }
 
-// Missing icon import for empty state
-import { Bookmark } from "lucide-react";

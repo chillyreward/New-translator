@@ -32,10 +32,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 p-4 transition-colors relative overflow-hidden">
       {/* Decorative Background */}
-      <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[600px] h-[600px] bg-primary-200 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[600px] h-[600px] bg-blue-200 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-primary-200 dark:bg-primary-900 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors"></div>
+      <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-blue-200 dark:bg-blue-900 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors"></div>
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex justify-center mb-8">
@@ -43,26 +43,26 @@ export default function LoginPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-md">
               <Languages size={24} />
             </div>
-            <span className="text-2xl font-bold font-serif text-slate-900 tracking-tight">Tafsiri</span>
+            <span className="text-2xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">Tafsiri</span>
           </Link>
         </div>
 
-        <Card className="p-8 shadow-2xl shadow-slate-200/50 border-white bg-white/80 backdrop-blur-xl">
+        <Card className="p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl transition-all">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold font-serif text-slate-900 mb-2">Welcome back</h1>
-            <p className="text-slate-500 text-sm">Please enter your details to sign in.</p>
+            <h1 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-2 transition-colors">Welcome back</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm transition-colors">Please enter your details to sign in.</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             {error && (
-              <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium flex items-center gap-2 animate-in fade-in zoom-in slide-in-from-top-4 duration-300">
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-medium flex items-center gap-2 animate-in fade-in zoom-in slide-in-from-top-4 duration-300">
                 <AlertCircle size={16} />
                 {error}
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Email Address</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
               <Input 
                 type="email" 
                 placeholder="Ex: john@company.com" 
@@ -74,8 +74,8 @@ export default function LoginPage() {
             
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="text-sm font-medium text-slate-700">Password</label>
-                <Link href="/forgot-password" className="text-xs font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+                <Link href="/forgot-password" size="sm" className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -88,19 +88,19 @@ export default function LoginPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-11" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
 
-          <div className="mt-6 flex items-center gap-3">
-            <div className="flex-1 h-px bg-slate-100"></div>
-            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Or continue with</span>
-            <div className="flex-1 h-px bg-slate-100"></div>
+          <div className="mt-8 flex items-center gap-3">
+            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800 transition-colors"></div>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Or continue with</span>
+            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800 transition-colors"></div>
           </div>
 
           <div className="mt-6">
-            <Button variant="outline" className="w-full gap-3 font-semibold text-slate-700">
+            <Button variant="outline" className="w-full gap-3 font-semibold text-slate-700 dark:text-slate-300 h-11">
               <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
                 <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335" />
                 <path d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z" fill="#4285F4" />
@@ -111,9 +111,9 @@ export default function LoginPage() {
             </Button>
           </div>
 
-          <p className="mt-8 text-center text-sm text-slate-500">
+          <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400 transition-colors">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-primary-600 font-medium hover:text-primary-700 hover:underline">
+            <Link href="/signup" className="text-primary-600 dark:text-primary-400 font-bold hover:underline">
               Sign up today
             </Link>
           </p>
@@ -122,3 +122,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -17,9 +17,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           {
             "bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 shadow-md hover:shadow-lg":
               variant === "default",
-            "border border-slate-200 bg-white hover:bg-slate-100 text-slate-900":
+            "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100":
               variant === "outline",
-            "hover:bg-slate-100 hover:text-slate-900 text-slate-700":
+            "hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 text-slate-700 dark:text-slate-300":
               variant === "ghost",
             "text-primary-600 underline-offset-4 hover:underline":
               variant === "link",

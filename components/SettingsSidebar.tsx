@@ -18,7 +18,7 @@ export function SettingsSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col h-full sticky top-0 transition-colors">
+    <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hidden md:flex flex-col h-full sticky top-0 transition-colors">
       <div className="p-6 pb-2">
         <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50 transition-colors mb-6 text-sm font-medium">
           <ArrowLeft size={16} />
