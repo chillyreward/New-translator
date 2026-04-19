@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "../../components/ThemeToggle";
 
 export default function SettingsLayout({
   children,
@@ -24,7 +25,8 @@ export default function SettingsLayout({
              <Link href="/" className="p-2 text-slate-500 bg-slate-50 dark:bg-slate-900 dark:text-slate-400 rounded-lg">
                 <ArrowLeft size={16} />
              </Link>
-             <h2 className="text-lg font-bold font-serif text-slate-900 dark:text-slate-50">Settings</h2>
+             <h2 className="text-lg font-bold font-serif text-slate-900 dark:text-slate-50 flex-1">Settings</h2>
+             <ThemeToggle />
           </div>
           <div className="flex overflow-x-auto no-scrollbar px-4 pb-2 gap-2">
             {settingsTabs.map((tab) => {

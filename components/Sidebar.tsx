@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, History, Languages, Settings, LogOut, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
   { name: "Translate", href: "/translate", icon: Languages },
@@ -68,6 +69,10 @@ export function Sidebar() {
           <Settings size={18} className={cn("transition-colors", pathname.startsWith("/settings") ? "text-primary-600 dark:text-primary-400" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300")} />
           Settings
         </Link>
+        <div className="flex items-center justify-between px-3 py-2">
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Theme</span>
+          <ThemeToggle />
+        </div>
         <button
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all group"
         >

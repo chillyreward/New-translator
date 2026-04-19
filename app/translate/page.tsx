@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { Navbar } from "@/components/Navbar";
 import { TranslationCard } from "@/components/TranslationCard";
 import { Zap } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function TranslatePage() {
   return (
@@ -23,6 +24,7 @@ export default function TranslatePage() {
         {/* Desktop Header */}
         <header className="h-16 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 shrink-0 relative z-20 hidden md:flex transition-colors">
           <h1 className="text-lg font-semibold font-serif text-slate-800 dark:text-white">Translate</h1>
+          <ThemeToggle />
         </header>
 
         {/* Translation Studio Area */}

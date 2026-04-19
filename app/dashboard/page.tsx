@@ -8,6 +8,7 @@ import { Languages, History, Star, ArrowRight, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 import { useStore } from "@/lib/store";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function DashboardPage() {
   const { profile } = useStore();
@@ -32,8 +33,9 @@ export default function DashboardPage() {
         </div>
         
         {/* Desktop Header */}
-        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md flex items-center px-8 sticky top-0 z-10 hidden md:flex transition-colors">
+        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10 hidden md:flex transition-colors">
           <h1 className="text-xl font-bold font-serif text-slate-800 dark:text-white">Dashboard</h1>
+          <ThemeToggle />
         </header>
 
         <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8">

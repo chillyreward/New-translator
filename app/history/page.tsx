@@ -5,8 +5,9 @@ import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
-import { Search, Filter, Copy, Bookmark, MoreHorizontal, ArrowRight, Clock, Check } from "lucide-react";
+import { Clock, Check, Search, Filter, ArrowRight, Copy, Bookmark, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,8 +44,11 @@ export default function HistoryPage() {
         {/* Desktop Header */}
         <header className="h-16 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-between px-8 shrink-0 hidden md:flex transition-colors">
           <h1 className="text-xl font-bold font-serif text-slate-900 dark:text-white">History</h1>
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-            <Clock size={14} /> 248 Total Translations
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <Clock size={14} /> 248 Total Translations
+            </div>
+            <ThemeToggle />
           </div>
         </header>
 

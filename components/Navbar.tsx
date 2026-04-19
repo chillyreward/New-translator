@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Navbar() {
   const { profile } = useStore();
@@ -28,6 +29,18 @@ export function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [pathname]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   const navItems = [
     { name: "Translate", href: "/translate", icon: Languages },
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -37,7 +50,7 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-colors">
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 md:bg-white/80 dark:bg-slate-950/95 md:dark:bg-slate-950/80 backdrop-blur-md transition-colors">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm">
@@ -54,6 +67,12 @@ export function Navbar() {
           <Link href="/support" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
             Support
           </Link>
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+          
+          <div className="mr-2">
+            <ThemeToggle />
+          </div>
+          
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mr-2"></div>
           
           {pathname === '/' ? (
@@ -113,22 +132,32 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Mobile menu button */}
-        <button 
-          onClick={() => setMobileMenuOpen(true)}
-          className="md:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-        >
-          <Menu size={24} />
-        </button>
+        {/* Mobile menu button and Theme Toggle */}
+        <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle />
+          <button 
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-800"
+            aria-label="Open menu"
+          >
+            <Menu size={24} />
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="fixed inset-y-0 right-0 w-[280px] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-2xl animate-in slide-in-from-right duration-300">
+        <div 
+          className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div 
+            className="fixed inset-y-0 right-0 w-[280px] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-2xl animate-in slide-in-from-right duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex flex-col h-full">
               {/* Drawer Header */}
-              <div className="p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+              <div className="p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                 <Link href="/" className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm">
                     <Languages size={18} />
@@ -137,9 +166,10 @@ export function Navbar() {
                 </Link>
                 <button 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 transition-colors"
+                  className="p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50 transition-colors bg-slate-100 dark:bg-slate-800 rounded-lg"
+                  aria-label="Close menu"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
 

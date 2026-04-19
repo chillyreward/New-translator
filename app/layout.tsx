@@ -21,6 +21,11 @@ import { APP_NAME } from "@/lib/constants";
 export const metadata: Metadata = {
   title: `${APP_NAME} | Professional Translation Tool`,
   description: "A production-quality frontend web application for translation.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
