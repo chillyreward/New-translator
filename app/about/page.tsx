@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/Card";
 import { Globe2, Users, BookOpen } from "lucide-react";
+import { APP_NAME } from "@/lib/constants";
 
 export default function AboutPage() {
   return (
@@ -14,11 +15,11 @@ export default function AboutPage() {
           <div className="container mx-auto max-w-3xl text-center">
             <h1 className="text-3xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white mb-6">Our Story</h1>
             <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-              Founded on the belief that communication should never be a barrier, Tafsiri was built to connect the world. 
-              We started as a small team of linguists and engineers who saw the potential of advanced technology to accurately bridge the gap between distinct languages and cultures.
+              Founded on the belief that communication should never be a barrier, {APP_NAME} was built to bridge the gap between Gikuyu and the world. 
+              We started as a small team of linguists and engineers dedicated to preserving the richness of local languages through state-of-the-art neural machine translation.
             </p>
             <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-              Today, Tafsiri powers thousands of conversations, maintaining nuance and cultural fidelity in every translation.
+              Today, {APP_NAME} powers thousands of conversations daily, maintaining nuance and cultural fidelity in every word translated.
             </p>
           </div>
         </section>
@@ -53,7 +54,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">Educate</h3>
                 <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                  Tafsiri acts as a bridge for infinite learning, allowing students and professionals to unlock knowledge from across the globe.
+                  {APP_NAME} acts as a bridge for infinite learning, allowing students and professionals to unlock knowledge from across the globe.
                 </p>
               </Card>
             </div>

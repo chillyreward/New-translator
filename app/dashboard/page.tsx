@@ -9,15 +9,15 @@ import Link from "next/link";
 
 export default function DashboardPage() {
   const recentTranslations = [
-    { id: 1, source: "English", target: "Spanish", text: "Hello, how are you?", date: "2 hours ago" },
-    { id: 2, source: "French", target: "English", text: "Ceci est un test.", date: "5 hours ago" },
-    { id: 3, source: "Spanish", target: "German", text: "El gato duerme.", date: "1 day ago" }
+    { id: 1, source: "English", target: "Gikuyu", text: "How are you today?", date: "2 hours ago" },
+    { id: 2, source: "Gikuyu", target: "English", text: "Nî wega mûno.", date: "5 hours ago" },
+    { id: 3, source: "English", target: "Gikuyu", text: "Welcome to our home.", date: "1 day ago" }
   ];
 
   const phrasebook = [
-    { id: 1, text: "Where is the train station?", translation: "¿Dónde está la estación de tren?" },
-    { id: 2, text: "I would like a coffee, please.", translation: "Me gustaría un café, por favor." },
-    { id: 3, text: "How much does this cost?", translation: "Combien ça coûte?" }
+    { id: 1, text: "Where is the train station?", translation: "Kîtesheni kîa mûtambo wa kîrî nî kû?" },
+    { id: 2, text: "I would like a coffee, please.", translation: "Nîngwenda kahûa, thaitî." },
+    { id: 3, text: "How much does this cost?", translation: "Gîthani gîkî nî mbeca thigana?" }
   ];
 
   return (

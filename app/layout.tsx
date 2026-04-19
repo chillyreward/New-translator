@@ -16,8 +16,10 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+import { APP_NAME } from "@/lib/constants";
+
 export const metadata: Metadata = {
-  title: "Tafsiri | Professional Translation Tool",
+  title: `${APP_NAME} | Professional Translation Tool`,
   description: "A production-quality frontend web application for translation.",
 };
 

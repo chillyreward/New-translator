@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Languages } from "lucide-react";
+import { APP_NAME } from "@/lib/constants";
 
 export function Footer() {
   return (
@@ -11,7 +12,7 @@ export function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm group-hover:scale-110 transition-transform">
                 <Languages size={18} />
               </div>
-              <span className="text-xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">Tafsiri</span>
+              <span className="text-xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">{APP_NAME}</span>
             </Link>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
               Professional translation tools bridging languages and cultures through advanced technology and localized intelligence.
@@ -40,7 +41,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-400 dark:text-slate-600 font-medium">© {new Date().getFullYear()} Tafsiri Inc. All rights reserved.</p>
+          <p className="text-xs text-slate-400 dark:text-slate-600 font-medium">© {new Date().getFullYear()} {APP_NAME} Inc. All rights reserved.</p>
         </div>
       </div>
     </footer>

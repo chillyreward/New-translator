@@ -3,6 +3,7 @@ import { ArrowRight, Globe2, Sparkles, Zap } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/Button";
+import { APP_NAME } from "@/lib/constants";
 
 export default function LandingPage() {
   return (
@@ -26,7 +27,7 @@ export default function LandingPage() {
               <span className="text-gradient">seamlessly.</span>
             </h1>
             <p className="text-base md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed transition-colors">
-              Professional-grade translations powered by advanced AI. Connect cultures, expand your business, and communicate with absolute clarity.
+              Translate into {APP_NAME.split(" ")[0]} and other languages with clarity, powered by advanced AI. Connect cultures and communicate with absolute precision.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/translate" className="w-full sm:w-auto">
@@ -65,8 +66,8 @@ export default function LandingPage() {
                     <p className="text-xl md:text-2xl text-slate-800 dark:text-slate-100 font-serif leading-relaxed transition-colors">"The limits of my language mean the limits of my world."</p>
                   </div>
                   <div className="space-y-4">
-                    <div className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-primary-100 dark:bg-primary-900/40 text-[10px] font-bold text-primary-600 dark:text-primary-400 transition-colors uppercase tracking-wider">Spanish</div>
-                    <p className="text-xl md:text-2xl text-primary-600 dark:text-primary-400 font-serif leading-relaxed transition-colors">"Los límites de mi lenguaje significan los límites de mi mundo."</p>
+                    <div className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-primary-100 dark:bg-primary-900/40 text-[10px] font-bold text-primary-600 dark:text-primary-400 transition-colors uppercase tracking-wider">Gikuyu</div>
+                    <p className="text-xl md:text-2xl text-primary-600 dark:text-primary-400 font-serif leading-relaxed transition-colors">"Mîhaka ya rûthiomi rûakwa nîyo mîhaka ya thî îno yakwa."</p>
                   </div>
                 </div>
               </div>
@@ -82,7 +83,7 @@ export default function LandingPage() {
         <section className="py-24 bg-white dark:bg-slate-950 transition-colors">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold font-serif text-slate-900 dark:text-white mb-4 transition-colors">How Tafsiri works</h2>
+              <h2 className="text-3xl md:text-4xl font-bold font-serif text-slate-900 dark:text-white mb-4 transition-colors">How {APP_NAME} works</h2>
               <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto transition-colors">Three simple steps to break down language barriers instantly.</p>
             </div>
 

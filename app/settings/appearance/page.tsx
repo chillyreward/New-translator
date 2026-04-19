@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { APP_NAME } from "@/lib/constants";
+
 export default function AppearanceSettingsPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -19,7 +21,7 @@ export default function AppearanceSettingsPage() {
     <div className="space-y-8 animate-in fade-in duration-300">
       <div>
         <h1 className="text-2xl font-bold font-serif text-slate-900 dark:text-slate-50 mb-1">Appearance</h1>
-        <p className="text-slate-500 dark:text-slate-400">Customize how Tafsiri looks on your device.</p>
+        <p className="text-slate-500 dark:text-slate-400">Customize how {APP_NAME} looks on your device.</p>
       </div>
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">

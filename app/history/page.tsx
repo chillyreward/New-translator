@@ -9,11 +9,11 @@ import { Search, Filter, Copy, Bookmark, MoreHorizontal, ArrowRight, Clock } fro
 
 export default function HistoryPage() {
   const historyData = [
-    { id: 1, sourceLang: "English", targetLang: "Spanish", sourceText: "The package will arrive tomorrow morning.", targetText: "El paquete llegará mañana por la mañana.", date: "Today, 10:45 AM", type: "Text" },
-    { id: 2, sourceLang: "French", targetLang: "English", sourceText: "C'est un excellent restaurant.", targetText: "This is an excellent restaurant.", date: "Yesterday", type: "Speech" },
-    { id: 3, sourceLang: "English", targetLang: "German", sourceText: "Please sign the contract and send it back.", targetText: "Bitte unterschreiben Sie den Vertrag und senden Sie ihn zurück.", date: "Oct 12, 2025", type: "Text" },
-    { id: 4, sourceLang: "Spanish", targetLang: "English", sourceText: "¿Dónde está la biblioteca más cercana?", targetText: "Where is the nearest library?", date: "Oct 10, 2025", type: "Text" },
-    { id: 5, sourceLang: "English", targetLang: "Japanese", sourceText: "Thank you for your hard work.", targetText: "お疲れ様でした。", date: "Oct 08, 2025", type: "Speech" },
+    { id: 1, sourceLang: "English", targetLang: "Gikuyu", sourceText: "The package will arrive tomorrow morning.", targetText: "Mûtîgo nîûgoka rûciû rûciinî.", date: "Today, 10:45 AM", type: "Text" },
+    { id: 2, sourceLang: "Gikuyu", targetLang: "English", sourceText: "Nî wega mûno nî kûng'ethera.", targetText: "Thank you very much for waiting for me.", date: "Yesterday", type: "Speech" },
+    { id: 3, sourceLang: "English", targetLang: "Gikuyu", sourceText: "Please sign the contract and send it back.", targetText: "Thaitî tîîrīna mbūri îno na ûmîcookie.", date: "Oct 12, 2025", type: "Text" },
+    { id: 4, sourceLang: "Gikuyu", targetLang: "English", sourceText: "Nyumba ya mûthigari îrî kû?", targetText: "Where is the chief's house?", date: "Oct 10, 2025", type: "Text" },
+    { id: 5, sourceLang: "English", targetLang: "Gikuyu", sourceText: "Thank you for your hard work.", targetText: "Wîra mwega nî ûthaka.", date: "Oct 08, 2025", type: "Speech" },
   ];
 
   return (

@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { APP_NAME } from "@/lib/constants";
 
 export default function PrivacyPage() {
+  const brandEmail = `privacy@${APP_NAME.toLowerCase().replace(/\s+/g, "")}.com`;
+
   const sections = [
     { id: "collection", title: "Data Collection" },
     { id: "usage", title: "Usage" },
@@ -11,29 +14,29 @@ export default function PrivacyPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors">
       <Navbar />
 
-      <main className="flex-1 bg-white">
+      <main className="flex-1 bg-white dark:bg-slate-950">
         {/* Header */}
-        <div className="bg-slate-50 border-b border-slate-200 py-16 px-4">
+        <div className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 py-16 px-4">
           <div className="container mx-auto max-w-5xl">
-            <h1 className="text-4xl md:text-5xl font-bold font-serif text-slate-900 mb-4">Privacy Policy</h1>
-            <p className="text-slate-500">Effective Date: April 18, 2026</p>
+            <h1 className="text-4xl md:text-5xl font-bold font-serif text-slate-900 dark:text-white mb-4">Privacy Policy</h1>
+            <p className="text-slate-500 dark:text-slate-400">Effective Date: April 18, 2026</p>
           </div>
         </div>
 
         <div className="container mx-auto max-w-5xl px-4 py-12 flex flex-col md:flex-row gap-12 items-start">
           
           {/* Sidebar Navigation */}
-          <aside className="w-full md:w-64 shrink-0 p-6 bg-slate-50 rounded-2xl border border-slate-100 sticky top-24">
-            <h3 className="font-semibold text-slate-900 mb-4 pb-4 border-b border-slate-200">Table of Contents</h3>
+          <aside className="w-full md:w-64 shrink-0 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 sticky top-24">
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-4 pb-4 border-b border-slate-200 dark:border-slate-800">Table of Contents</h3>
             <ul className="space-y-3">
               {sections.map((section) => (
                 <li key={section.id}>
                   <Link 
                     href={`#${section.id}`}
-                    className="text-sm font-medium text-slate-500 hover:text-primary-600 transition-colors"
+                    className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                   >
                     {section.title}
                   </Link>
@@ -43,11 +46,11 @@ export default function PrivacyPage() {
           </aside>
 
           {/* Content */}
-          <div className="flex-1 max-w-3xl space-y-12 text-slate-700 leading-relaxed">
+          <div className="flex-1 max-w-3xl space-y-12 text-slate-700 dark:text-slate-300 leading-relaxed">
             
             <section id="collection" className="scroll-mt-24">
-              <h2 className="text-2xl font-bold font-serif text-slate-900 mb-4">1. Data Collection</h2>
-              <p className="mb-4">Protecting your privacy is fundamental to our business. We collect the following types of information when you use Tafsiri:</p>
+              <h2 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-4">1. Data Collection</h2>
+              <p className="mb-4">Protecting your privacy is fundamental to our business. We collect the following types of information when you use {APP_NAME}:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li><strong>Account Information:</strong> Name, email address, password hash, and payment details (processed securely via our payment provider).</li>
                 <li><strong>Usage Data:</strong> Source text inputs and generated translations. Note: Enterprise customers can opt out of data-logging entirely.</li>
@@ -56,7 +59,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="usage" className="scroll-mt-24">
-              <h2 className="text-2xl font-bold font-serif text-slate-900 mb-4">2. Application & Usage of Data</h2>
+              <h2 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-4">2. Application & Usage of Data</h2>
               <p className="mb-4">We use the collected information for the following purposes:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>To provide, maintain, and improve the translation algorithms.</li>
@@ -67,12 +70,12 @@ export default function PrivacyPage() {
             </section>
 
             <section id="storage" className="scroll-mt-24">
-              <h2 className="text-2xl font-bold font-serif text-slate-900 mb-4">3. Storage & Security</h2>
+              <h2 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-4">3. Storage & Security</h2>
               <p>All data is encrypted in transit using industry-standard TLS 1.3 and at rest using AES-256 encryption. We utilize enterprise-grade cloud infrastructure with strictly controlled access policies. Your translation history is stored securely for your convenience, and you may delete it at any time from your dashboard.</p>
             </section>
 
             <section id="rights" className="scroll-mt-24">
-              <h2 className="text-2xl font-bold font-serif text-slate-900 mb-4">4. Your Rights</h2>
+              <h2 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-4">4. Your Rights</h2>
               <p className="mb-4">Depending on your location (e.g., under GDPR or CCPA), you possess specific rights regarding your personal data:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>The right to access, update, or delete the information we have on you.</li>
@@ -80,7 +83,7 @@ export default function PrivacyPage() {
                 <li>The right to object to our processing of your personal data.</li>
                 <li>The right to request data portability in a structured, machine-readable format.</li>
               </ul>
-              <p className="mt-4">To exercise any of these rights, please contact our Data Protection Officer at privacy@tafsiri.com.</p>
+              <p className="mt-4">To exercise any of these rights, please contact our Data Protection Officer at {brandEmail}.</p>
             </section>
             
           </div>
@@ -91,3 +94,4 @@ export default function PrivacyPage() {
     </div>
   );
 }
+

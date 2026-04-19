@@ -28,8 +28,12 @@ const faqs = [
   }
 ];
 
+import { APP_NAME } from "@/lib/constants";
+
 export default function SupportPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const brandEmail = `support@${APP_NAME.toLowerCase().replace(/\s+/g, "")}.com`;
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors">
@@ -60,7 +64,7 @@ export default function SupportPage() {
                 </div>
                 <h3 className="font-bold text-slate-900 dark:text-white mb-2">Email Support</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Direct help from our team.</p>
-                <div className="text-sm font-bold text-primary-600 dark:text-primary-400 group-hover:underline">support@tafsiri.com</div>
+                <div className="text-sm font-bold text-primary-600 dark:text-primary-400 group-hover:underline">{brandEmail}</div>
               </Card>
 
               <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group cursor-pointer text-center bg-white dark:bg-slate-900/50">

@@ -30,7 +30,7 @@ export default function ProfileSettingsPage() {
 
   const handleMockUpload = () => {
     // Just toggle to a placeholder avatar
-    const mockAvatar = formData.avatarUrl ? "" : "https://i.pravatar.cc/150?u=tafsiri";
+    const mockAvatar = formData.avatarUrl ? "" : "https://i.pravatar.cc/150?u=gikuyutranslator";
     setFormData({ ...formData, avatarUrl: mockAvatar });
     if (isSaved) setIsSaved(false);
   };

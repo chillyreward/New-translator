@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { cn } from "@/lib/utils";
+import { APP_NAME } from "@/lib/constants";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -43,7 +44,7 @@ export default function LoginPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-md">
               <Languages size={24} />
             </div>
-            <span className="text-2xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">Tafsiri</span>
+            <span className="text-2xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">{APP_NAME}</span>
           </Link>
         </div>
 
@@ -75,7 +76,7 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
-                <Link href="/forgot-password" size="sm" className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline">
+                <Link href="/forgot-password" className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline">
                   Forgot password?
                 </Link>
               </div>

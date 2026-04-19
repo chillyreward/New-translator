@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { APP_NAME } from "@/lib/constants";
 
 export function Navbar() {
   const { profile } = useStore();
@@ -42,7 +43,7 @@ export function Navbar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm">
             <Languages size={18} />
           </div>
-          <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">Tafsiri</span>
+          <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">{APP_NAME}</span>
         </Link>
         
         {/* Desktop Navigation */}
@@ -117,7 +118,7 @@ export function Navbar() {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm">
                     <Languages size={18} />
                   </div>
-                  <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">Tafsiri</span>
+                  <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">{APP_NAME}</span>
                 </Link>
                 <button 
                   onClick={() => setMobileMenuOpen(false)}

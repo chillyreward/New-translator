@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { APP_NAME } from "./constants";
 
 export type UserProfile = {
   name: string;
@@ -36,9 +37,12 @@ type StoreContextType = {
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const brandDomain = APP_NAME.toLowerCase().replace(/\s+/g, "");
+  const storagePrefix = brandDomain + "_";
+
   const [profile, setProfileState] = useState<UserProfile>({
     name: "Demo User",
-    email: "demo@tafsiri.com",
+    email: `demo@${brandDomain}.com`,
     bio: "Language enthusiast.",
     avatarUrl: "",
   });
@@ -54,21 +58,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Load from local storage on mount
   useEffect(() => {
-    const savedProfile = localStorage.getItem("tafsiri_profile");
+    const savedProfile = localStorage.getItem(`${storagePrefix}profile`);
     if (savedProfile) setProfileState(JSON.parse(savedProfile));
 
-    const savedPhrases = localStorage.getItem("tafsiri_phrases");
+    const savedPhrases = localStorage.getItem(`${storagePrefix}phrases`);
     if (savedPhrases) setSavedPhrasesState(JSON.parse(savedPhrases));
 
-    const savedPrefs = localStorage.getItem("tafsiri_prefs");
+    const savedPrefs = localStorage.getItem(`${storagePrefix}prefs`);
     if (savedPrefs) setPreferencesState(JSON.parse(savedPrefs));
 
     setMounted(true);
-  }, []);
+  }, [storagePrefix]);
 
   const setProfile = (newProfile: UserProfile) => {
     setProfileState(newProfile);
-    localStorage.setItem("tafsiri_profile", JSON.stringify(newProfile));
+    localStorage.setItem(`${storagePrefix}profile`, JSON.stringify(newProfile));
   };
 
   const addSavedPhrase = (phrase: Omit<SavedPhrase, "id" | "dateSaved">) => {
@@ -79,18 +83,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
     const updated = [newPhrase, ...savedPhrases];
     setSavedPhrasesState(updated);
-    localStorage.setItem("tafsiri_phrases", JSON.stringify(updated));
+    localStorage.setItem(`${storagePrefix}phrases`, JSON.stringify(updated));
   };
 
   const removeSavedPhrase = (id: string) => {
     const updated = savedPhrases.filter((p) => p.id !== id);
     setSavedPhrasesState(updated);
-    localStorage.setItem("tafsiri_phrases", JSON.stringify(updated));
+    localStorage.setItem(`${storagePrefix}phrases`, JSON.stringify(updated));
   };
 
   const setPreferences = (newPrefs: AppPreferences) => {
     setPreferencesState(newPrefs);
-    localStorage.setItem("tafsiri_prefs", JSON.stringify(newPrefs));
+    localStorage.setItem(`${storagePrefix}prefs`, JSON.stringify(newPrefs));
   };
 
   return (

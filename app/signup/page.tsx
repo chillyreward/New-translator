@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { cn } from "@/lib/utils";
+import { APP_NAME } from "@/lib/constants";
 
 export default function SignupPage() {
   const [password, setPassword] = useState("");
@@ -39,7 +40,7 @@ export default function SignupPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-md">
               <Languages size={24} />
             </div>
-            <span className="text-2xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">Tafsiri</span>
+            <span className="text-2xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">{APP_NAME}</span>
           </Link>
 
           <h2 className="text-2xl md:text-3xl font-bold font-serif mb-2 text-slate-900 dark:text-white transition-colors">Create an account</h2>
