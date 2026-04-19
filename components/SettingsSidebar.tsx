@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Palette, Languages, Bell, Shield, Bookmark, ArrowLeft } from "lucide-react";
+import { User, Palette, Languages, Bookmark, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const settingsTabs = [
+export const settingsTabs = [
   { name: "Profile", href: "/settings/profile", icon: User },
   { name: "Appearance", href: "/settings/appearance", icon: Palette },
   { name: "Language Preferences", href: "/settings/language", icon: Languages },
-  { name: "Saved Phrases", href: "/saved-phrases", icon: Bookmark },
-  { name: "Notifications", href: "/settings/notifications", icon: Bell },
-  { name: "Privacy", href: "/settings/privacy", icon: Shield },
+  { name: "Phrasebook", href: "/saved-phrases", icon: Bookmark },
 ];
 
 export function SettingsSidebar() {

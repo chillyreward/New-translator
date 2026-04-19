@@ -43,7 +43,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfileState] = useState<UserProfile>({
     name: "Demo User",
     email: `demo@${brandDomain}.com`,
-    bio: "Language enthusiast.",
+    bio: "",
     avatarUrl: "",
   });
 

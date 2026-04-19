@@ -11,20 +11,20 @@ import { cn } from "@/lib/utils";
 
 const faqs = [
   {
-    question: "Do you offer API access for developers?",
-    answer: "Yes, we offer enterprise API access. You can find the documentation in our developer portal."
+    question: "Which languages are supported?",
+    answer: "We currently support translating English and Kiswahili into Gikuyu."
   },
   {
     question: "Can I translate audio files?",
-    answer: "Currently, we only support live audio translation through the microphone. Uploading audio files for batch translation will be available in Q3."
+    answer: "Currently, we only support live audio translation through the microphone. Audio file uploading may be supported in the future."
   },
   {
     question: "How accurate are the translations?",
-    answer: "Our engine utilizes state-of-the-art neural machine translation, boasting over 95% accuracy for common language pairings."
+    answer: "Our engine uses advanced neural machine translation fine-tuned specifically for Gikuyu, providing high accuracy for everyday phrases."
   },
   {
-    question: "How do I cancel my subscription?",
-    answer: "You can manage or cancel your subscription at any time from your Account Settings Dashboard."
+    question: "Do I need an account to translate?",
+    answer: "You can try translations as a guest, but an account is required to save phrases to your Phrasebook."
   }
 ];
 

@@ -23,11 +23,11 @@ export default function LandingPage() {
               <span>Next generation translation engine is here</span>
             </div>
             <h1 className="text-4xl md:text-7xl font-bold font-serif text-slate-900 dark:text-white tracking-tight leading-tight mb-6 transition-colors">
-              Understand the world, <br className="hidden md:block"/>
-              <span className="text-gradient">seamlessly.</span>
+              The first AI translator <br className="hidden md:block"/>
+              <span className="text-gradient">built for Gikuyu.</span>
             </h1>
             <p className="text-base md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed transition-colors">
-              Translate into {APP_NAME.split(" ")[0]} and other languages with clarity, powered by advanced AI. Connect cultures and communicate with absolute precision.
+              Translate English and Kiswahili into Gikuyu instantly. Designed for learners, families, and communities preserving our language.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/translate" className="w-full sm:w-auto">
@@ -75,7 +75,7 @@ export default function LandingPage() {
           </div>
           
           <div className="container mx-auto px-4 mt-16 text-center">
-             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Trusted by teams from across the globe</p>
+             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Built to make Gikuyu more accessible</p>
           </div>
         </section>
 
@@ -100,7 +100,7 @@ export default function LandingPage() {
                   <Globe2 size={28} />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-3 transition-colors">2. Select Language</h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed transition-colors">Choose from over 100 fully supported languages with natural-sounding pronunciation.</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed transition-colors">Translate instantly from English and Kiswahili into Gikuyu with natural-sounding context.</p>
               </div>
               <div className="text-center group p-6 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all duration-300">
                 <div className="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center mx-auto mb-6 text-primary-600 dark:text-primary-400 group-hover:-translate-y-2 transition-all duration-300 shadow-sm">

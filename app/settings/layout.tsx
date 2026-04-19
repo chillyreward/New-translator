@@ -1,19 +1,10 @@
 "use client";
 
-import { SettingsSidebar } from "../../components/SettingsSidebar";
+import { SettingsSidebar, settingsTabs } from "../../components/SettingsSidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Palette, Languages, Bell, Shield, Bookmark, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const settingsTabs = [
-  { name: "Profile", href: "/settings/profile", icon: User },
-  { name: "Appearance", href: "/settings/appearance", icon: Palette },
-  { name: "Language", href: "/settings/language", icon: Languages },
-  { name: "Saved", href: "/saved-phrases", icon: Bookmark },
-  { name: "Notifications", href: "/settings/notifications", icon: Bell },
-  { name: "Privacy", href: "/settings/privacy", icon: Shield },
-];
 
 export default function SettingsLayout({
   children,

@@ -7,11 +7,13 @@ import { Button } from "@/components/Button";
 import { Languages, History, Star, ArrowRight, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
+import { useStore } from "@/lib/store";
+
 export default function DashboardPage() {
+  const { profile } = useStore();
+
   const recentTranslations = [
     { id: 1, source: "English", target: "Gikuyu", text: "How are you today?", date: "2 hours ago" },
-    { id: 2, source: "Gikuyu", target: "English", text: "Nî wega mûno.", date: "5 hours ago" },
-    { id: 3, source: "English", target: "Gikuyu", text: "Welcome to our home.", date: "1 day ago" }
   ];
 
   const phrasebook = [
@@ -38,7 +40,7 @@ export default function DashboardPage() {
           
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-              <h2 className="text-2xl md:text-3xl font-bold font-serif text-slate-900 dark:text-white mb-2 transition-colors">Welcome back, John 👋</h2>
+              <h2 className="text-2xl md:text-3xl font-bold font-serif text-slate-900 dark:text-white mb-2 transition-colors">Welcome back, {profile.name.split(' ')[0]} 👋</h2>
               <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base transition-colors">Here's an overview of your recent translation activities.</p>
             </div>
             <Link href="/translate" className="w-full md:w-auto">
@@ -47,7 +49,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
             <Card className="p-6 border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-4 transition-all hover:shadow-md">
               <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                 <Languages size={24} />
@@ -55,8 +57,7 @@ export default function DashboardPage() {
               <div className="min-w-0">
                 <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Words Translated</p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">45.2k</h3>
-                  <span className="text-xs font-semibold text-emerald-500 flex items-center"><TrendingUp size={12} className="mr-0.5" /> +12%</span>
+                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">0</h3>
                 </div>
               </div>
             </Card>
@@ -67,8 +68,7 @@ export default function DashboardPage() {
               <div className="min-w-0">
                 <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Total Requests</p>
                 <div className="flex items-baseline gap-2">
-                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">1,248</h3>
-                  <span className="text-xs font-semibold text-emerald-500 flex items-center"><TrendingUp size={12} className="mr-0.5" /> +5%</span>
+                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">0</h3>
                 </div>
               </div>
             </Card>
@@ -78,16 +78,8 @@ export default function DashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Saved Phrases</p>
-                <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">84</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">0</h3>
               </div>
-            </Card>
-            <Card className="p-6 flex items-start flex-col justify-center bg-gradient-to-br from-primary-600 to-primary-800 text-white border-transparent relative overflow-hidden group hover:shadow-xl transition-all">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-              <p className="text-[10px] font-bold text-primary-100 mb-1 z-10 uppercase tracking-widest">Current Plan</p>
-              <h3 className="text-xl md:text-2xl font-bold mb-4 z-10">Pro Plan</h3>
-              <Button size="sm" variant="outline" className="bg-white/10 hover:bg-white border-white/20 hover:text-slate-900 z-10 h-8 px-4 text-xs font-bold">
-                Upgrade
-              </Button>
             </Card>
           </div>
 

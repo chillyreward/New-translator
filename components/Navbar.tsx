@@ -56,46 +56,61 @@ export function Navbar() {
           </Link>
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mr-2"></div>
           
-          <div className="relative" ref={dropdownRef}>
-            <button 
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-900 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-800 transition-all dark:text-slate-100"
-            >
-              <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 border overflow-hidden flex items-center justify-center">
-                {profile.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-sm font-serif">{profile.name?.charAt(0) || "U"}</span>
-                )}
-              </div>
-              <span className="text-sm font-medium">{profile.name.split(" ")[0]}</span>
-            </button>
-            
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="p-3 border-b border-slate-100 dark:border-slate-800">
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{profile.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{profile.email}</p>
+          {pathname === '/' ? (
+            <div className="flex items-center gap-3 ml-2">
+              <Link href="/login">
+                <Button variant="ghost" className="text-sm font-medium h-9">
+                  Log in
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="text-sm font-medium h-9">
+                  Sign up
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="relative ml-2" ref={dropdownRef}>
+              <button 
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-900 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-800 transition-all dark:text-slate-100"
+              >
+                <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 border overflow-hidden flex items-center justify-center">
+                  {profile.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-serif">{profile.name?.charAt(0) || "U"}</span>
+                  )}
                 </div>
-                <div className="p-2 space-y-1">
-                  <Link href="/settings/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                    <User size={16} /> Profile
-                  </Link>
-                  <Link href="/saved-phrases" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                    <Bookmark size={16} /> Saved Phrases
-                  </Link>
-                  <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                    <SettingsIcon size={16} /> Settings
-                  </Link>
+                <span className="text-sm font-medium">{profile.name.split(" ")[0]}</span>
+              </button>
+              
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="p-3 border-b border-slate-100 dark:border-slate-800">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{profile.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{profile.email}</p>
+                  </div>
+                  <div className="p-2 space-y-1">
+                    <Link href="/settings/profile" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                      <User size={16} /> Profile
+                    </Link>
+                    <Link href="/saved-phrases" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                      <Bookmark size={16} /> Phrasebook
+                    </Link>
+                    <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                      <SettingsIcon size={16} /> Settings
+                    </Link>
+                  </div>
+                  <div className="p-2 border-t border-slate-100 dark:border-slate-800">
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                      <LogOut size={16} /> Log out
+                    </button>
+                  </div>
                 </div>
-                <div className="p-2 border-t border-slate-100 dark:border-slate-800">
-                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                    <LogOut size={16} /> Log out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Mobile menu button */}
@@ -128,26 +143,37 @@ export function Navbar() {
                 </button>
               </div>
 
-              {/* User Section (Mobile) */}
+              {/* User Section / Auth Actions (Mobile) */}
               <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full border bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
-                    {profile.avatarUrl ? (
-                      <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-lg font-serif">{profile.name?.charAt(0) || "U"}</span>
-                    )}
+                {pathname === '/' ? (
+                  <div className="flex flex-col gap-3">
+                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full justify-center">Log in</Button>
+                    </Link>
+                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full justify-center">Sign up</Button>
+                    </Link>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">{profile.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{profile.email}</p>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full border bg-slate-50 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+                      {profile.avatarUrl ? (
+                        <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-lg font-serif">{profile.name?.charAt(0) || "U"}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">{profile.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{profile.email}</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Navigation Items (Mobile) */}
               <div className="flex-1 overflow-y-auto p-4 space-y-1">
-                {navItems.map((item) => {
+                {pathname !== '/' && navItems.map((item) => {
                   const isActive = pathname === item.href || (item.href === '/settings/profile' && pathname.startsWith('/settings'));
                   return (
                     <Link
@@ -167,7 +193,7 @@ export function Navbar() {
                           isActive ? "text-primary-600 dark:text-primary-400" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
                         )} 
                       />
-                      {item.name}
+                      {item.name === "Saved Phrases" ? "Phrasebook" : item.name}
                     </Link>
                   );
                 })}
@@ -177,10 +203,12 @@ export function Navbar() {
               <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
                 <Link href="/about" className="block px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50">About</Link>
                 <Link href="/support" className="block px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50">Support</Link>
-                <button className="flex w-full items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
-                  <LogOut size={18} />
-                  Log out
-                </button>
+                {pathname !== '/' && (
+                  <button className="flex w-full items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+                    <LogOut size={18} />
+                    Log out
+                  </button>
+                )}
               </div>
             </div>
           </div>

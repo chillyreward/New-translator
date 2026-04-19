@@ -144,15 +144,15 @@ export default function SignupPage() {
         <div className="absolute inset-0 flex items-center justify-center p-20">
           <Card className="w-full max-w-lg bg-white/10 backdrop-blur-xl border-white/10 p-10 shadow-2xl text-white outline outline-1 outline-white/20 outline-offset-8 rounded-[2.5rem] transition-all">
             <h3 className="text-2xl md:text-3xl font-serif font-bold text-white mb-6 leading-tight">
-              "The most intuitive and accurate translation suite we've ever deployed."
+              "Connecting generations through the beauty of the Gikuyu language."
             </h3>
             <div className="flex items-center gap-4 mt-10">
               <div className="w-12 h-12 rounded-full bg-primary-400 flex items-center justify-center text-lg font-bold border border-white/20">
-                DR
+                GK
               </div>
               <div>
-                <p className="font-semibold">Dr. Robert Chen</p>
-                <p className="text-sm text-white/50">Linguistics Director, Global Reach Org</p>
+                <p className="font-semibold">Gikuyu Community Project</p>
+                <p className="text-sm text-white/50">Language Preservation Initiative</p>
               </div>
             </div>
           </Card>

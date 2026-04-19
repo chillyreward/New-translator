@@ -19,7 +19,7 @@ export default function AboutPage() {
               We started as a small team of linguists and engineers dedicated to preserving the richness of local languages through state-of-the-art neural machine translation.
             </p>
             <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-              Today, {APP_NAME} powers thousands of conversations daily, maintaining nuance and cultural fidelity in every word translated.
+              Today, {APP_NAME} connects a growing network of learners and native speakers, maintaining nuance and cultural fidelity in every word translated.
             </p>
           </div>
         </section>
@@ -69,20 +69,20 @@ export default function AboutPage() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center md:divide-x md:divide-slate-800">
               <div className="p-4">
-                <div className="text-3xl md:text-5xl font-bold text-white mb-2 font-serif">100+</div>
-                <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Languages</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-2 font-serif">1</div>
+                <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Focus Language</div>
               </div>
               <div className="p-4">
-                <div className="text-3xl md:text-5xl font-bold text-white mb-2 font-serif">2M+</div>
-                <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Translations Daily</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-2 font-serif">24/7</div>
+                <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Availability</div>
               </div>
               <div className="p-4">
-                <div className="text-3xl md:text-5xl font-bold text-white mb-2 font-serif">99%</div>
-                <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Uptime Record</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-2 font-serif">100%</div>
+                <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Cultural Focus</div>
               </div>
               <div className="p-4">
-                <div className="text-3xl md:text-5xl font-bold text-white mb-2 font-serif">50k</div>
-                <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Active Users</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-2 font-serif">Growth</div>
+                <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold">Community Driven</div>
               </div>
             </div>
           </div>

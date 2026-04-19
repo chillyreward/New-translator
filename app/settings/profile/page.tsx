@@ -46,17 +46,17 @@ export default function ProfileSettingsPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex items-center gap-6">
             <div className="relative group">
-              <div className="h-24 w-24 rounded-full bg-slate-100 dark:bg-slate-800 border-4 border-white dark:border-slate-950 shadow-sm overflow-hidden flex items-center justify-center">
+              <div className="h-24 w-24 rounded-full bg-primary-100 dark:bg-primary-900/20 border-4 border-white dark:border-slate-950 shadow-sm overflow-hidden flex items-center justify-center text-primary-600 dark:text-primary-400">
                 {formData.avatarUrl ? (
                   <img src={formData.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <span className="text-3xl font-serif text-slate-400">{formData.name?.charAt(0) || "U"}</span>
+                  <span className="text-4xl font-serif font-medium">{formData.name?.charAt(0) || "U"}</span>
                 )}
               </div>
               <button 
                 type="button"
                 onClick={handleMockUpload}
-                className="absolute bottom-0 right-0 h-8 w-8 bg-primary-600 hover:bg-primary-700 text-white rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-105"
+                className="absolute bottom-0 right-0 h-8 w-8 bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-105"
                 title="Upload photo"
               >
                 <Camera size={14} />
@@ -64,7 +64,10 @@ export default function ProfileSettingsPage() {
             </div>
             <div>
               <h3 className="font-medium text-slate-900 dark:text-slate-50">Profile Picture</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">JPG, GIF or PNG. 1MB max.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">JPG, GIF or PNG. 1MB max.</p>
+              <Button type="button" variant="outline" size="sm" onClick={handleMockUpload} className="text-xs">
+                Upload New Picture
+              </Button>
             </div>
           </div>
 
@@ -90,7 +93,9 @@ export default function ProfileSettingsPage() {
                 disabled 
                 className="max-w-md bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 cursor-not-allowed" 
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400">Email addresses cannot be changed here.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Email addresses cannot be changed here. <a href="/support" className="text-primary-600 dark:text-primary-400 hover:underline">Contact support</a> if you need to change your email.
+              </p>
             </div>
             <div className="grid gap-2">
               <label htmlFor="bio" className="text-sm font-medium text-slate-700 dark:text-slate-300">Bio</label>

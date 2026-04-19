@@ -47,7 +47,6 @@ export default function LanguageSettingsPage() {
               >
                 <option value="English">English</option>
                 <option value="Kiswahili">Kiswahili</option>
-                <option value="Gikuyu">Gikuyu</option>
               </select>
               <p className="text-xs text-slate-500 dark:text-slate-400">The language used for navigation, buttons, and settings.</p>
             </div>
@@ -57,14 +56,16 @@ export default function LanguageSettingsPage() {
               <select
                 id="defaultTargetLanguage"
                 name="defaultTargetLanguage"
-                value={formData.defaultTargetLanguage}
+                value="Gikuyu"
                 onChange={handleChange}
-                className="max-w-md w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-50"
+                disabled
+                className="max-w-md w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 focus-visible:outline-none cursor-not-allowed hidden"
               >
                 <option value="Gikuyu">Gikuyu</option>
-                <option value="Kiswahili">Kiswahili</option>
-                <option value="English">English</option>
               </select>
+              <div className="max-w-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500 dark:text-slate-400 cursor-not-allowed">
+                Gikuyu (🔒 Locked to translation platform constraint)
+              </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">When you paste text, automatically translate it into this language.</p>
             </div>
             
@@ -74,9 +75,10 @@ export default function LanguageSettingsPage() {
                   <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Auto-translate foreign content</h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Automatically translate text when pasting.</p>
                 </div>
-                <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-primary-600 transition-colors">
-                  <span className="inline-block h-4 w-4 translate-x-6 rounded-full bg-white transition-transform" />
-                </div>
+                <label className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer" style={{ backgroundColor: 'var(--primary-600, #4f46e5)' }}>
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <span className="inline-block h-4 w-4 translate-x-6 rounded-full bg-white transition-transform peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-primary-500" />
+                </label>
               </div>
             </div>
 
@@ -86,9 +88,11 @@ export default function LanguageSettingsPage() {
                   <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Show pronunciation hints</h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Display transliteration for target text.</p>
                 </div>
-                <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-200 dark:bg-slate-700 transition-colors">
-                  <span className="inline-block h-4 w-4 translate-x-1 rounded-full bg-white transition-transform" />
-                </div>
+                <label className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer bg-slate-200 dark:bg-slate-700">
+                  <input type="checkbox" className="sr-only peer" />
+                  <span className="inline-block h-4 w-4 translate-x-1 rounded-full bg-white transition-transform peer-checked:translate-x-6 peer-checked:bg-white peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-slate-400" />
+                  {/* Tailwind doesn't have peer-checked:bg-primary-600 without custom plugin or direct style sometimes, using style or arbitrary variant if needed */}
+                </label>
               </div>
             </div>
           </div>

@@ -22,11 +22,7 @@ export default function TranslatePage() {
 
         {/* Desktop Header */}
         <header className="h-16 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 shrink-0 relative z-20 hidden md:flex transition-colors">
-          <h1 className="text-xl font-bold font-serif text-slate-800 dark:text-white">Translation Studio</h1>
-          <div className="inline-flex items-center gap-2 bg-white/60 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800/50 px-3 py-1.5 rounded-full backdrop-blur-md shadow-sm">
-             <Zap size={14} className="text-amber-500" />
-             <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">Pro Engine Active</span>
-          </div>
+          <h1 className="text-lg font-semibold font-serif text-slate-800 dark:text-white">Translate</h1>
         </header>
 
         {/* Translation Studio Area */}
