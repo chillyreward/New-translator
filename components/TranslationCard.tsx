@@ -52,18 +52,22 @@ export function TranslationCard() {
         
         {/* Source Text Area */}
         <div className="flex-1 p-5 md:p-8 relative flex flex-col group transition-all">
-          <div className="flex items-center justify-between mb-6">
-            <div className="relative group/select">
-              <select 
-                value={sourceLang}
-                onChange={(e) => setSourceLang(e.target.value)}
-                className="bg-slate-100/50 dark:bg-slate-800/50 text-xs font-bold text-slate-700 dark:text-slate-200 pl-4 pr-10 py-2 rounded-full outline-none cursor-pointer appearance-none border border-transparent focus:border-primary-500/50 transition-all uppercase tracking-widest"
-              >
-                {SOURCE_LANGUAGES.map(lang => (
-                  <option key={lang} value={lang} className="bg-white dark:bg-slate-900">{lang}</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover/select:text-primary-500 transition-colors" />
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <div className="flex flex-wrap gap-1 md:gap-2">
+              {SOURCE_LANGUAGES.map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setSourceLang(lang)}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all border",
+                    sourceLang === lang
+                      ? "bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-500/20"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                  )}
+                >
+                  {lang}
+                </button>
+              ))}
             </div>
           </div>
           <textarea
@@ -102,11 +106,9 @@ export function TranslationCard() {
 
         {/* Translation Area */}
         <div className="flex-1 p-5 md:p-8 bg-slate-50/30 dark:bg-slate-950/30 relative flex flex-col group/result transition-all">
-          <div className="flex items-center justify-between mb-6">
-            <div className="relative inline-flex items-center">
-              <div className="bg-primary-50/50 dark:bg-primary-900/20 text-xs font-bold text-primary-600 dark:text-primary-400 px-4 py-2 rounded-full border border-primary-100 dark:border-primary-800/50 uppercase tracking-widest flex items-center gap-2">
-                Translating into: {targetLang}
-              </div>
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <div className="text-[10px] md:text-xs font-bold text-primary-600 dark:text-primary-400 px-4 py-2 rounded-full border border-primary-100 dark:border-primary-800/50 bg-primary-50/50 dark:bg-primary-900/20 uppercase tracking-widest flex items-center gap-2">
+              Target: {targetLang}
             </div>
           </div>
           <div className="flex-1 text-xl md:text-2xl text-slate-900 dark:text-white min-h-[180px] font-serif leading-relaxed transition-colors">

@@ -3,11 +3,18 @@ import { Footer } from "@/components/Footer";
 import { Card } from "@/components/Card";
 import { Globe2, Users, BookOpen } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
+import { MobileHeader } from "@/components/MobileHeader";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors">
-      <Navbar />
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors selection:bg-primary-500 selection:text-white">
+      {/* Desktop nav */}
+      <div className="hidden md:block">
+        <Navbar />
+      </div>
+      {/* Mobile header */}
+      <MobileHeader />
 
       <main className="flex-1">
         {/* Story Section */}
@@ -129,7 +136,15 @@ export default function AboutPage() {
 
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+
+      {/* Mobile bottom padding spacer */}
+      <div className="md:hidden h-20" />
+
+      {/* Mobile bottom nav */}
+      <MobileBottomNav />
     </div>
   );
 }

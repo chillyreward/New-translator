@@ -8,27 +8,32 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Mail, AlertCircle, MessageSquare, ChevronDown, Headset } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { APP_NAME } from "@/lib/constants";
+import { MobileHeader } from "@/components/MobileHeader";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 const faqs = [
   {
-    question: "Which languages are supported?",
-    answer: "We currently support translating English and Kiswahili into Gikuyu."
-  },
-  {
-    question: "Can I translate audio files?",
-    answer: "Currently, we only support live audio translation through the microphone. Audio file uploading may be supported in the future."
-  },
-  {
     question: "How accurate are the translations?",
-    answer: "Our engine uses advanced neural machine translation fine-tuned specifically for Gikuyu, providing high accuracy for everyday phrases."
+    answer: "Tafsiri uses advanced neural machine translation engines combined with dialect-specific fine-tuning to ensure high accuracy. While automated, it captures many nuances that generic translators miss."
   },
   {
-    question: "Do I need an account to translate?",
-    answer: "You can try translations as a guest, but an account is required to save phrases to your Phrasebook."
+    question: "Which languages are supported?",
+    answer: "We currently support English, Kiswahili, and Gikuyu, with several other regional dialects in the beta phase. Our goal is to preserve and bridge communication across all major African languages."
+  },
+  {
+    question: "Is there a limit to how much I can translate?",
+    answer: "Free accounts have a generous daily limit. Premium subscribers enjoy unlimited text translation and advanced speech-to-text features without any restrictions."
+  },
+  {
+    question: "Can I save my translations for later?",
+    answer: "Yes! Simply click the bookmark icon on any translation result. You can access all your saved phrases in the 'Saved Phrases' section of your dashboard."
+  },
+  {
+    question: "How do I report an incorrect translation?",
+    answer: "We value community feedback. If you notice an error, use the 'Report Error' card on this page or click the flag icon next to the translation result."
   }
 ];
-
-import { APP_NAME } from "@/lib/constants";
 
 export default function SupportPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -36,12 +41,17 @@ export default function SupportPage() {
   const brandEmail = `support@${APP_NAME.toLowerCase().replace(/\s+/g, "")}.com`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors">
-      <Navbar />
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors selection:bg-primary-500 selection:text-white">
+      {/* Desktop nav */}
+      <div className="hidden md:block">
+        <Navbar />
+      </div>
+      {/* Mobile header */}
+      <MobileHeader />
 
       <main className="flex-1">
         {/* Support Hero */}
-        <section className="pt-24 pb-20 px-4 text-center relative overflow-hidden">
+        <section className="pt-16 pb-20 px-4 text-center relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full bg-primary-500/5 blur-[120px] rounded-full pointer-events-none"></div>
           
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm mb-6 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 relative z-10 transition-colors">
@@ -58,7 +68,7 @@ export default function SupportPage() {
         <section className="pb-20 px-4">
           <div className="container mx-auto max-w-5xl">
             <div className="grid md:grid-cols-3 gap-6">
-              <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group cursor-pointer text-center bg-white dark:bg-slate-900/50">
+              <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group cursor-pointer text-center bg-white dark:bg-slate-950">
                 <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                   <Mail size={24} />
                 </div>
@@ -67,7 +77,7 @@ export default function SupportPage() {
                 <div className="text-sm font-bold text-primary-600 dark:text-primary-400 group-hover:underline">{brandEmail}</div>
               </Card>
 
-              <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group cursor-pointer text-center bg-white dark:bg-slate-900/50">
+              <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group cursor-pointer text-center bg-white dark:bg-slate-950">
                 <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
                   <AlertCircle size={24} />
                 </div>
@@ -76,7 +86,7 @@ export default function SupportPage() {
                 <div className="text-sm font-bold text-red-600 dark:text-red-400 group-hover:underline">Submit Ticket</div>
               </Card>
 
-              <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group cursor-pointer text-center bg-white dark:bg-slate-900/50">
+              <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group cursor-pointer text-center bg-white dark:bg-slate-950">
                 <div className="w-14 h-14 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                   <MessageSquare size={24} />
                 </div>
@@ -89,7 +99,7 @@ export default function SupportPage() {
         </section>
 
         {/* Content Section: FAQ & Form */}
-        <section className="py-24 bg-slate-50/50 dark:bg-slate-900/20 border-t border-slate-100 dark:border-slate-800/50 transition-colors">
+        <section className="py-24 bg-slate-50/50 dark:bg-slate-950/20 border-t border-slate-100 dark:border-slate-800/50 transition-colors">
           <div className="container mx-auto px-4 max-w-6xl">
             <div className="grid lg:grid-cols-2 gap-16 md:gap-24">
               
@@ -143,7 +153,7 @@ export default function SupportPage() {
 
               {/* Contact Form */}
               <div className="animate-in fade-in slide-in-from-right-8 duration-700">
-                <Card className="p-8 md:p-10 border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900/80 backdrop-blur-xl">
+                <Card className="p-8 md:p-10 border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-950/80 backdrop-blur-xl">
                   <h2 className="text-2xl font-bold font-serif text-slate-900 dark:text-white mb-2">Send a Message</h2>
                   <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">Have a specific question? Fill out the form below and we'll reply shortly.</p>
                   
@@ -181,7 +191,15 @@ export default function SupportPage() {
         </section>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+
+      {/* Mobile bottom padding spacer */}
+      <div className="md:hidden h-20" />
+
+      {/* Mobile bottom nav */}
+      <MobileBottomNav />
     </div>
   );
 }

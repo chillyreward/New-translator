@@ -30,12 +30,12 @@ export function Navbar() {
   return (
     // Desktop-only navbar – hidden on mobile (MobileHeader + MobileBottomNav handle mobile)
     <nav className="hidden md:block sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-colors">
-      <div className="container mx-auto flex h-16 items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm">
+      <div className="container mx-auto flex h-16 items-center justify-between px-6 min-w-0">
+        <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 min-w-0 shrink-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm shrink-0">
             <Languages size={18} />
           </div>
-          <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">{APP_NAME}</span>
+          <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight truncate">{APP_NAME}</span>
         </Link>
 
         {/* Desktop Navigation */}

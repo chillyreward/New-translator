@@ -20,9 +20,9 @@ export default function SavedPhrasesPage() {
   );
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-slate-950 transition-colors">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white dark:bg-slate-950 transition-colors overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
         <MobileHeader />
         
