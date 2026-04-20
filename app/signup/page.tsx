@@ -8,6 +8,7 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
+import { MobileHeader } from "@/components/MobileHeader";
 
 export default function SignupPage() {
   const [password, setPassword] = useState("");
@@ -32,11 +33,13 @@ export default function SignupPage() {
     strengthScore === 3 ? "bg-emerald-400" : "bg-emerald-600";
 
   return (
-    <div className="min-h-screen flex bg-white dark:bg-slate-950 transition-colors">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors">
+      {/* Mobile Header */}
+      <MobileHeader />
       {/* Left side Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 md:px-12 lg:px-20 xl:px-32 relative z-10 transition-all">
-        <div className="mx-auto w-full max-w-sm lg:w-96 py-12">
-          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 mb-8 md:mb-10">
+        <div className="mx-auto w-full max-w-sm lg:w-96 py-8">
+          <Link href="/" className="hidden md:flex items-center gap-2 transition-opacity hover:opacity-80 mb-8 md:mb-10">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-md">
               <Languages size={24} />
             </div>

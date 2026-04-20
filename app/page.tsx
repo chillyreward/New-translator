@@ -4,15 +4,20 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/Button";
 import { APP_NAME } from "@/lib/constants";
+import { MobileHeader } from "@/components/MobileHeader";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors selection:bg-primary-500 selection:text-white">
+      {/* Desktop nav */}
       <Navbar />
+      {/* Mobile header */}
+      <MobileHeader />
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative pt-20 pb-20 md:pt-36 md:pb-48 overflow-hidden px-4">
+        <section className="relative pt-12 pb-20 md:pt-36 md:pb-48 overflow-hidden px-4">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-soft-light dark:mix-blend-overlay"></div>
           <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[300px] md:w-[800px] h-[300px] md:h-[800px] bg-primary-200 dark:bg-primary-900 rounded-full blur-3xl opacity-20 transition-colors"></div>
           <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-primary-300 dark:bg-blue-900 rounded-full blur-3xl opacity-20 transition-colors"></div>
@@ -115,7 +120,16 @@ export default function LandingPage() {
 
       </main>
 
-      <Footer />
+      {/* Footer hidden on mobile – bottom nav provides nav instead */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+
+      {/* Mobile bottom padding spacer */}
+      <div className="md:hidden h-20" />
+
+      {/* Mobile bottom nav */}
+      <MobileBottomNav />
     </div>
   );
 }

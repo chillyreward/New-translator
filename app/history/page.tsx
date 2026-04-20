@@ -1,13 +1,15 @@
 "use client";
 
 import { Sidebar } from "@/components/Sidebar";
-import { Navbar } from "@/components/Navbar";
+import { MobileHeader } from "@/components/MobileHeader";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Clock, Check, Search, Filter, ArrowRight, Copy, Bookmark, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+
 
 export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,10 +38,8 @@ export default function HistoryPage() {
     <div className="min-h-screen flex bg-white dark:bg-slate-950 transition-colors">
       <Sidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Navbar */}
-        <div className="md:hidden sticky top-0 z-50">
-          <Navbar />
-        </div>
+        {/* Mobile Header */}
+        <MobileHeader />
         
         {/* Desktop Header */}
         <header className="h-16 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-between px-8 shrink-0 hidden md:flex transition-colors">
@@ -88,7 +88,7 @@ export default function HistoryPage() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto p-4 md:p-8">
+        <div className="flex-1 overflow-auto p-4 md:p-8 pb-24 md:pb-8">
           <div className="max-w-6xl mx-auto space-y-4">
             
             {filteredHistory.map((item) => (
@@ -160,6 +160,9 @@ export default function HistoryPage() {
         </div>
 
       </main>
+
+      {/* Mobile Bottom Nav */}
+      <MobileBottomNav />
     </div>
   );
 }

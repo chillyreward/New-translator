@@ -2,7 +2,8 @@
 
 import { useStore } from "@/lib/store";
 import { Sidebar } from "@/components/Sidebar";
-import { Navbar } from "@/components/Navbar";
+import { MobileHeader } from "@/components/MobileHeader";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Button } from "@/components/Button";
 import { Search, Copy, Trash2, ArrowRight, Bookmark, LayoutGrid } from "lucide-react";
 import { useState } from "react";
@@ -22,10 +23,8 @@ export default function SavedPhrasesPage() {
     <div className="flex min-h-screen bg-white dark:bg-slate-950 transition-colors">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Navbar */}
-        <div className="md:hidden sticky top-0 z-50">
-          <Navbar />
-        </div>
+        {/* Mobile Header */}
+        <MobileHeader />
         
         {/* Desktop Header */}
         <header className="h-16 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-between px-8 shrink-0 hidden md:flex transition-colors">
@@ -35,7 +34,7 @@ export default function SavedPhrasesPage() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
           <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -119,6 +118,9 @@ export default function SavedPhrasesPage() {
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Nav */}
+      <MobileBottomNav />
     </div>
   );
 }

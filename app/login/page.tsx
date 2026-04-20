@@ -8,6 +8,7 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
+import { MobileHeader } from "@/components/MobileHeader";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -33,20 +34,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 p-4 transition-colors relative overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-primary-200 dark:bg-primary-900 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors"></div>
-      <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-blue-200 dark:bg-blue-900 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors"></div>
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 transition-colors relative overflow-hidden">
+      {/* Mobile Header for branding */}
+      <MobileHeader />
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="flex justify-center mb-8">
-          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-md">
-              <Languages size={24} />
-            </div>
-            <span className="text-2xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">{APP_NAME}</span>
-          </Link>
-        </div>
+      {/* Decorative Background */}
+      <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-primary-200 dark:bg-primary-900 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors" />
+      <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-blue-200 dark:bg-blue-900 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors" />
+
+      {/* Auth card centered */}
+      <div className="flex-1 flex items-center justify-center p-4">
+
+        <div className="w-full max-w-md relative z-10">
+          <div className="hidden md:flex justify-center mb-8">
+            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-md">
+                <Languages size={24} />
+              </div>
+              <span className="text-2xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">{APP_NAME}</span>
+            </Link>
+          </div>
 
         <Card className="p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl transition-all">
           <div className="text-center mb-8">
@@ -119,6 +126,7 @@ export default function LoginPage() {
             </Link>
           </p>
         </Card>
+        </div>
       </div>
     </div>
   );

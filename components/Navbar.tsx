@@ -1,24 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { Languages, Menu, User, Settings as SettingsIcon, LogOut, Bookmark, X, LayoutDashboard, History, ArrowLeft } from "lucide-react";
+import { Languages, User, Settings as SettingsIcon, LogOut, Bookmark } from "lucide-react";
 import { Button } from "./Button";
 import { useStore } from "@/lib/store";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 import { ThemeToggle } from "./ThemeToggle";
-import { MobileDrawer } from "./MobileDrawer";
 
 export function Navbar() {
   const { profile } = useStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
-  // Close dropdown/mobile menu when clicking outside or navigating
+  // Close dropdown when clicking outside or navigating
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -26,60 +23,49 @@ export function Navbar() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    setMobileMenuOpen(false);
+    setDropdownOpen(false);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [pathname]);
 
-  const navItems = [
-    { name: "Translate", href: "/translate", icon: Languages },
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Saved Phrases", href: "/saved-phrases", icon: Bookmark },
-    { name: "History", href: "/history", icon: History },
-    { name: "Settings", href: "/settings/profile", icon: SettingsIcon },
-  ];
-
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 md:bg-white/80 dark:bg-slate-950/95 md:dark:bg-slate-950/80 backdrop-blur-md transition-colors">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+    // Desktop-only navbar – hidden on mobile (MobileHeader + MobileBottomNav handle mobile)
+    <nav className="hidden md:block sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-colors">
+      <div className="container mx-auto flex h-16 items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-sm">
             <Languages size={18} />
           </div>
           <span className="text-xl font-bold font-serif text-slate-900 dark:text-slate-50 tracking-tight">{APP_NAME}</span>
         </Link>
-        
+
         {/* Desktop Navigation */}
-        <div className="hidden md:flex gap-6 items-center">
+        <div className="flex gap-6 items-center">
           <Link href="/about" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
             About
           </Link>
           <Link href="/support" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
             Support
           </Link>
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
-          
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-2" />
+
           <div className="mr-2">
             <ThemeToggle />
           </div>
-          
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mr-2"></div>
-          
-          {pathname === '/' ? (
+
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mr-2" />
+
+          {pathname === "/" ? (
             <div className="flex items-center gap-3 ml-2">
               <Link href="/login">
-                <Button variant="ghost" className="text-sm font-medium h-9">
-                  Log in
-                </Button>
+                <Button variant="ghost" className="text-sm font-medium h-9">Log in</Button>
               </Link>
               <Link href="/signup">
-                <Button className="text-sm font-medium h-9">
-                  Sign up
-                </Button>
+                <Button className="text-sm font-medium h-9">Sign up</Button>
               </Link>
             </div>
           ) : (
             <div className="relative ml-2" ref={dropdownRef}>
-              <button 
+              <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-900 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-800 transition-all dark:text-slate-100"
               >
@@ -92,7 +78,7 @@ export function Navbar() {
                 </div>
                 <span className="text-sm font-medium">{profile.name.split(" ")[0]}</span>
               </button>
-              
+
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-2">
                   <div className="p-3 border-b border-slate-100 dark:border-slate-800">
@@ -120,28 +106,7 @@ export function Navbar() {
             </div>
           )}
         </div>
-
-        {/* Mobile menu button and Theme Toggle */}
-        <div className="md:hidden flex items-center gap-2">
-          <ThemeToggle />
-          <button 
-            onClick={() => setMobileMenuOpen(true)}
-            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-800"
-            aria-label="Open menu"
-          >
-            <Menu size={24} />
-          </button>
-        </div>
       </div>
-
-      <MobileDrawer 
-        isOpen={mobileMenuOpen} 
-        onClose={() => setMobileMenuOpen(false)} 
-        navItems={navItems}
-        profile={profile}
-        pathname={pathname}
-      />
     </nav>
   );
 }
-
