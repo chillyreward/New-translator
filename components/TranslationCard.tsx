@@ -54,11 +54,14 @@ export function TranslationCard() {
     setTranslatedText("");
     setIsSaved(false);
 
+    // Capture the text at the moment of the request to guard against race conditions
+    const textToTranslate = sourceText.trim();
+
     try {
       const res = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: sourceText, sourceLanguage: sourceLang }),
+        body: JSON.stringify({ text: textToTranslate, sourceLanguage: sourceLang }),
       });
 
       const data = await res.json();

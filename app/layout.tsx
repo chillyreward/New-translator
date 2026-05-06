@@ -3,6 +3,7 @@ import { Noto_Serif, Plus_Jakarta_Sans } from "next/font/google";
 import "@/styles/globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { StoreProvider } from "@/lib/store";
+import { APP_NAME } from "@/lib/constants";
 
 const notoSerif = Noto_Serif({
   subsets: ["latin"],
@@ -16,11 +17,9 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-import { APP_NAME } from "@/lib/constants";
-
 export const metadata: Metadata = {
   title: `${APP_NAME} | Professional Translation Tool`,
-  description: "A production-quality frontend web application for translation.",
+  description: "Translate English and Kiswahili into Gikuyu instantly with AI-powered translation.",
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",

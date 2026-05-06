@@ -1,0 +1,20 @@
+{
+  "model": "xtts_v2",
+  "output_path": "./output",
+  "datasets": [
+    {
+      "name": "kikuyu",
+      "meta_file_train": "dataset/metadata.csv",
+      "path": "dataset/"
+    }
+  ],
+  "audio": {
+    "sample_rate": 16000
+  },
+  "training": {
+    "batch_size": 4,
+    "grad_accum_steps": 4,
+    "num_loader_workers": 2,
+    "epochs": 20
+  }
+}

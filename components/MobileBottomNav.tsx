@@ -56,8 +56,8 @@ export function MobileBottomNav() {
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative group",
                 active
-                  ? "text-primary-600 dark:text-primary-400"
-                  : "text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400"
+                   ? "text-primary-600 dark:text-primary-400"
+                   : "text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400"
               )}
             >
               {/* Active indicator */}
@@ -85,8 +85,8 @@ export function MobileBottomNav() {
           className={cn(
             "flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative group",
             pathname === "/login" || pathname.startsWith("/settings")
-              ? "text-primary-600 dark:text-primary-400"
-              : "text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400"
+               ? "text-primary-600 dark:text-primary-400"
+               : "text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400"
           )}
         >
           {(pathname === "/login" || pathname.startsWith("/settings")) && (

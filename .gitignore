@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+.yarn/install-state.gz
 
 # testing
 /coverage
@@ -35,3 +36,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# temp files
+/temp
+
+# Python virtual environments
+coqui-server/venv/
+coqui-server/venv311/
+piper-server/venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
