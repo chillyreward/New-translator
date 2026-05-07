@@ -1,10 +1,25 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-200: #ddd6fe;
+  --color-primary-300: #c4b5fd;
+  --color-primary-400: #a78bfa;
+  --color-primary-500: #7C3AED;
+  --color-primary-600: #3B1FA8;
+  --color-primary-700: #6d28d9;
+  --color-primary-800: #5b21b6;
+  --color-primary-900: #4c1d95;
+  --color-background: #fcf9f4;
+
+  --font-sans: var(--font-plus-jakarta-sans), sans-serif;
+  --font-serif: var(--font-noto-serif), serif;
+}
 
 @layer base {
   body {
-    @apply bg-background text-slate-900 antialiased;
+    @apply bg-white text-slate-900 antialiased;
   }
 }
 
@@ -12,22 +27,22 @@
   .glassmorphism {
     @apply bg-white/70 backdrop-blur-md border border-white/20;
   }
-  
+
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-primary-500 to-primary-700;
+    background: linear-gradient(to right, var(--color-primary-600), var(--color-primary-500), var(--color-primary-700));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  /* Safe area bottom padding for iOS notch / home indicator */
   .pb-safe {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
-  /* Utility to ensure content is never hidden behind the mobile bottom nav */
   .mobile-content-pad {
     @apply pb-20 md:pb-0;
   }
 
-  /* Hide scrollbar but keep scrollability */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
