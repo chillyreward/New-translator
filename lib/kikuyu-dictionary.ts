@@ -10,7 +10,7 @@ export interface DictionaryEntry {
 
 export const kikuyuDictionary: DictionaryEntry[] = [
   // --- GREETINGS ---
-  { english: 'Hello', swahili: 'Habari', kikuyu: 'Úhoro', phonetic: 'Úhoro', category: 'greetings' },
+  { english: 'Hello', swahili: 'Habari', kikuyu: 'wee mwega', phonetic: 'wee mwega', category: 'greetings' },
   { english: 'Good morning', swahili: 'Habari ya asubuhi', kikuyu: 'Wega wa rũciinĩ', phonetic: 'Wega wa roocheenee', category: 'greetings' },
   { english: 'Good afternoon', swahili: 'Habari ya mchana', kikuyu: 'Ũrĩa mwega mũthenya', phonetic: 'Ooria mwega moothenya', category: 'greetings' },
   { english: 'Good evening', swahili: 'Habari ya jioni', kikuyu: 'Wega wa hwa-inĩ', phonetic: 'Wega wa hwa-eenee', category: 'greetings' },
@@ -112,9 +112,36 @@ export const kikuyuDictionary: DictionaryEntry[] = [
 
   // --- BODY ---
   { english: 'Head', swahili: 'Kichwa', kikuyu: 'Mũtwe', phonetic: 'Mootwe', category: 'body' },
-  { english: 'Eye', swahili: 'Jicho', kikuyu: 'Ĩthĩ', phonetic: 'Eethee', category: 'body' },
+  { english: 'Eye', swahili: 'Jicho', kikuyu: 'Ritho', phonetic: 'Reetho', category: 'body' },
+  { english: 'Eyes', swahili: 'Macho', kikuyu: 'Maitho', phonetic: 'Maeetho', category: 'body' },
   { english: 'Hand', swahili: 'Mkono', kikuyu: 'Guoko', phonetic: 'Gwoko', category: 'body' },
+  { english: 'Face', swahili: 'Uso', kikuyu: 'ũthiũ', phonetic: 'oothioo', category: 'body' },
+  { english: 'My face', swahili: 'Uso wangu', kikuyu: 'ũthiũ wakwa', phonetic: 'oothioo wakwa', category: 'body' },
+  { english: 'Stomach', swahili: 'Tumbo', kikuyu: 'Nda', phonetic: 'Nda', category: 'body' },
+  { english: 'Shoulder', swahili: 'Bega', kikuyu: 'Kiande', phonetic: 'Kiande', category: 'body' },
+  { english: 'Chest', swahili: 'Kifua', kikuyu: 'Githũri', phonetic: 'Geethooree', category: 'body' },
+  { english: 'Waist', swahili: 'Kiuno', kikuyu: 'Njohero', phonetic: 'Njohero', category: 'body' },
+  { english: 'Slim', swahili: 'Mwembamba', kikuyu: 'Njeke', phonetic: 'Njeke', category: 'body' },
+  { english: 'Thigh', swahili: 'Paja', kikuyu: 'Kiero', phonetic: 'Kiero', category: 'body' },
+  { english: 'Thighs', swahili: 'Mapaja', kikuyu: 'Shiero', phonetic: 'Shiero', category: 'body' },
   { english: 'Leg', swahili: 'Mguu', kikuyu: 'Kũgũrũ', phonetic: 'Koogooroo', category: 'body' },
+  { english: 'Legs', swahili: 'Miguu', kikuyu: 'Magũrũ', phonetic: 'Magooroo', category: 'body' },
+  { english: 'Knee', swahili: 'Goti', kikuyu: 'Iru', phonetic: 'Eeroo', category: 'body' },
+  { english: 'Ankle', swahili: 'Kifundo cha mguu', kikuyu: 'Itede', phonetic: 'Eetede', category: 'body' },
+  { english: 'Ankles', swahili: 'Vifundo vya miguu', kikuyu: 'Matede', phonetic: 'Matede', category: 'body' },
+  { english: 'Heel', swahili: 'Kisigino', kikuyu: 'Ikinya', phonetic: 'Eekinya', category: 'body' },
+  { english: 'Heels', swahili: 'Visigino', kikuyu: 'Makinya', phonetic: 'Makinya', category: 'body' },
+  { english: 'Mouth', swahili: 'Mdomo', kikuyu: 'Kanua', phonetic: 'Kanua', category: 'body' },
+  { english: 'Mine', swahili: 'Yangu', kikuyu: 'Gakwa', phonetic: 'Gakwa', category: 'body' },
+  { english: 'Nose', swahili: 'Pua', kikuyu: 'Iniũrũ', phonetic: 'Eeniooroo', category: 'body' },
+  { english: 'Ear', swahili: 'Sikio', kikuyu: 'Gũtũ', phonetic: 'Rootoo', category: 'body' },
+  { english: 'Ears', swahili: 'Masikio', kikuyu: 'Matũ', phonetic: 'Matoo', category: 'body' },
+  { english: 'Finger', swahili: 'Kidole', kikuyu: 'Kĩara', phonetic: 'Kiara', category: 'body' },
+  { english: 'Fingers', swahili: 'Vidole', kikuyu: 'Ciara', phonetic: 'Shara', category: 'body' },
+  { english: 'Elbow', swahili: 'Kiwiko', kikuyu: 'Kĩgokora', phonetic: 'Keegokora', category: 'body' },
+  { english: 'Palm', swahili: 'Kiganja', kikuyu: 'Rũhĩ', phonetic: 'Rohee', category: 'body' },
+  { english: 'Neck', swahili: 'Shingo', kikuyu: 'Gigo', phonetic: 'Geego', category: 'body' },
+  { english: 'Cheeks', swahili: 'Mashavu', kikuyu: 'Makaĩ', phonetic: 'Makai', category: 'body' },
   { english: 'Heart', swahili: 'Moyo', kikuyu: 'Ngoro', phonetic: 'Ngoro', category: 'body' },
 
   // --- NATURE ---
@@ -125,6 +152,13 @@ export const kikuyuDictionary: DictionaryEntry[] = [
   { english: 'Mountain', swahili: 'Mlima', kikuyu: 'Kĩrĩma', phonetic: 'Keereema', category: 'nature' },
   { english: 'Fire', swahili: 'Moto', kikuyu: 'Mwaki', phonetic: 'Mwaki', category: 'nature' },
   { english: 'Land / Earth', swahili: 'Ardhi', kikuyu: 'Mũgũnda', phonetic: 'Moogoonda', category: 'nature' },
+  { english: 'Earth / Ground', swahili: 'Dunia / Ardhi', kikuyu: 'Thi', phonetic: 'Thee', category: 'nature' },
+  { english: 'Dark / Darkness', swahili: 'Giza', kikuyu: 'Nduma', phonetic: 'Ndooma', category: 'nature' },
+
+  // --- SPIRITUAL ---
+  { english: 'God', swahili: 'Mungu', kikuyu: 'Ngai', phonetic: 'Ngai', category: 'spiritual' },
+  { english: 'Create', swahili: 'Umba', kikuyu: 'Oombire', phonetic: 'Oombire', category: 'spiritual' },
+  { english: 'All', swahili: 'Yote', kikuyu: 'Guothe', phonetic: 'Gwothe', category: 'spiritual' },
 ];
 
 // Helper: get all categories

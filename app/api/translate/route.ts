@@ -3,6 +3,7 @@ import { localTranslate, hasLocalTranslation } from '@/lib/localTranslate';
 import { searchPhrases, phoneticConvert } from '@/lib/kikuyuPhrases';
 import { getCached, setCached } from '@/lib/translationCache';
 import { audioLibrary, phraseDictionary } from '@/lib/dictionary';
+import { translateWithGooey } from '@/lib/gooeyTranslate';
 
 function findLocalTranslation(text: string): string | null {
   if (hasLocalTranslation(text)) return localTranslate(text);
@@ -42,7 +43,10 @@ export async function POST(request: Request) {
     // 1. Check audio library — serve pre-recorded file path
     const audioPath = audioLibrary[text.toLowerCase()];
     if (audioPath) {
-      const kikuyuText = phraseDictionary[text.toLowerCase()] ?? text;
+      // Look up the Kikuyu text: phraseDictionary first, then local library, then keep source
+      const kikuyuText = phraseDictionary[text.toLowerCase()]
+        ?? findLocalTranslation(text)
+        ?? text;
       return NextResponse.json({ translation: kikuyuText, audioUrl: audioPath });
     }
 
@@ -50,7 +54,7 @@ export async function POST(request: Request) {
     const cached = getCached(text);
     if (cached) return NextResponse.json({ translation: cached, cached: true });
 
-    // 2. Try local library
+    // 3. Try local library — phrases + dictionary
     const local = findLocalTranslation(text);
     if (local) {
       setCached(text, local);
@@ -58,12 +62,31 @@ export async function POST(request: Request) {
     }
 
     if (!apiKey) {
+      // Try Gooey translation before giving up
+      try {
+        const gooeyResult = await translateWithGooey(text, sourceLang === 'sw' ? 'sw' : 'en');
+        if (gooeyResult && gooeyResult !== text) {
+          const phonetic = phoneticConvert(gooeyResult);
+          setCached(text, phonetic);
+          return NextResponse.json({ translation: phonetic });
+        }
+      } catch { /* fall through */ }
       return NextResponse.json({
         error: 'Missing OPENAI_API_KEY. Add known phrases to the local library for offline use.'
       }, { status: 500 });
     }
 
-    // 3. Single API call: direct to Kikuyu
+    // 4. Try Gooey — Kikuyu-specific model
+    try {
+      const gooeyResult = await translateWithGooey(text, sourceLang === 'sw' ? 'sw' : 'en');
+      if (gooeyResult && gooeyResult !== text) {
+        const phonetic = phoneticConvert(gooeyResult);
+        setCached(text, phonetic);
+        return NextResponse.json({ translation: phonetic });
+      }
+    } catch { /* Gooey failed, fall through to OpenAI */ }
+
+    // 5. OpenAI fallback
     const { kikuyu, swahili } = await translateToKikuyuDirect(text, sourceLang, apiKey);
     const phonetic = phoneticConvert(kikuyu);
 

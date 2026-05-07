@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Languages, History, Bookmark, User, LogIn, LayoutDashboard } from "lucide-react";
+import { Languages, User, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 
@@ -11,21 +11,6 @@ const NAV_ITEMS = [
     label: "Translate",
     href: "/translate",
     icon: Languages,
-  },
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "History",
-    href: "/history",
-    icon: History,
-  },
-  {
-    label: "Phrasebook",
-    href: "/saved-phrases",
-    icon: Bookmark,
   },
 ];
 

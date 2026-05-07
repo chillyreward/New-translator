@@ -54,11 +54,14 @@ export function TranslationCard() {
     setTranslatedText("");
     setIsSaved(false);
 
+    // Capture the text at the moment of the request to guard against race conditions
+    const textToTranslate = sourceText.trim();
+
     try {
       const res = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: sourceText, sourceLanguage: sourceLang }),
+        body: JSON.stringify({ text: textToTranslate, sourceLang: sourceLang === "Kiswahili" ? "sw" : "en" }),
       });
 
       const data = await res.json();
@@ -68,20 +71,43 @@ export function TranslationCard() {
       }
 
       setTranslatedText(data.translation);
+      setLoadingState("speaking");
 
-      // Play pre-recorded audio directly if available
+      // Helper to speak via TTS as fallback
+      const speakViaTTS = async (text: string) => {
+        try {
+          const speakRes = await fetch("/api/speak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          if (speakRes.ok) {
+            const audioBlob = await speakRes.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            audio.onended = () => { setLoadingState("idle"); URL.revokeObjectURL(audioUrl); };
+            audio.onerror = () => { setLoadingState("idle"); URL.revokeObjectURL(audioUrl); };
+            audio.play();
+            return;
+          }
+        } catch { /* fall through */ }
+        setLoadingState("idle");
+      };
+
+      // Play pre-recorded audio directly if available, fall back to TTS on error
       if (data.audioUrl) {
-        setLoadingState("speaking");
         const audio = new Audio(data.audioUrl);
         audio.onended = () => setLoadingState("idle");
-        audio.onerror = () => setLoadingState("idle");
-        audio.play();
+        audio.onerror = () => speakViaTTS(data.translation); // file missing/corrupt → TTS
+        audio.play().catch(() => speakViaTTS(data.translation));
         return;
       }
+
+      // Auto-speak the translation via TTS
+      await speakViaTTS(data.translation);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Translation failed.";
       setError(message);
-    } finally {
       setLoadingState("idle");
     }
   }, [sourceText, sourceLang]);

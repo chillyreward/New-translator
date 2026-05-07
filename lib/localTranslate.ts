@@ -20,7 +20,7 @@ const phraseMap: Record<string, string> = phrases.reduce((acc, p) => {
  * Smart local translator
  * Priority:
  * 1. Phrase map exact match
- * 2. Partial phrase match (longest wins)
+ * 2. Partial phrase match — only whole-phrase containment, longest wins
  * 3. Word-by-word dictionary fallback
  */
 export function localTranslate(text: string): string {
@@ -29,12 +29,15 @@ export function localTranslate(text: string): string {
   // 1. Exact match
   if (phraseMap[lower]) return phoneticConvert(phraseMap[lower]);
 
-  // 2. Partial match (longest wins)
+  // 2. Partial match — the stored key must be a complete phrase contained in
+  //    the input, not just any substring (avoids "go" matching "good morning")
   let bestMatch: string | null = null;
   let bestLength = 0;
 
   for (const [key, value] of Object.entries(phraseMap)) {
-    if (lower.includes(key) && key.length > bestLength) {
+    // Only match if the key is at a word boundary within the input
+    const pattern = new RegExp(`(?:^|\\s)${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`);
+    if (pattern.test(lower) && key.length > bestLength) {
       bestMatch = value;
       bestLength = key.length;
     }
@@ -42,9 +45,9 @@ export function localTranslate(text: string): string {
 
   if (bestMatch) return phoneticConvert(bestMatch);
 
-  // 3. Word-by-word dictionary fallback
-  const words = lower.split(' ');
-  const translated = words.map(word => dictionary[word] || word);
+  // 3. Word-by-word dictionary fallback — only replace whole words
+  const words = lower.split(/\s+/);
+  const translated = words.map(word => dictionary[word] ?? word);
   return phoneticConvert(translated.join(' '));
 }
 
