@@ -22,7 +22,10 @@ export const phrases: Phrase[] = [
   { english: "hello",                          swahili: "habari",                                   kikuyu: "kohana atia",                        category: "greetings" },
   { english: "hi",                             swahili: "habari",                                   kikuyu: "kohana atia",                        category: "greetings" },
   { english: "how are you",                    swahili: "habari yako",                              kikuyu: "Uhoro waku",                         category: "greetings" },
+  { english: "are you okay",                   swahili: "uko sawa",                                 kikuyu: "we wĩmwega",                         category: "greetings" },
   { english: "i am fine",                      swahili: "niko sawa",                                kikuyu: "ndi mwega",                          category: "greetings" },
+  { english: "yes i am okay",                  swahili: "ndiyo niko sawa",                          kikuyu: "ĩĩ ndĩ mwega",                       category: "greetings" },
+  { english: "i am well too",                  swahili: "mimi pia niko sawa",                       kikuyu: "O nanĩĩ ndĩ mwega",                  category: "greetings" },
   { english: "welcome",                        swahili: "karibu",                                   kikuyu: "niwega",                             category: "greetings" },
   { english: "good morning",                   swahili: "habari ya asubuhi",                        kikuyu: "wega wa ruciini",                    category: "greetings" },
   { english: "good evening",                   swahili: "habari ya jioni",                          kikuyu: "wega wa hwa-ini",                    category: "greetings" },
@@ -34,8 +37,9 @@ export const phrases: Phrase[] = [
   { english: "sorry",                          swahili: "samahani",                                 kikuyu: "pole",                               category: "greetings" },
 
   // identity
-  { english: "what is your name",              swahili: "jina lako nani",                           kikuyu: "riitwa riaku ni ruu",                category: "identity" },
-  { english: "my name is",                     swahili: "jina langu ni",                            kikuyu: "riitwa riakwa ni",                   category: "identity" },
+  { english: "what is your name",              swahili: "jina lako nani",                           kikuyu: "wĩtagwo atĩa",                       category: "identity" },
+  { english: "whats your name",                swahili: "jina lako nani",                           kikuyu: "wĩtagwo atĩa",                       category: "identity" },
+  { english: "my name is",                     swahili: "jina langu ni",                            kikuyu: "njĩtagwo",                           category: "identity" },
   { english: "we are happy to have you",       swahili: "tunafurahi kuwa nawe",                     kikuyu: "nituri na gikeno kugukuona",         category: "identity" },
 
   // places
@@ -212,6 +216,8 @@ export const phrases: Phrase[] = [
   // actions
   { english: "we see",                         swahili: "tunaona",                                  kikuyu: "Twonaga",                            category: "actions" },
   { english: "we eat",                         swahili: "tunakula",                                 kikuyu: "Tũriaga",                            category: "actions" },
+  { english: "lets learn",                     swahili: "hebu tujifunze",                           kikuyu: "Tuthome",                            category: "actions" },
+  { english: "let us learn",                   swahili: "hebu tujifunze",                           kikuyu: "Tuthome",                            category: "actions" },
 ];
 
 

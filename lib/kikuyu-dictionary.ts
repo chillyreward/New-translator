@@ -45,7 +45,10 @@ export const kikuyuDictionary: DictionaryEntry[] = [
 
   // --- INTRODUCTIONS ---
   { english: 'What is your name?', swahili: 'Jina lako ni nani?', kikuyu: 'Wĩtagwo atĩa?', phonetic: 'Weetagwo atia?', category: 'introductions' },
-  { english: 'My name is', swahili: 'Jina langu ni', kikuyu: 'Nĩĩtagwo', phonetic: 'Neeetagwo', category: 'introductions' },
+  { english: 'My name is', swahili: 'Jina langu ni', kikuyu: 'Njĩtagwo', phonetic: 'Njeetagwo', category: 'introductions' },
+  { english: 'Are you okay?', swahili: 'Uko sawa?', kikuyu: 'We wĩmwega?', phonetic: 'We weemwega?', category: 'greetings' },
+  { english: 'Yes I am okay', swahili: 'Ndiyo niko sawa', kikuyu: 'Ĩĩ ndĩ mwega', phonetic: 'Ee ndee mwega', category: 'greetings' },
+  { english: 'I am well too', swahili: 'Mimi pia niko sawa', kikuyu: 'O nanĩĩ ndĩ mwega', phonetic: 'O naneee ndee mwega', category: 'greetings' },
   { english: 'Where are you from?', swahili: 'Unatoka wapi?', kikuyu: 'Ũtũũra kũ?', phonetic: 'Ootoora koo?', category: 'introductions' },
   { english: 'I am from Kenya', swahili: 'Natoka Kenya', kikuyu: 'Nĩ wa Kenya', phonetic: 'Nee wa Kenya', category: 'introductions' },
   { english: 'How old are you?', swahili: 'Una umri gani?', kikuyu: 'Ũrĩ na mĩaka mĩngĩ?', phonetic: 'Ooree na meeaka meengee?', category: 'introductions' },
