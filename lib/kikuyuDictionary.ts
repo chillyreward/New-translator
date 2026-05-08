@@ -142,7 +142,6 @@
   hovering: "aareerete",
   light: "ũtheri",
   day: "mũthenya",
-  night : "ũtukũ",
   first: "mbere",
   middle: "gatagatĩ",
   between: "gatagatĩ",
