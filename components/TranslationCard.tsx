@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import {
   Mic, MicOff, Copy, Share2, Bookmark, ArrowRightLeft,
-  Volume2, History, Loader2, AlertCircle, CheckCircle2, Youtube,
+  Volume2, History, Loader2, AlertCircle, CheckCircle2, Youtube, Film,
 } from "lucide-react";
 import { Card } from "./Card";
 import { Button } from "./Button";
@@ -12,13 +12,13 @@ import { cn } from "@/lib/utils";
 
 const SOURCE_LANGUAGES = ["Auto-detect", "English", "Kiswahili"];
 
-type LoadingState = "idle" | "translating" | "listening" | "transcribing" | "speaking" | "youtube";
+type LoadingState = "idle" | "translating" | "listening" | "transcribing" | "speaking" | "youtube" | "video";
 
-export function TranslationCard() {
+export function TranslationCard({ initialText = "" }: { initialText?: string }) {
   const { addSavedPhrase } = useStore();
   const [sourceLang, setSourceLang] = useState("Auto-detect");
   const targetLang = "Gikuyu";
-  const [sourceText, setSourceText] = useState("");
+  const [sourceText, setSourceText] = useState(initialText);
   const [translatedText, setTranslatedText] = useState("");
   const [isSaved, setIsSaved] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
@@ -30,6 +30,7 @@ export function TranslationCard() {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
   const isRecording = loadingState === "listening";
   const isBusy = loadingState !== "idle";
 
@@ -96,6 +97,29 @@ export function TranslationCard() {
       setLoadingState("idle");
     }
   }, [sourceText, sourceLang, speakViaTTS]);
+
+  // ─── Video Upload Pipeline ────────────────────────────────────────────────
+  const handleVideoUpload = useCallback(async (file: File) => {
+    if (!file) return;
+    clearError();
+    setLoadingState("video");
+    setSourceText("");
+    setTranslatedText("");
+
+    try {
+      const form = new FormData();
+      form.append("video", file);
+      const res = await fetch("/api/video-transcript", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Video transcription failed.");
+      setSourceText(data.transcript);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Video transcription failed.");
+    } finally {
+      setLoadingState("idle");
+      if (videoInputRef.current) videoInputRef.current.value = "";
+    }
+  }, []);
 
   // ─── YouTube Pipeline ─────────────────────────────────────────────────────
   const handleYoutubeTranscribe = useCallback(async () => {
@@ -317,6 +341,24 @@ export function TranslationCard() {
                 {loadingState === "youtube" ? <Loader2 size={20} className="animate-spin" /> : <Youtube size={20} />}
               </Button>
 
+              {/* Video upload button */}
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*,.mp4,.mov,.avi,.mkv,.webm"
+                className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleVideoUpload(f); }}
+              />
+              <Button variant="ghost" size="icon"
+                onClick={() => videoInputRef.current?.click()}
+                disabled={isBusy} title="Upload video to transcribe"
+                className={cn("rounded-xl h-10 w-10 transition-all",
+                  loadingState === "video" ? "text-primary-500 animate-pulse"
+                    : "text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                )}>
+                {loadingState === "video" ? <Loader2 size={20} className="animate-spin" /> : <Film size={20} />}
+              </Button>
+
               <Button variant="ghost" size="icon" onClick={handleSpeakSource}
                 disabled={!sourceText.trim() || isBusy} title="Listen to source text"
                 className={cn("rounded-xl h-10 w-10 transition-all",
@@ -437,6 +479,11 @@ export function TranslationCard() {
           {loadingState === "youtube" && (
             <span className="flex items-center gap-2 text-red-500 dark:text-red-400">
               <Loader2 size={13} className="animate-spin" /> Fetching YouTube transcript…
+            </span>
+          )}
+          {loadingState === "video" && (
+            <span className="flex items-center gap-2 text-primary-500 dark:text-primary-400">
+              <Loader2 size={13} className="animate-spin" /> Extracting audio from video…
             </span>
           )}
           {loadingState === "speaking" && (

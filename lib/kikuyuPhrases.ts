@@ -204,20 +204,48 @@ export const phrases: Phrase[] = [
   { english: "palm",                           swahili: "kiganja",                                  kikuyu: "Rũhĩ",                               category: "body" },
   { english: "neck",                           swahili: "shingo",                                   kikuyu: "Gigo",                               category: "body" },
   { english: "cheeks",                         swahili: "mashavu",                                  kikuyu: "Makaĩ",                              category: "body" },
+  { english: "teeth",                          swahili: "meno",                                     kikuyu: "Magego",                             category: "body" },
+  { english: "that girl has nice cheeks",      swahili: "msichana huyo ana mashavu mazuri",          kikuyu: "Moiretu uria ena makai mega",         category: "body" },
+  { english: "forehead",                       swahili: "paji la uso",                              kikuyu: "Gĩthĩ",                              category: "body" },
+  { english: "hair",                           swahili: "nywele",                                   kikuyu: "Juere",                              category: "body" },
+  { english: "beards",                         swahili: "ndevu",                                    kikuyu: "Nderu",                              category: "body" },
+  { english: "shoulders",                      swahili: "mabega",                                   kikuyu: "Iande",                              category: "body" },
+  { english: "small waist",                    swahili: "kiuno kidogo",                             kikuyu: "Njohero njeke",                      category: "body" },
+  { english: "my mouth",                       swahili: "mdomo wangu",                              kikuyu: "Kanua gakwa",                        category: "body" },
 
   // spiritual / creation
   { english: "god",                            swahili: "mungu",                                    kikuyu: "Ngai",                               category: "spiritual" },
   { english: "earth",                          swahili: "dunia",                                    kikuyu: "Thi",                                category: "spiritual" },
   { english: "create",                         swahili: "umba",                                     kikuyu: "Oombire",                            category: "spiritual" },
+  { english: "created",                        swahili: "aliumba",                                  kikuyu: "nĩombire",                           category: "spiritual" },
   { english: "all",                            swahili: "yote",                                     kikuyu: "Guothe",                             category: "spiritual" },
   { english: "dark",                           swahili: "giza",                                     kikuyu: "Nduma",                              category: "spiritual" },
   { english: "darkness",                       swahili: "giza",                                     kikuyu: "Nduma",                              category: "spiritual" },
+  { english: "in the beginning",               swahili: "mwanzo",                                   kikuyu: "Kĩambĩrĩria-inĩ",                   category: "spiritual" },
+  { english: "things",                         swahili: "vitu",                                     kikuyu: "maũndũ",                             category: "spiritual" },
+  { english: "heaven",                         swahili: "mbinguni",                                 kikuyu: "igũrũ",                              category: "spiritual" },
+  { english: "that time",                      swahili: "wakati huo",                               kikuyu: "Hĩndĩ ĩyo",                          category: "spiritual" },
+  { english: "there was no",                   swahili: "haikuwepo",                                kikuyu: "ndĩarĩ",                             category: "spiritual" },
+  { english: "spirit",                         swahili: "roho",                                     kikuyu: "Roho",                               category: "spiritual" },
+  { english: "of",                             swahili: "ya",                                       kikuyu: "wa",                                 category: "spiritual" },
+  { english: "water",                          swahili: "maji",                                     kikuyu: "maaĩ",                               category: "spiritual" },
+  { english: "hovering",                       swahili: "ikielea",                                  kikuyu: "aareerete",                          category: "spiritual" },
+  { english: "light",                          swahili: "nuru",                                     kikuyu: "ũtheri",                             category: "spiritual" },
+  { english: "day",                            swahili: "siku",                                     kikuyu: "mũthenya",                           category: "spiritual" },
+  { english: "night",                          swahili: "usiku",                                    kikuyu: "ũtukũ",                              category: "spiritual" },
+  { english: "first",                          swahili: "kwanza",                                   kikuyu: "mbere",                              category: "spiritual" },
+  { english: "middle",                         swahili: "katikati",                                 kikuyu: "gatagatĩ",                           category: "spiritual" },
+  { english: "between",                        swahili: "kati",                                     kikuyu: "gatagatĩ",                           category: "spiritual" },
 
   // actions
   { english: "we see",                         swahili: "tunaona",                                  kikuyu: "Twonaga",                            category: "actions" },
   { english: "we eat",                         swahili: "tunakula",                                 kikuyu: "Tũriaga",                            category: "actions" },
   { english: "lets learn",                     swahili: "hebu tujifunze",                           kikuyu: "Tuthome",                            category: "actions" },
   { english: "let us learn",                   swahili: "hebu tujifunze",                           kikuyu: "Tuthome",                            category: "actions" },
+  { english: "reading",                        swahili: "kusoma",                                   kikuyu: "Gũthoma",                            category: "actions" },
+  { english: "writing",                        swahili: "kuandika",                                 kikuyu: "Kwandika",                           category: "actions" },
+  { english: "speaking",                       swahili: "kusema",                                   kikuyu: "Gũaria",                             category: "actions" },
+  { english: "i will slap you",                swahili: "nitakupiga kofi",                          kikuyu: "Nĩngũkũhura",                        category: "actions" },
 ];
 
 
@@ -230,6 +258,9 @@ export function phoneticConvert(text: string): string {
     .replace(/ũ/g, "u")
     .replace(/th/g, "dh")
     .replace(/ng'/g, "ng")
+    .replace(/\bci/g, "shi")     // ci at word start → shi
+    .replace(/ci/g, "shi")       // ci anywhere → shi (e.g. ciara → shiara)
+    .replace(/\bc([aeiou])/g, "sh$1") // c + vowel → sh + vowel
     .replace(/mw/g, "mwe")
     .replace(/ny/g, "ni")
     .replace(/\binĩ\b/g, "o")    // locative -inĩ suffix → "o"

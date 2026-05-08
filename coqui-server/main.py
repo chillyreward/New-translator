@@ -18,11 +18,11 @@ import soundfile as sf
 
 app = FastAPI(title="XTTS v2 Kikuyu Voice Server")
 
-SPEAKER_WAV = os.getenv("SPEAKER_WAV", "../public/audio/coffee-varieties.wav")
+SPEAKER_WAV = os.getenv("SPEAKER_WAV", "../public/audio/voice-training-1.wav")
 
 # Use multiple samples for better voice cloning
 SPEAKER_WAVS = [
-    "../public/audio/coffee-varieties.wav",
+    "../public/audio/voice-training-1.wav",
     "dataset/chunks/how are you.wav",
     "dataset/chunks/thank you.wav",
     "dataset/chunks/come here.wav",

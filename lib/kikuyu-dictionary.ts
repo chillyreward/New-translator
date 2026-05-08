@@ -144,7 +144,9 @@ export const kikuyuDictionary: DictionaryEntry[] = [
   { english: 'Elbow', swahili: 'Kiwiko', kikuyu: 'Kĩgokora', phonetic: 'Keegokora', category: 'body' },
   { english: 'Palm', swahili: 'Kiganja', kikuyu: 'Rũhĩ', phonetic: 'Rohee', category: 'body' },
   { english: 'Neck', swahili: 'Shingo', kikuyu: 'Gigo', phonetic: 'Geego', category: 'body' },
+  { english: 'Hair', swahili: 'Nywele', kikuyu: 'Juere', phonetic: 'Juere', category: 'body' },
   { english: 'Cheeks', swahili: 'Mashavu', kikuyu: 'Makaĩ', phonetic: 'Makai', category: 'body' },
+  { english: 'Teeth', swahili: 'Meno', kikuyu: 'Magego', phonetic: 'Magego', category: 'body' },
   { english: 'Heart', swahili: 'Moyo', kikuyu: 'Ngoro', phonetic: 'Ngoro', category: 'body' },
 
   // --- NATURE ---
@@ -161,7 +163,24 @@ export const kikuyuDictionary: DictionaryEntry[] = [
   // --- SPIRITUAL ---
   { english: 'God', swahili: 'Mungu', kikuyu: 'Ngai', phonetic: 'Ngai', category: 'spiritual' },
   { english: 'Create', swahili: 'Umba', kikuyu: 'Oombire', phonetic: 'Oombire', category: 'spiritual' },
+  { english: 'Created', swahili: 'Aliumba', kikuyu: 'nĩombire', phonetic: 'neeombire', category: 'spiritual' },
   { english: 'All', swahili: 'Yote', kikuyu: 'Guothe', phonetic: 'Gwothe', category: 'spiritual' },
+  { english: 'In the beginning', swahili: 'Mwanzo', kikuyu: 'Kĩambĩrĩria-inĩ', phonetic: 'Kiambeereeria-o', category: 'spiritual' },
+  { english: 'Things', swahili: 'Vitu', kikuyu: 'Maũndũ', phonetic: 'Maoondoo', category: 'spiritual' },
+  { english: 'Heaven', swahili: 'Mbinguni', kikuyu: 'Igũrũ', phonetic: 'Eegooroo', category: 'spiritual' },
+  { english: 'Earth', swahili: 'Dunia', kikuyu: 'Thĩ', phonetic: 'Thee', category: 'spiritual' },
+  { english: 'That time', swahili: 'Wakati huo', kikuyu: 'Hĩndĩ ĩyo', phonetic: 'Heendee eeyo', category: 'spiritual' },
+  { english: 'There was no', swahili: 'Haikuwepo', kikuyu: 'Ndĩarĩ', phonetic: 'Ndeearee', category: 'spiritual' },
+  { english: 'Dark / Darkness', swahili: 'Giza', kikuyu: 'Nduma', phonetic: 'Ndooma', category: 'spiritual' },
+  { english: 'Spirit', swahili: 'Roho', kikuyu: 'Roho', phonetic: 'Roho', category: 'spiritual' },
+  { english: 'Water', swahili: 'Maji', kikuyu: 'Maaĩ', phonetic: 'Maai', category: 'spiritual' },
+  { english: 'Hovering', swahili: 'Ikielea', kikuyu: 'Aareerete', phonetic: 'Aareerete', category: 'spiritual' },
+  { english: 'Light', swahili: 'Nuru', kikuyu: 'Ũtheri', phonetic: 'Ootheri', category: 'spiritual' },
+  { english: 'Day', swahili: 'Siku', kikuyu: 'Mũthenya', phonetic: 'Moothenya', category: 'spiritual' },
+  { english: 'Night', swahili: 'Usiku', kikuyu: 'Ũtukũ', phonetic: 'Ootookoo', category: 'spiritual' },
+  { english: 'First', swahili: 'Kwanza', kikuyu: 'Mbere', phonetic: 'Mbere', category: 'spiritual' },
+  { english: 'Middle', swahili: 'Katikati', kikuyu: 'Gatagatĩ', phonetic: 'Gatagatee', category: 'spiritual' },
+  { english: 'Between', swahili: 'Kati', kikuyu: 'Gatagatĩ', phonetic: 'Gatagatee', category: 'spiritual' },
 ];
 
 // Helper: get all categories
