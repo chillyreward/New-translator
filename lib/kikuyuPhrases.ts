@@ -23,13 +23,21 @@ export const phrases: Phrase[] = [
   { english: "hi",                             swahili: "habari",                                   kikuyu: "kohana atia",                        category: "greetings" },
   { english: "how are you",                    swahili: "habari yako",                              kikuyu: "Uhoro waku",                         category: "greetings" },
   { english: "are you okay",                   swahili: "uko sawa",                                 kikuyu: "we wĩmwega",                         category: "greetings" },
-  { english: "i am fine",                      swahili: "niko sawa",                                kikuyu: "ndi mwega",                          category: "greetings" },
+  { english: "i am fine",                      swahili: "niko sawa",                                kikuyu: "ndí mwega",                          category: "greetings" },
   { english: "yes i am okay",                  swahili: "ndiyo niko sawa",                          kikuyu: "ĩĩ ndĩ mwega",                       category: "greetings" },
   { english: "i am well too",                  swahili: "mimi pia niko sawa",                       kikuyu: "O nanĩĩ ndĩ mwega",                  category: "greetings" },
+  { english: "i am doing great",               swahili: "niko vizuri sana",                         kikuyu: "Ndímwega",                           category: "greetings" },
   { english: "welcome",                        swahili: "karibu",                                   kikuyu: "niwega",                             category: "greetings" },
-  { english: "good morning",                   swahili: "habari ya asubuhi",                        kikuyu: "wega wa ruciini",                    category: "greetings" },
-  { english: "good evening",                   swahili: "habari ya jioni",                          kikuyu: "wega wa hwa-ini",                    category: "greetings" },
+  { english: "good morning",                   swahili: "habari ya asubuhi",                        kikuyu: "Úhoro wa rúciní",                    category: "greetings" },
+  { english: "good afternoon",                 swahili: "habari ya mchana",                         kikuyu: "Úhoro wa míaraho",                   category: "greetings" },
+  { english: "good evening",                   swahili: "habari ya jioni",                          kikuyu: "Úhoro wa húainí",                    category: "greetings" },
   { english: "goodbye",                        swahili: "kwaheri",                                  kikuyu: "tigwo na thayu",                     category: "greetings" },
+  { english: "have a good day",                swahili: "uwe na siku njema",                        kikuyu: "Gía na múthenya mwega",              category: "greetings" },
+  { english: "how are you today",              swahili: "habari yako leo",                          kikuyu: "Úhana atía úmuthí",                  category: "greetings" },
+  { english: "nice to meet you",               swahili: "nafurahi kukujua",                         kikuyu: "Níndakena ní gúkuona",               category: "greetings" },
+  { english: "see you soon",                   swahili: "tutaonana hivi karibuni",                  kikuyu: "Tuonane ica ikuhí",                  category: "greetings" },
+  { english: "see you later",                  swahili: "tutaonana baadaye",                        kikuyu: "Tuonane mahinda mangí",              category: "greetings" },
+  { english: "see you tomorrow",               swahili: "tutaonana kesho",                          kikuyu: "Tuonane rúciú",                      category: "greetings" },
   { english: "thank you",                      swahili: "asante",                                   kikuyu: "ni ngatho",                          category: "greetings" },
   { english: "thank you very much",            swahili: "asante sana",                              kikuyu: "ni ngatho muno",                     category: "greetings" },
   { english: "you are welcome",                swahili: "karibu sana",                              kikuyu: "niwega muno",                        category: "greetings" },
@@ -42,8 +50,14 @@ export const phrases: Phrase[] = [
   { english: "my name is",                     swahili: "jina langu ni",                            kikuyu: "njĩtagwo",                           category: "identity" },
   { english: "we are happy to have you",       swahili: "tunafurahi kuwa nawe",                     kikuyu: "nituri na gikeno kugukuona",         category: "identity" },
 
-  // places
-  { english: "where are you",                  swahili: "uko wapi",                                 kikuyu: "uri ku",                             category: "places" },
+  // places & location
+  { english: "where are you",                  swahili: "uko wapi",                                 kikuyu: "Wí kú",                              category: "places" },
+  { english: "where did you go",               swahili: "ulienda wapi",                             kikuyu: "Úthire kú",                          category: "places" },
+  { english: "where do you live",              swahili: "unaishi wapi",                             kikuyu: "Úikaraga kú",                        category: "places" },
+  { english: "where are you going",            swahili: "unakwenda wapi",                           kikuyu: "Wathií kú",                          category: "places" },
+  { english: "where were you",                 swahili: "ulikuwa wapi",                             kikuyu: "Warí kú",                            category: "places" },
+  { english: "i went to the market for shopping", swahili: "nilikwenda sokoni kununua vitu",        kikuyu: "Nií thiire thoko kúgúra indo",        category: "places" },
+  { english: "i was in my room folding clothes", swahili: "nilikuwa chumbani nikipiga nguo",        kikuyu: "Nií ndarí rumu yakwa ngíkúnja nguo",  category: "places" },
   { english: "come here",                      swahili: "njoo hapa",                                kikuyu: "uka haha",                           category: "places" },
   { english: "go there",                       swahili: "nenda pale",                               kikuyu: "thiI kuo",                           category: "places" },
   { english: "where are you going",            swahili: "unakwenda wapi",                           kikuyu: "uendaga ku",                         category: "places" },
@@ -83,24 +97,35 @@ export const phrases: Phrase[] = [
   { english: "i do not understand",            swahili: "sielewi",                                  kikuyu: "ndimenyaga",                         category: "sentences" },
   { english: "how can i help you",             swahili: "naweza kukusaidiaje",                      kikuyu: "ndingugunteithia atia",              category: "sentences" },
 
-  // emotions
+  // emotions & health
   { english: "i am happy",                     swahili: "nina furaha",                              kikuyu: "ndi na gikeno",                      category: "emotions" },
   { english: "don't worry",                    swahili: "usijali",                                  kikuyu: "ndugacooke na meciiria",             category: "emotions" },
   { english: "everything is okay",             swahili: "kila kitu sawa",                           kikuyu: "indo ciothe ni njega",               category: "emotions" },
   { english: "i am sorry",                     swahili: "samahani",                                 kikuyu: "ni uuru wakwa",                      category: "emotions" },
   { english: "i love you",                     swahili: "nakupenda",                                kikuyu: "ningwendete",                        category: "emotions" },
+  { english: "how are you feeling",            swahili: "unajisikiaje",                             kikuyu: "Úraigua atía",                       category: "emotions" },
+  { english: "i am feeling dizzy",             swahili: "ninahisi kizunguzungu",                    kikuyu: "ndíraigua toro",                     category: "emotions" },
+  { english: "pain",                           swahili: "maumivu",                                  kikuyu: "ruo",                                category: "emotions" },
 
   // time
   { english: "what time is it",                swahili: "ni saa ngapi",                             kikuyu: "ni saa ngapi",                       category: "time" },
   { english: "it is morning",                  swahili: "ni asubuhi",                               kikuyu: "ni ruciini",                         category: "time" },
   { english: "see you tomorrow",               swahili: "tutaonana kesho",                          kikuyu: "tuguonana ruciu",                    category: "time" },
 
-  // food
+  // food & drink
   { english: "i am hungry",                    swahili: "nina njaa",                                kikuyu: "ndi muhotu",                         category: "food" },
   { english: "i am thirsty",                   swahili: "nina kiu",                                 kikuyu: "ndi munyotu",                        category: "food" },
   { english: "give me water",                  swahili: "nipe maji",                                kikuyu: "he mae",                             category: "food" },
   { english: "let us eat",                     swahili: "tukule",                                   kikuyu: "turie",                              category: "food" },
   { english: "the food is ready",              swahili: "chakula kiko tayari",                      kikuyu: "irio ni iri",                        category: "food" },
+  { english: "flour",                          swahili: "unga",                                     kikuyu: "mútu",                               category: "food" },
+  { english: "porridge",                       swahili: "uji",                                      kikuyu: "ucúrú",                              category: "food" },
+  { english: "water",                          swahili: "maji",                                     kikuyu: "maí",                                category: "food" },
+  { english: "saliva",                         swahili: "mate",                                     kikuyu: "mata",                               category: "food" },
+  { english: "oil",                            swahili: "mafuta",                                   kikuyu: "maguta",                             category: "food" },
+  { english: "milk",                           swahili: "maziwa",                                   kikuyu: "iria",                               category: "food" },
+  { english: "air",                            swahili: "hewa",                                     kikuyu: "ríera",                              category: "food" },
+  { english: "how much",                       swahili: "bei gani",                                 kikuyu: "Úigana atía",                        category: "food" },
 
   // nature
   { english: "it is raining",                  swahili: "inanyesha",                                kikuyu: "mbura iri",                          category: "nature" },
@@ -246,24 +271,117 @@ export const phrases: Phrase[] = [
   { english: "writing",                        swahili: "kuandika",                                 kikuyu: "Kwandika",                           category: "actions" },
   { english: "speaking",                       swahili: "kusema",                                   kikuyu: "Gũaria",                             category: "actions" },
   { english: "i will slap you",                swahili: "nitakupiga kofi",                          kikuyu: "Nĩngũkũhura",                        category: "actions" },
+
+  // love & relationships
+  { english: "i love you",                     swahili: "nakupenda",                                kikuyu: "ningwendete",                        category: "love" },
+  { english: "love you so much",               swahili: "nakupenda sana",                           kikuyu: "Ngwendete múno",                     category: "love" },
+  { english: "i love you with all my heart",   swahili: "nakupenda kwa moyo wangu wote",            kikuyu: "Nwendete na ngoro yakwa yothe",      category: "love" },
+  { english: "i love you too",                 swahili: "nakupenda pia",                            kikuyu: "Onanií níngwendete",                 category: "love" },
+  { english: "i like you",                     swahili: "unapendeza",                               kikuyu: "Níndakwenda",                        category: "love" },
+  { english: "you are beautiful",              swahili: "wewe ni mzuri",                            kikuyu: "Wí múthaka",                         category: "love" },
+  { english: "you look beautiful",             swahili: "unaonekana mzuri",                         kikuyu: "Úthakaríte",                         category: "love" },
+  { english: "my love",                        swahili: "mpenzi wangu",                             kikuyu: "Mwendwa wakwa",                      category: "love" },
+  { english: "my beautiful wife",              swahili: "mke wangu mzuri",                          kikuyu: "Mútumia wakwa kírorerwa",            category: "love" },
+  { english: "i miss you so much darling",     swahili: "nakukosa sana mpenzi",                     kikuyu: "Ndírirírie gúkuona mwendwa",         category: "love" },
+  { english: "i miss you so much",             swahili: "nakukosa sana",                            kikuyu: "Ndírirírie gúkuona mwendwa",         category: "love" },
+  { english: "i need you",                     swahili: "nahitaji wewe",                            kikuyu: "Níngúbataire",                       category: "love" },
+  { english: "i need your love",               swahili: "nahitaji upendo wako",                     kikuyu: "Níbatairio ní wendo waku",           category: "love" },
+  { english: "i want to see you",              swahili: "nataka kukuona",                           kikuyu: "Níndírenda gúkuona",                 category: "love" },
+  { english: "you will miss me",               swahili: "utanikosa",                                kikuyu: "Níúkeriríria kúnyona",               category: "love" },
+  { english: "you are mine",                   swahili: "wewe ni wangu",                            kikuyu: "Wí wakwa",                           category: "love" },
+  { english: "i want some space",              swahili: "nataka nafasi",                            kikuyu: "Amba úhe kahinda",                   category: "love" },
+  { english: "goodbye my love",                swahili: "kwaheri mpenzi wangu",                     kikuyu: "Mahinda mega mwendwa wakwa",         category: "love" },
+  { english: "i will marry you",               swahili: "nitakuoa",                                 kikuyu: "Níngúkúhikia",                       category: "love" },
+
+  // everyday expressions
+  { english: "happy birthday",                 swahili: "hongera siku ya kuzaliwa",                 kikuyu: "múthenya mwega wa gúciarúo",          category: "everyday" },
+  { english: "i am sorry",                     swahili: "samahani",                                 kikuyu: "níndahera",                          category: "everyday" },
+  { english: "you are welcome",                swahili: "karibu",                                   kikuyu: "Wí múnyite úgeni",                   category: "everyday" },
+  { english: "me too",                         swahili: "mimi pia",                                 kikuyu: "onanií",                             category: "everyday" },
+  { english: "god bless you",                  swahili: "mungu akubariki",                          kikuyu: "Ngai akúrathime",                    category: "everyday" },
+  { english: "may god protect you",            swahili: "mungu akulinde",                           kikuyu: "Ngai arokúgitíra",                   category: "everyday" },
+  { english: "she is happy",                   swahili: "yeye ana furaha",                          kikuyu: "Ní múkenu",                          category: "everyday" },
+  { english: "please help me",                 swahili: "tafadhali nisaidie",                       kikuyu: "Ndagúthaitha ndeithia",              category: "everyday" },
+  { english: "i don't know",                   swahili: "sijui",                                    kikuyu: "Ndiúí",                              category: "everyday" },
+  { english: "i will come tomorrow",           swahili: "nitakuja kesho",                           kikuyu: "Níngoka rúciú",                      category: "everyday" },
+  { english: "come here",                      swahili: "njoo hapa",                                kikuyu: "Úka haha",                           category: "everyday" },
+  { english: "feel at home",                   swahili: "jisikie nyumbani",                         kikuyu: "Wíigue wí múcií",                    category: "everyday" },
+  { english: "be blessed",                     swahili: "ubarikiwe",                                kikuyu: "Rathimwo",                           category: "everyday" },
+  { english: "i am coming soon",               swahili: "ninakuja hivi karibuni",                   kikuyu: "Níndíroka o naihenya",               category: "everyday" },
+  { english: "excuse me",                      swahili: "nisamehe",                                 kikuyu: "Tebu",                               category: "everyday" },
+  { english: "leave me alone",                 swahili: "niacha peke yangu",                        kikuyu: "Tigana nanií",                       category: "everyday" },
+  { english: "it is okay",                     swahili: "sawa",                                     kikuyu: "Nowega",                             category: "everyday" },
+  { english: "no problem",                     swahili: "hakuna shida",                             kikuyu: "Hatírí na thína",                    category: "everyday" },
+  { english: "i am going home",                swahili: "ninaenda nyumbani",                        kikuyu: "Níkúinúka ndírainúka",               category: "everyday" },
+  { english: "i don't want",                   swahili: "sitaki",                                   kikuyu: "Ndirenda",                           category: "everyday" },
+  { english: "love is a beautiful thing",      swahili: "upendo ni kitu kizuri",                    kikuyu: "Nínyendete kíndu gíthaka",           category: "everyday" },
+  { english: "let me try",                     swahili: "niache nijaribu",                          kikuyu: "Amba ngerie",                        category: "everyday" },
+  { english: "welcome home",                   swahili: "karibu nyumbani",                          kikuyu: "Karibu múcií",                       category: "everyday" },
+  { english: "i reached home safely",          swahili: "nilifika nyumbani salama",                 kikuyu: "Ndakinyire múcií owega",             category: "everyday" },
+  { english: "god is good",                    swahili: "mungu ni mwema",                           kikuyu: "Ngai ní mwega",                      category: "everyday" },
+  { english: "i don't understand",             swahili: "sielewi",                                  kikuyu: "Ndiranyita",                         category: "everyday" },
+  { english: "we are happy to see you",        swahili: "tunafurahi kukuona",                       kikuyu: "Nítwakena ní gúkuona",               category: "everyday" },
+  { english: "i have it",                      swahili: "niko nacho",                               kikuyu: "Níndakíenda",                        category: "everyday" },
+  { english: "rest in peace",                  swahili: "pumzika kwa amani",                        kikuyu: "Koma thayú",                         category: "everyday" },
+  { english: "i don't have money",             swahili: "sina pesa",                                kikuyu: "Ndirí na mbia",                      category: "everyday" },
+  { english: "i am done",                      swahili: "nimemaliza",                               kikuyu: "Nindaríkia",                         category: "everyday" },
+  { english: "i am going to the shop",         swahili: "ninaenda dukani",                          kikuyu: "Ndathií nduka",                      category: "everyday" },
+  { english: "happy new year",                 swahili: "heri ya mwaka mpya",                       kikuyu: "Mwaka mwerú mwega",                  category: "everyday" },
+  { english: "bad manners",                    swahili: "tabia mbaya",                              kikuyu: "Mítugo míúru",                       category: "everyday" },
+  { english: "stop using your phone",          swahili: "acha kutumia simu yako",                   kikuyu: "Tiga kúhúthíra thimú yaku",          category: "everyday" },
+  { english: "i need a favour please",         swahili: "nahitaji msaada tafadhali",                kikuyu: "Ndírenda undeithie",                 category: "everyday" },
+  { english: "i haven't seen you for ages",    swahili: "sijakuona kwa muda mrefu",                 kikuyu: "Ngwíriga tene",                      category: "everyday" },
+  { english: "great to see you again",         swahili: "vizuri kukuona tena",                      kikuyu: "Níúndú múnene gúkuona ríngí",        category: "everyday" },
+  { english: "i really appreciate it",         swahili: "ninashukuru sana",                         kikuyu: "Níndakenio níkío",                   category: "everyday" },
+  { english: "you made my day",                swahili: "umefanya siku yangu",                      kikuyu: "Niwanjaka úmúthí",                   category: "everyday" },
+
+  // verb conjugation — root: oka (to come/arrive)
+  // Nĩ = emphasis prefix | person prefixes: nd(i)=I, tu=we, w=you, (none)=he/she, m=they
+  { english: "i have come",                    swahili: "nimefika",                                 kikuyu: "Nĩndoka",                            category: "actions" },
+  { english: "we have come",                   swahili: "tumefika",                                 kikuyu: "Nĩtuoka",                            category: "actions" },
+  { english: "you have come",                  swahili: "umefika",                                  kikuyu: "Nĩwoka",                             category: "actions" },
+  { english: "he has come",                    swahili: "amefika",                                  kikuyu: "Nĩoka",                              category: "actions" },
+  { english: "she has come",                   swahili: "amefika",                                  kikuyu: "Nĩoka",                              category: "actions" },
+  { english: "they have come",                 swahili: "wamefika",                                 kikuyu: "Nĩmoka",                             category: "actions" },
 ];
 
 
 
+/**
+ * Kikuyu vowel guide:
+ *   a  = like "arm"        (open back a)
+ *   e  = like "egg"        (short e)
+ *   i  = like "in"         (short i)
+ *   o  = like "opposite"   (short o)
+ *   u  = like "ululation"  (short u)
+ *   í  = like "it"         (high tone i)
+ *   ú  = like "own/oat"    (high tone rounded o — like 'o' in "own")
+ *
+ * Other rules:
+ *   ũũ  → long stretchy "oo"
+ *   ĩĩ  → long "ee"
+ *   ci/ce → sh  (e.g. ciara → shiara)
+ *   c + vowel → sh + vowel
+ *   Rũ  → RO
+ *   Nĩ  → emphasis prefix (kept as-is)
+ *   -inĩ suffix → "o" (locative)
+ */
 export function phoneticConvert(text: string): string {
   return text
-    .replace(/ũũ/g, "oo")        // double ũũ → long stretchy "oo"
-    .replace(/ĩĩ/g, "ee")        // double ĩĩ → long "ee"
+    .replace(/ũũ/g, "oo")              // double ũũ → long stretchy "oo"
+    .replace(/ĩĩ/g, "ee")              // double ĩĩ → long "ee"
     .replace(/ĩ/g, "i")
     .replace(/ũ/g, "u")
+    .replace(/ú/g, "o")                // ú = "own/oat" → render as o
+    .replace(/í/g, "i")                // í = "it" → short i
     .replace(/th/g, "dh")
     .replace(/ng'/g, "ng")
-    .replace(/\bci/g, "shi")     // ci at word start → shi
-    .replace(/ci/g, "shi")       // ci anywhere → shi (e.g. ciara → shiara)
-    .replace(/\bc([aeiou])/g, "sh$1") // c + vowel → sh + vowel
+    .replace(/\bci/g, "shi")           // ci at word start → shi
+    .replace(/ci/g, "shi")             // ci anywhere → shi
+    .replace(/\bc([aeiou])/g, "sh$1")  // c + vowel → sh + vowel
     .replace(/mw/g, "mwe")
     .replace(/ny/g, "ni")
-    .replace(/\binĩ\b/g, "o")    // locative -inĩ suffix → "o"
+    .replace(/\binĩ\b/g, "o")          // locative -inĩ suffix → "o"
     .replace(/\s+/g, " ")
     .trim();
 }

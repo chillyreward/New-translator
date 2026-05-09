@@ -15,16 +15,19 @@ const navItems = [
 
 // Group audio library phrases by category label
 const PHRASE_GROUPS: { label: string; keys: string[] }[] = [
-  { label: "Greetings", keys: ["hello", "hi", "how are you"] },
+  { label: "Greetings", keys: ["hello", "hi", "how are you", "how are you today", "are you okay", "i am fine", "i am doing great", "good morning", "good afternoon", "good evening", "have a good day", "nice to meet you", "see you soon", "see you later", "see you tomorrow"] },
   { label: "Instructions", keys: ["come here", "come in", "come into the house", "come", "go away", "help me", "keep quiet", "quiet", "shut up", "stop laughing"] },
-  { label: "Food & Drink", keys: ["give me water", "water", "food", "i am hungry", "i am thirsty"] },
+  { label: "Places & Location", keys: ["where are you", "where did you go", "where do you live", "where are you going", "where were you", "i went to the market for shopping", "i was in my room folding clothes"] },
+  { label: "Food & Drink", keys: ["give me water", "water", "food", "i am hungry", "i am thirsty", "flour", "porridge", "milk", "oil", "how much"] },
   { label: "Family", keys: ["father", "mother", "friend", "enemy", "home"] },
-  { label: "Emotions", keys: ["i love you"] },
+  { label: "Love & Relationships", keys: ["i love you", "love you so much", "i love you with all my heart", "i love you too", "i like you", "you are beautiful", "you look beautiful", "my love", "my beautiful wife", "i miss you so much", "i need you", "i need your love", "i want to see you", "you will miss me", "you are mine", "i want some space", "goodbye my love", "i will marry you"] },
+  { label: "Health & Feelings", keys: ["how are you feeling", "i am feeling dizzy", "i am happy", "i am hungry", "i am thirsty"] },
+  { label: "Everyday Expressions", keys: ["happy birthday", "happy new year", "i am sorry", "you are welcome", "me too", "god bless you", "may god protect you", "please help me", "i don't know", "i don't understand", "i don't want", "it is okay", "no problem", "excuse me", "leave me alone", "be blessed", "feel at home", "rest in peace", "i am done", "i haven't seen you for ages", "great to see you again", "i really appreciate it", "you made my day", "god is good", "bad manners", "stop using your phone"] },
   { label: "Communication", keys: ["i will call you", "i will phone you", "thank you", "thank you so much"] },
   { label: "Body Parts", keys: ["hand", "face", "my face", "head", "eye", "eyes", "ear", "ears", "nose", "mouth", "my mouth", "neck", "shoulder", "shoulders", "chest", "stomach", "waist", "small waist", "palm", "elbow", "finger", "fingers", "leg", "legs", "thigh", "thighs", "knee", "ankle", "ankles", "heel", "cheeks", "forehead", "hair", "beards", "that girl has nice cheeks"] },
   { label: "Animals & Nature", keys: ["goat", "horse", "maize", "mouse", "mice"] },
   { label: "Culture", keys: ["kikuyu", "agikuyu"] },
-  { label: "Actions", keys: ["reading", "writing", "speaking", "i will slap you"] },
+  { label: "Actions", keys: ["reading", "writing", "speaking", "i will slap you", "i have come", "we have come", "you have come", "he has come", "they have come"] },
 ];
 
 export function Sidebar() {

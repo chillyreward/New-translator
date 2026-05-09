@@ -13,9 +13,31 @@ function findLocalTranslation(text: string): string | null {
 
 async function translateWithOpenAI(text: string, sourceLang: string, apiKey: string): Promise<string> {
   const isSwahili = sourceLang === 'sw';
+
+  const kikuyuGuide = `You are a native Kikuyu speaker from Central Kenya. Translate to natural spoken Kikuyu only — no explanations.
+
+KIKUYU VOWEL PRONUNCIATION:
+- a = like "arm" (open back)
+- e = like "egg" (short e)
+- i = like "in" (short i)
+- o = like "opposite" (short o)
+- u = like "ululation" (short u)
+- í = like "it" (high tone i)
+- ú = like "own/oat/oak" (high tone, rounded — like the 'o' in "own")
+
+KEY GRAMMAR RULES:
+- Nĩ = emphasis prefix before verbs
+- Verb person prefixes: nd(i)=I, tu=we, w=you, (none)=he/she, m=they
+- Example (root "oka"=come): Nĩndoka=I have come, Nĩtuoka=we, Nĩwoka=you, Nĩoka=he/she, Nĩmoka=they
+- ci/ce = always pronounced as sh (ciara=shiara)
+- Double ũũ = long stretchy "oo" sound
+- Rũ = pronounced as "RO"
+- ú = "own/oat" sound (rounded o)
+- í = short "it" sound`;
+
   const prompt = isSwahili
-    ? `You are a native Kikuyu speaker. Translate this Kiswahili text to natural spoken Kikuyu. Return only the Kikuyu translation.\n\n${text}`
-    : `You are a native Kikuyu speaker. Translate this English text to natural spoken Kikuyu. Return only the Kikuyu translation.\n\n${text}`;
+    ? `${kikuyuGuide}\n\nTranslate this Kiswahili to Kikuyu:\n${text}`
+    : `${kikuyuGuide}\n\nTranslate this English to Kikuyu:\n${text}`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',

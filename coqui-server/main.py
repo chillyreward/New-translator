@@ -20,19 +20,19 @@ app = FastAPI(title="XTTS v2 Kikuyu Voice Server")
 
 SPEAKER_WAV = os.getenv("SPEAKER_WAV", "../public/audio/voice-training-1.wav")
 
-# Use multiple samples for better voice cloning
-SPEAKER_WAVS = [
-    "../public/audio/voice-training-1.wav",
-    "dataset/chunks/how are you.wav",
-    "dataset/chunks/thank you.wav",
-    "dataset/chunks/come here.wav",
-    "dataset/chunks/i love you.wav",
-    "dataset/chunks/help me.wav",
-]
-# Filter to only existing files
+# Use all chunks as speaker samples for best voice clone
+_CHUNKS_DIR = "../public/audio/chunks"
+SPEAKER_WAVS = [os.path.join(_CHUNKS_DIR, f) for f in os.listdir(_CHUNKS_DIR) if f.endswith(".wav")]
+# Add the main voice training file at the front (highest weight)
+_MAIN_SAMPLE = "../public/audio/voice-training-1.wav"
+if os.path.exists(_MAIN_SAMPLE):
+    SPEAKER_WAVS = [_MAIN_SAMPLE] + SPEAKER_WAVS
+# Filter to only files that actually exist
 SPEAKER_WAVS = [w for w in SPEAKER_WAVS if os.path.exists(w)]
 if not SPEAKER_WAVS:
     SPEAKER_WAVS = [SPEAKER_WAV]
+
+print(f"Loaded {len(SPEAKER_WAVS)} speaker samples for voice cloning")
 LANGUAGE    = os.getenv("LANGUAGE", "en")
 CACHE_DIR   = os.getenv("CACHE_DIR", "../public/audio/cache")
 
@@ -103,6 +103,7 @@ async def health():
         "status": "ok",
         "speaker_wav": SPEAKER_WAV,
         "speaker_exists": os.path.exists(SPEAKER_WAV),
+        "speaker_samples": len(SPEAKER_WAVS),
         "device": device,
         "cached_phrases": cache_count,
     }
