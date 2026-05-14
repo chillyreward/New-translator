@@ -1,25 +1,73 @@
-chunks/Give me water.wav|Give me water
-chunks/come here (2).wav|come here (2)
-chunks/come here.wav|come here
-chunks/come in.wav|come in
-chunks/come into the house.wav|come into the house
-chunks/come.wav|come
-chunks/enemy.wav|enemy
-chunks/father.wav|father
-chunks/food.wav|food
-chunks/friend.wav|friend
-chunks/go away.wav|go away
-chunks/help me.wav|help me
-chunks/home.wav|home
-chunks/how are you.wav|how are you
-chunks/i am hungry.wav|i am hungry
-chunks/i am thirsty.wav|i am thirsty
-chunks/i love you.wav|i love you
-chunks/i will call you.wav|i will call you
-chunks/i will phone you.wav|i will phone you
-chunks/keep quiet.wav|keep quiet
-chunks/mother.wav|mother
-chunks/stop laughing.wav|stop laughing
-chunks/thank you so much.wav|thank you so much
-chunks/thank you.wav|thank you
-chunks/water.wav|water
+audio_file|text|speaker_name
+chunks/hello.wav|kohana atia|speaker
+chunks/how are you.wav|Uhoro waku|speaker
+chunks/come here.wav|uka haha|speaker
+chunks/come in.wav|ingira|speaker
+chunks/come into the house.wav|ingira mucii|speaker
+chunks/come.wav|uka|speaker
+chunks/go away.wav|thii ukiuge|speaker
+chunks/help me.wav|ndeithia|speaker
+chunks/keep quiet.wav|kira|speaker
+chunks/quiet.wav|Tumia|speaker
+chunks/shut up.wav|Kira|speaker
+chunks/stop laughing.wav|tiga gutheka|speaker
+chunks/Give me water.wav|he mae|speaker
+chunks/water.wav|maai|speaker
+chunks/food.wav|irio|speaker
+chunks/i am hungry.wav|ndi muhotu|speaker
+chunks/i am thirsty.wav|ndi munyotu|speaker
+chunks/father.wav|fafa|speaker
+chunks/mother.wav|maitu|speaker
+chunks/friend.wav|murata|speaker
+chunks/enemy.wav|thu|speaker
+chunks/home.wav|mucii|speaker
+chunks/i love you.wav|ningwendete|speaker
+chunks/i will call you.wav|ningukuhurira thimu|speaker
+chunks/i will phone you.wav|ningukuhurira thimu|speaker
+chunks/thank you.wav|ni ngatho|speaker
+chunks/thank you so much.wav|ni ngatho muno|speaker
+chunks/hand.wav|Guoko|speaker
+chunks/face.wav|uthiu|speaker
+chunks/my face.wav|uthiu wakwa|speaker
+chunks/head.wav|Mutwe|speaker
+chunks/eye.wav|Ritho|speaker
+chunks/eyes.wav|Maitho|speaker
+chunks/ear.wav|Gutu|speaker
+chunks/ears.wav|Matu|speaker
+chunks/nose.wav|Iniuru|speaker
+chunks/mouth.wav|Kanua|speaker
+chunks/my mouth.wav|Kanua gakwa|speaker
+chunks/neck.wav|Gigo|speaker
+chunks/shoulder.wav|Kiande|speaker
+chunks/shoulders.wav|Iande|speaker
+chunks/chest.wav|Githuri|speaker
+chunks/stomach.wav|Nda|speaker
+chunks/waist.wav|Njohero|speaker
+chunks/small waist.wav|Njohero njeke|speaker
+chunks/palm.wav|Ruhi|speaker
+chunks/elbow.wav|Kigokora|speaker
+chunks/finger.wav|Kiara|speaker
+chunks/fingers.wav|Ciara|speaker
+chunks/leg.wav|Kuguru|speaker
+chunks/legs.wav|Maguru|speaker
+chunks/thigh.wav|Kiero|speaker
+chunks/thighs.wav|Shiero|speaker
+chunks/knee.wav|Iru|speaker
+chunks/ankle.wav|Itede|speaker
+chunks/ankles.wav|Matede|speaker
+chunks/heel.wav|Ikinya|speaker
+chunks/cheeks.wav|Makai|speaker
+chunks/forehead.wav|Githi|speaker
+chunks/hair.wav|Juere|speaker
+chunks/beards.wav|Nderu|speaker
+chunks/that girl has nice cheeks.wav|Moiretu uria ena makai mega|speaker
+chunks/goat.wav|mburi|speaker
+chunks/horse.wav|mbarathi|speaker
+chunks/maize.wav|mbembe|speaker
+chunks/mouse or mice.wav|mbia|speaker
+chunks/kikuyu.wav|gigikuyu|speaker
+chunks/agikuyu.wav|agikuyu|speaker
+chunks/reading.wav|Guthoma|speaker
+chunks/writing.wav|Kwandika|speaker
+chunks/speaking.wav|Guaria|speaker
+chunks/I will slap you.wav|Ningukuhura|speaker

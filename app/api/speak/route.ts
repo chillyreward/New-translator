@@ -1,32 +1,21 @@
 import { NextResponse } from 'next/server';
-import { synthesizeSpeech } from '@/lib/elevenlabs';
 import { synthesizeWithOpenAI } from '@/lib/openaiTTS';
-import { synthesizeWithGooey } from '@/lib/gooeyTTS';
 import { synthesizeWithCoqui } from '@/lib/coquiTTS';
 
 export async function POST(request: Request) {
   try {
-    const { text, engine, voice } = await request.json();
+    const { text, voice } = await request.json();
 
-    const coquiUrl     = process.env.COQUI_TTS_URL;
-    const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
-    const openaiKey    = process.env.OPENAI_API_KEY;
-    const gooeyKey     = process.env.GOOEY_API_KEY;
-    const voiceId      = process.env.ELEVENLABS_VOICE_ID || 'pNInz6obpgDQGcFmaJgB';
+    const coquiUrl  = process.env.COQUI_TTS_URL;
+    const openaiKey = process.env.OPENAI_API_KEY;
 
     let audioBuffer: ArrayBuffer;
     let contentType = 'audio/mpeg';
 
-    if (engine === 'coqui' || coquiUrl) {
-      // Coqui XTTS v2 — cloned Kikuyu voice
+    if (coquiUrl) {
+      // Coqui XTTS v2 — cloned Kikuyu voice (local server)
       audioBuffer = await synthesizeWithCoqui(text);
       contentType = 'audio/wav';
-    } else if (engine === 'elevenlabs') {
-      if (!elevenLabsKey) return NextResponse.json({ error: 'Missing ELEVENLABS_API_KEY' }, { status: 500 });
-      audioBuffer = await synthesizeSpeech(text, elevenLabsKey, voiceId);
-    } else if (engine === 'gooey') {
-      if (!gooeyKey) return NextResponse.json({ error: 'Missing GOOEY_API_KEY' }, { status: 500 });
-      audioBuffer = await synthesizeWithGooey(text, gooeyKey);
     } else {
       // Default: OpenAI TTS
       if (!openaiKey) return NextResponse.json({ error: 'Missing OPENAI_API_KEY' }, { status: 500 });

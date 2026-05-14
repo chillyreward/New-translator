@@ -11,12 +11,14 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const SOURCE_LANGUAGES = ["Auto-detect", "English", "Kiswahili"];
+type Mode = "translate" | "answer";
 
 type LoadingState = "idle" | "translating" | "listening" | "transcribing" | "speaking" | "youtube" | "video";
 
 export function TranslationCard({ initialText = "" }: { initialText?: string }) {
   const { addSavedPhrase } = useStore();
   const [sourceLang, setSourceLang] = useState("Auto-detect");
+  const [mode, setMode] = useState<Mode>("translate");
   const targetLang = "Gikuyu";
   const [sourceText, setSourceText] = useState(initialText);
   const [translatedText, setTranslatedText] = useState("");
@@ -76,6 +78,7 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
         body: JSON.stringify({
           text: textToTranslate,
           sourceLang: sourceLang === "Kiswahili" ? "sw" : "en",
+          mode,
         }),
       });
       const data = await res.json();
@@ -252,6 +255,32 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
   return (
     <Card className="overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl transition-all duration-300">
 
+      {/* Mode Toggle */}
+      <div className="px-5 pt-4 pb-0 shrink-0 flex gap-2">
+        <button
+          onClick={() => setMode("translate")}
+          className={cn(
+            "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all border",
+            mode === "translate"
+              ? "bg-primary-600 text-white border-primary-600"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:border-slate-300"
+          )}
+        >
+          Translate
+        </button>
+        <button
+          onClick={() => setMode("answer")}
+          className={cn(
+            "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all border",
+            mode === "answer"
+              ? "bg-primary-600 text-white border-primary-600"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:border-slate-300"
+          )}
+        >
+          Ask in Kikuyu
+        </button>
+      </div>
+
       {/* YouTube Input Panel */}
       {showYoutube && (
         <div className="px-5 py-4 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 flex gap-3 items-center animate-in fade-in duration-200">
@@ -311,7 +340,7 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
 
           <textarea
             className="w-full flex-1 resize-none bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 text-xl md:text-2xl min-h-[180px] font-serif leading-relaxed selection:bg-primary-500/30 transition-colors"
-            placeholder={loadingState === "transcribing" ? "Transcribing audio..." : loadingState === "youtube" ? "Fetching YouTube transcript..." : "Type, paste, or speak text here..."}
+            placeholder={loadingState === "transcribing" ? "Transcribing audio..." : loadingState === "youtube" ? "Fetching YouTube transcript..." : mode === "answer" ? "Ask a question in English or Kiswahili..." : "Type, paste, or speak text here..."}
             value={sourceText}
             onChange={e => { setSourceText(e.target.value); setIsSaved(false); clearError(); }}
             disabled={isBusy}
