@@ -20,7 +20,7 @@ export async function synthesizeWithOpenAI(
       voice,
       input: text,
       response_format: "mp3",
-      speed: 0.95, // slightly slower for clarity
+      speed: 0.6,
     }),
   });
 

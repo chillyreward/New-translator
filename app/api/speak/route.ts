@@ -9,21 +9,25 @@ export async function POST(request: Request) {
     const coquiUrl  = process.env.COQUI_TTS_URL;
     const openaiKey = process.env.OPENAI_API_KEY;
 
-    let audioBuffer: ArrayBuffer;
-    let contentType = 'audio/mpeg';
-
+    // Try Coqui first if configured, fall back to OpenAI on any failure
     if (coquiUrl) {
-      // Coqui XTTS v2 — cloned Kikuyu voice (local server)
-      audioBuffer = await synthesizeWithCoqui(text);
-      contentType = 'audio/wav';
-    } else {
-      // Default: OpenAI TTS
-      if (!openaiKey) return NextResponse.json({ error: 'Missing OPENAI_API_KEY' }, { status: 500 });
-      audioBuffer = await synthesizeWithOpenAI(text, openaiKey, voice ?? 'onyx');
+      try {
+        const audioBuffer = await synthesizeWithCoqui(text);
+        return new NextResponse(audioBuffer, {
+          headers: { 'Content-Type': 'audio/wav' },
+        });
+      } catch (coquiErr: any) {
+        console.warn('[Speak] Coqui failed, falling back to OpenAI:', coquiErr.message);
+      }
     }
 
+    // OpenAI TTS fallback
+    if (!openaiKey) {
+      return NextResponse.json({ error: 'Missing OPENAI_API_KEY' }, { status: 500 });
+    }
+    const audioBuffer = await synthesizeWithOpenAI(text, openaiKey, voice ?? 'onyx');
     return new NextResponse(audioBuffer, {
-      headers: { 'Content-Type': contentType },
+      headers: { 'Content-Type': 'audio/mpeg' },
     });
 
   } catch (error: any) {
