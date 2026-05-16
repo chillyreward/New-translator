@@ -16,6 +16,8 @@ from pydantic import BaseModel
 import os
 import hashlib
 import io
+import csv
+import numpy as np
 import soundfile as sf
 import torch
 
@@ -42,21 +44,95 @@ PREFERRED_REFS = [
     "help me.wav",
 ]
 
+import csv
+import numpy as np
+
+def build_reference_from_metadata(metadata_path: str, chunks_dir: str, max_duration: float = 30.0) -> str:
+    """
+    Concatenate the best WAV clips from metadata.csv into a single reference file.
+    Chatterbox works best with 10-30s of clean speech.
+    """
+    output_path = os.path.join(os.path.dirname(metadata_path), "combined_reference.wav")
+
+    if not os.path.exists(metadata_path):
+        return None
+
+    clips = []
+    total_duration = 0.0
+
+    with open(metadata_path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f, delimiter="|")
+        for row in reader:
+            wav_rel = row.get("audio_file", "")
+            wav_path = os.path.join(os.path.dirname(metadata_path), wav_rel)
+            if not os.path.exists(wav_path):
+                # Try chunks dir
+                fname = os.path.basename(wav_rel)
+                wav_path = os.path.join(chunks_dir, fname)
+            if not os.path.exists(wav_path):
+                continue
+            try:
+                data, sr = sf.read(wav_path)
+                duration = len(data) / sr
+                if duration >= 1.5:  # skip very short clips
+                    clips.append((data, sr, duration))
+                    total_duration += duration
+                    if total_duration >= max_duration:
+                        break
+            except Exception:
+                continue
+
+    if not clips:
+        return None
+
+    # Resample all to same rate and concatenate
+    target_sr = clips[0][1]
+    combined = []
+    silence = np.zeros(int(target_sr * 0.3))  # 300ms silence between clips
+
+    for data, sr, _ in clips:
+        if sr != target_sr:
+            # Simple resample by ratio
+            ratio = target_sr / sr
+            new_len = int(len(data) * ratio)
+            data = np.interp(np.linspace(0, len(data), new_len), np.arange(len(data)), data)
+        if data.ndim > 1:
+            data = data[:, 0]  # mono
+        combined.append(data)
+        combined.append(silence)
+
+    combined_audio = np.concatenate(combined)
+    sf.write(output_path, combined_audio, target_sr)
+    print(f"[Reference] Built combined reference: {total_duration:.1f}s from {len(clips)} clips → {output_path}")
+    return output_path
+
+
 def get_reference_wav() -> str:
     """Return the best available reference WAV for voice cloning."""
-    # Try main training file first
+    # Try building from metadata.csv first (best quality — multiple clips)
+    metadata_path = "../coqui-server/dataset/metadata.csv"
+    chunks_dir = "../public/audio/chunks"
+
+    combined = build_reference_from_metadata(metadata_path, chunks_dir)
+    if combined and os.path.exists(combined):
+        return combined
+
+    # Fall back to main training file
     if os.path.exists(_MAIN_SAMPLE):
         return _MAIN_SAMPLE
+
     # Fall back to preferred chunks
     for fname in PREFERRED_REFS:
         path = os.path.join(_CHUNKS_DIR, fname)
         if os.path.exists(path):
             return path
+
     # Last resort: any chunk
     if os.path.exists(_CHUNKS_DIR):
         wavs = [f for f in os.listdir(_CHUNKS_DIR) if f.endswith(".wav")]
         if wavs:
             return os.path.join(_CHUNKS_DIR, wavs[0])
+
     raise RuntimeError("No reference WAV found")
 
 print("Loading Chatterbox TTS model...")

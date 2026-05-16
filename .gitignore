@@ -40,6 +40,9 @@ next-env.d.ts
 # temp files
 /temp
 
+# dubbed video output
+/public/dubbed
+
 # Python virtual environments
 coqui-server/venv/
 coqui-server/venv311/
