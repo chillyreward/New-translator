@@ -1,12 +1,12 @@
 """
-Chatterbox TTS Voice Cloning Server
+Coqui TTS Voice Cloning Server
 Uses your WAV chunks as voice reference for cloning.
 
 Setup:
-    cd chatterbox-server
+    cd coqui-server
     python -m venv venv311
     venv311\\Scripts\\activate
-    pip install chatterbox-tts fastapi uvicorn soundfile
+    pip install coqui-tts fastapi uvicorn soundfile
     python main.py
 """
 
@@ -21,7 +21,7 @@ import numpy as np
 import soundfile as sf
 import torch
 
-app = FastAPI(title="Chatterbox TTS Kikuyu Voice Server")
+app = FastAPI(title="Coqui TTS Kikuyu Voice Server")
 
 CACHE_DIR = os.getenv("CACHE_DIR", "../public/audio/cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -50,7 +50,7 @@ import numpy as np
 def build_reference_from_metadata(metadata_path: str, chunks_dir: str, max_duration: float = 30.0) -> str:
     """
     Concatenate the best WAV clips from metadata.csv into a single reference file.
-    Chatterbox works best with 10-30s of clean speech.
+    Coqui works best with 10-30s of clean speech.
     """
     output_path = os.path.join(os.path.dirname(metadata_path), "combined_reference.wav")
 
@@ -135,7 +135,7 @@ def get_reference_wav() -> str:
 
     raise RuntimeError("No reference WAV found")
 
-print("Loading Chatterbox TTS model...")
+print("Loading Coqui TTS model...")
 from chatterbox.tts import ChatterboxTTS
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -147,7 +147,7 @@ print(f"Reference voice: {reference_wav}")
 
 def get_cache_path(text: str) -> str:
     key = hashlib.md5(text.encode()).hexdigest()
-    return os.path.join(CACHE_DIR, f"cb_{key}.wav")
+    return os.path.join(CACHE_DIR, f"coqui_{key}.wav")
 
 
 class SynthRequest(BaseModel):
@@ -195,7 +195,7 @@ async def health():
     cache_count = len([f for f in os.listdir(CACHE_DIR) if f.endswith(".wav")])
     return {
         "status": "ok",
-        "engine": "chatterbox-tts",
+        "engine": "coqui-tts",
         "reference_wav": reference_wav,
         "device": device,
         "cached_phrases": cache_count,
@@ -206,7 +206,7 @@ async def health():
 async def clear_cache():
     cleared = 0
     for f in os.listdir(CACHE_DIR):
-        if f.startswith("cb_") and f.endswith(".wav"):
+        if f.startswith("coqui_") and f.endswith(".wav"):
             os.remove(os.path.join(CACHE_DIR, f))
             cleared += 1
     return {"cleared": cleared}

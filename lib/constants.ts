@@ -1,2 +1,2 @@
-export const APP_NAME = "Gikuyu Translator";
-export const APP_SHORT_NAME = "Gikuyu";
+export const APP_NAME = "Swahili Demo";
+export const APP_SHORT_NAME = "Swahili";

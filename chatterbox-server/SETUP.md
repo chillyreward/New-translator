@@ -1,9 +1,9 @@
-# Chatterbox TTS Server Setup
+# Coqui TTS Server Setup
 
 ## Install
 
 ```bash
-cd chatterbox-server
+cd coqui-server
 python -m venv venv311
 venv311\Scripts\activate
 pip install -r requirements.txt

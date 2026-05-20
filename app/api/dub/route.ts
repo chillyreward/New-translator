@@ -59,7 +59,7 @@ async function translateSegment(text: string, apiKey: string): Promise<string> {
 
 async function synthesizeSegment(text: string, outputPath: string, coquiUrl?: string, openaiKey?: string) {
   if (coquiUrl) {
-    // Use Chatterbox for voice cloning
+    // Use Coqui for voice cloning
     const res = await fetch(`${coquiUrl}/synthesize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -50,3 +50,6 @@ piper-server/venv/
 **/__pycache__/
 **/*.pyc
 **/*.pyo
+
+# WAV cache (hidden, auto-generated)
+piper-server/.wav-cache/

@@ -1,6 +1,7 @@
-# Coqui XTTS v2 Voice Cloning Server — Setup Guide
+# Coqui XTTS v2 — Setup & Training Guide
 
-This server clones a Kikuyu voice using your recorded audio samples and generates speech via the XTTS v2 model.
+Fine-tunes XTTS v2 on your Kikuyu voice recordings using `dataset/metadata.csv`,
+then serves the trained model via a FastAPI endpoint.
 
 ---
 
@@ -8,138 +9,112 @@ This server clones a Kikuyu voice using your recorded audio samples and generate
 
 - Windows 10/11 (64-bit)
 - Python 3.11 (not 3.12+ — TTS requires 3.11)
-- At least 8GB RAM (16GB recommended)
-- GPU optional but speeds up generation significantly
+- At least 8GB RAM (16GB recommended for training)
+- GPU optional but strongly recommended for training
 
 ---
 
-## Step 1 — Install Python 3.11
-
-Download from: https://www.python.org/downloads/release/python-3119/
-
-During install:
-- ✅ Check **"Add Python to PATH"**
-- Choose **"Customize installation"** → enable pip
-
-Verify:
-```bash
-python --version
-# Should show: Python 3.11.x
-```
-
----
-
-## Step 2 — Create a Virtual Environment
-
-Open a terminal in the `coqui-server` folder:
+## Step 1 — Create Virtual Environment
 
 ```bash
 cd C:\Users\swanti\Desktop\Gikuyu-Demo\coqui-server
 python -m venv venv311
-```
-
-Activate it:
-```bash
 venv311\Scripts\activate
 ```
 
-You should see `(venv311)` at the start of your terminal prompt.
-
 ---
 
-## Step 3 — Install Dependencies
-
-With the venv active:
+## Step 2 — Install Dependencies
 
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-This installs:
-- `TTS` (Coqui XTTS v2)
-- `torch` (PyTorch — CPU version by default)
-- `fastapi` + `uvicorn` (web server)
-- `soundfile` (audio processing)
-
-> ⚠️ This may take 10–20 minutes on first install. The TTS package is large.
+> First install takes 10–20 minutes. TTS + torch are large packages.
 
 ---
 
-## Step 4 — First Run (Model Download)
+## Step 3 — Verify Your Dataset
 
-The first time you run the server, it downloads the XTTS v2 model (~2GB):
+Your `dataset/metadata.csv` should look like:
+
+```
+audio_file|text|speaker_name
+chunks/hello.wav|kohana atia|speaker
+chunks/how are you.wav|Uhoro waku|speaker
+...
+```
+
+WAV files must exist in `../public/audio/chunks/`.
+
+Check your dataset:
+```bash
+python -c "import csv; rows=list(csv.DictReader(open('dataset/metadata.csv'),delimiter='|')); print(f'{len(rows)} samples found')"
+```
+
+---
+
+## Step 4 — Fine-Tune the Model
+
+```bash
+python train.py
+```
+
+What it does:
+1. Copies WAVs from `public/audio/chunks/` into `dataset/audio/`
+2. Splits metadata 90/10 into train/eval sets
+3. Downloads base XTTS v2 (~2GB, cached after first run)
+4. Fine-tunes for 30 epochs on your Kikuyu voice
+5. Saves the best checkpoint to `./output/best_model.pth`
+
+Training time:
+- CPU: ~2–4 hours
+- GPU (RTX 3060+): ~15–30 minutes
+
+---
+
+## Step 5 — Run the Server
 
 ```bash
 python main.py
 ```
 
-You will see:
-```
-Loading XTTS v2 model...
-Loaded 72 speaker samples for voice cloning
-Model loaded on cpu
-INFO:     Uvicorn running on http://0.0.0.0:5003
-```
+The server auto-detects `./output/best_model.pth`:
+- If found → loads your **fine-tuned model**
+- If not found → falls back to **zero-shot cloning** with base XTTS v2
 
-> The model is cached after the first download — subsequent starts are fast.
-
----
-
-## Step 5 — Verify It's Working
-
-Open a browser and go to:
+Check which mode is active:
 ```
 http://localhost:5003/health
 ```
 
-You should see:
 ```json
 {
   "status": "ok",
+  "mode": "fine-tuned",
   "speaker_samples": 72,
-  "device": "cpu",
-  "cached_phrases": 0
+  "device": "cpu"
 }
 ```
 
 ---
 
-## Step 6 — Connect to the Translator App
+## Step 6 — Connect to the App
 
-In your `.env.local` file, uncomment:
+In `.env.local`:
 ```
 COQUI_TTS_URL=http://localhost:5003
 ```
 
-The translator will now use your cloned Kikuyu voice for all TTS output.
-
 ---
 
-## Voice Samples
+## Re-training
 
-The server automatically loads all WAV files from:
-```
-public/audio/chunks/
-```
-
-Plus the main training file:
-```
-public/audio/voice-training-1.wav
-```
-
-To improve the voice clone, add more clean WAV recordings to the chunks folder and restart the server.
-
----
-
-## Stopping the Server
-
-Press `Ctrl+C` in the terminal running `python main.py`.
-
-To deactivate the virtual environment:
-```bash
-deactivate
-```
+To retrain after adding more recordings to `public/audio/chunks/`:
+1. Update `dataset/metadata.csv` with the new entries
+2. Run `python train.py` again
+3. Restart `python main.py`
 
 ---
 
@@ -148,19 +123,15 @@ deactivate
 | Error | Fix |
 |---|---|
 | `ModuleNotFoundError: TTS` | Run `pip install -r requirements.txt` with venv active |
-| `Speaker WAV not found` | Make sure `public/audio/voice-training-1.wav` exists |
-| `CUDA not available` | Normal — runs on CPU. GPU is optional |
-| Port 5003 already in use | Kill the existing process or change the port in `main.py` |
-| Slow generation | Expected on CPU. Each phrase takes 5–15 seconds. Results are cached after first generation |
+| `ModuleNotFoundError: trainer` | Run `pip install trainer>=0.0.36` |
+| Missing WAV files | Check filenames in metadata.csv match files in `public/audio/chunks/` |
+| CUDA out of memory | Reduce `batch_size` to 1 in `train.py` |
+| Slow generation | Expected on CPU. Results are cached after first synthesis |
 
 ---
 
-## GPU Acceleration (Optional)
-
-If you have an NVIDIA GPU, install the CUDA version of PyTorch for much faster generation:
+## GPU Acceleration
 
 ```bash
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
-
-Then restart the server — it will automatically detect and use the GPU.
