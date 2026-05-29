@@ -1,0 +1,7 @@
+transformers>=4.37.2
+torch>=2.2.0
+sentencepiece>=0.1.99
+sacremoses>=0.0.53
+fastapi>=0.111.0
+uvicorn>=0.30.1
+pydantic>=2.7.1

@@ -19,7 +19,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: `${APP_NAME} | Professional Translation Tool`,
-  description: "Translate English and Kiswahili into Gikuyu instantly with AI-powered translation.",
+  description: "Translate English into Kikuyu instantly with AI-powered translation.",
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",

@@ -53,3 +53,7 @@ piper-server/venv/
 
 # WAV cache (hidden, auto-generated)
 piper-server/.wav-cache/
+mms-server/.wav-cache/
+
+# Kiro IDE workspace config
+.kiro/

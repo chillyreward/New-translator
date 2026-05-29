@@ -6,6 +6,7 @@ import { Button } from "@/components/Button";
 import { APP_NAME } from "@/lib/constants";
 import { MobileHeader } from "@/components/MobileHeader";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { VoiceBubble } from "@/components/VoiceBubble";
 
 export default function LandingPage() {
   return (
@@ -130,6 +131,9 @@ export default function LandingPage() {
 
       {/* Mobile bottom nav */}
       <MobileBottomNav />
+
+      {/* Floating voice bubble */}
+      <VoiceBubble />
     </div>
   );
 }

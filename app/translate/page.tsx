@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { MobileHeader } from "@/components/MobileHeader";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { TranslationCard } from "@/components/TranslationCard";
+import { VoiceBubble } from "@/components/VoiceBubble";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -27,6 +28,7 @@ function TranslateContent() {
         </div>
       </main>
       <MobileBottomNav />
+      <VoiceBubble />
     </div>
   );
 }
