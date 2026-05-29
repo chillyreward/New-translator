@@ -6,7 +6,7 @@ import { Button } from "@/components/Button";
 import { APP_NAME } from "@/lib/constants";
 import { MobileHeader } from "@/components/MobileHeader";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-import { VoiceBubble } from "@/components/VoiceBubble";
+import { VoiceOrb } from "@/components/VoiceOrb";
 
 export default function LandingPage() {
   return (
@@ -18,35 +18,56 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative pt-12 pb-20 md:pt-36 md:pb-48 overflow-hidden px-4">
+        <section className="relative pt-12 pb-20 md:pt-28 md:pb-40 overflow-hidden px-4">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-soft-light dark:mix-blend-overlay"></div>
           <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[300px] md:w-[800px] h-[300px] md:h-[800px] bg-primary-200 dark:bg-primary-900 rounded-full blur-3xl opacity-20 transition-colors"></div>
           <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-primary-300 dark:bg-blue-900 rounded-full blur-3xl opacity-20 transition-colors"></div>
-          
-          <div className="container mx-auto text-center relative z-10 max-w-4xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 backdrop-blur-md shadow-sm mb-8 text-sm font-medium text-slate-800 dark:text-slate-200 transition-colors">
-              <Sparkles size={16} className="text-primary-500" />
-              <span>Next generation translation engine is here</span>
-            </div>
-            <h1 className="text-4xl md:text-7xl font-bold font-serif text-slate-900 dark:text-white tracking-tight leading-tight mb-6 transition-colors">
-              The first AI translator <br className="hidden md:block"/>
-              <span className="text-gradient">built for Gikuyu.</span>
-            </h1>
-            <p className="text-base md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed transition-colors">
-              Translate English and Kiswahili into Gikuyu instantly. Designed for learners, families, and communities preserving our language.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/translate" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full gap-2 group shadow-xl shadow-primary-500/20">
-                  Start Translating
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link href="/about" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full">
-                  Learn how it works
-                </Button>
-              </Link>
+
+          <div className="container mx-auto relative z-10 max-w-6xl">
+            {/* Two-column layout: text left, orb right */}
+            <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-10 md:gap-16">
+
+              {/* LEFT — text content */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 backdrop-blur-md shadow-sm mb-8 text-sm font-medium text-slate-800 dark:text-slate-200 transition-colors">
+                  <Sparkles size={16} className="text-primary-500" />
+                  <span>Next generation translation engine is here</span>
+                </div>
+
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-serif text-slate-900 dark:text-white tracking-tight leading-tight mb-6 transition-colors">
+                  The first AI translator{" "}
+                  <br className="hidden md:block" />
+                  <span className="text-gradient">built for Gikuyu.</span>
+                </h1>
+
+                <p className="text-base md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-xl leading-relaxed transition-colors">
+                  Translate English and Kiswahili into Gikuyu instantly. Designed for learners, families, and communities preserving our language.
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-center md:items-start justify-center md:justify-start gap-4">
+                  <Link href="/translate" className="w-full sm:w-auto">
+                    <Button size="lg" className="w-full gap-2 group shadow-xl shadow-primary-500/20">
+                      Start Translating
+                      <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                  <Link href="/about" className="w-full sm:w-auto">
+                    <Button variant="outline" size="lg" className="w-full">
+                      Learn how it works
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* RIGHT — AI Voice Orb */}
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <div className="relative">
+                  {/* Ambient glow behind orb */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500/25 via-blue-500/15 to-pink-500/20 blur-3xl scale-125 animate-pulse" />
+                  <VoiceOrb size={420} />
+                </div>
+              </div>
+
             </div>
           </div>
         </section>
@@ -132,8 +153,6 @@ export default function LandingPage() {
       {/* Mobile bottom nav */}
       <MobileBottomNav />
 
-      {/* Floating voice bubble */}
-      <VoiceBubble />
     </div>
   );
 }

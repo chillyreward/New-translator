@@ -11,7 +11,8 @@ import { useState } from "react";
 
 const navItems = [
   { name: "Translate", href: "/translate", icon: Languages },
-  { name: "Dub Video", href: "/dub", icon: Youtube },
+  { name: "Speak",     href: "/speak",     icon: Volume2   },
+  { name: "Dub Video", href: "/dub",       icon: Youtube   },
 ];
 
 // Group audio library phrases by category label

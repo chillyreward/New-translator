@@ -138,50 +138,58 @@ export async function POST(request: Request) {
       return NextResponse.json({ translation: kikuyuText, audioUrl: audioPath });
     }
 
-    // 2. Check cache
-    const cacheKey = `${mode ?? 'translate'}:${sourceLang ?? 'en'}:${text}`;
-    const cached = getCached(cacheKey);
-    if (cached) return NextResponse.json({ translation: cached, cached: true });
+    // 2. Run Helsinki and OpenAI in parallel
+    const helsinkiPromise = (mode !== 'answer' && sourceLang !== 'sw')
+      ? translateWithHelsinki(text)
+      : Promise.resolve(null);
 
-    // 3. Local phrase library (fast, no AI needed)
-    if (mode !== 'answer') {
-      const local = findLocalTranslation(text);
-      if (local) {
-        setCached(cacheKey, local);
-        return NextResponse.json({ translation: local, source: 'local' });
-      }
+    const openaiPromise = apiKey
+      ? (async () => {
+          // Check cache first
+          const cacheKey = `${mode ?? 'translate'}:${sourceLang ?? 'en'}:${text}`;
+          const cached = getCached(cacheKey);
+          if (cached) return { result: cached, cached: true };
+
+          // Local phrase library
+          if (mode !== 'answer') {
+            const local = findLocalTranslation(text);
+            if (local) {
+              setCached(cacheKey, local);
+              return { result: local, source: 'local' };
+            }
+          }
+
+          let result: string;
+          if (mode === 'answer' || (mode !== 'translate' && isQuestion(text))) {
+            result = await answerInKikuyu(text, sourceLang ?? 'en', apiKey);
+          } else {
+            result = await translateWithOpenAI(text, sourceLang ?? 'en', apiKey);
+          }
+          const phonetic = phoneticConvert(result);
+          setCached(cacheKey, phonetic);
+          return { result: phonetic, source: 'gpt-4o' };
+        })()
+      : Promise.resolve(null);
+
+    const [helsinkiResult, openaiResult] = await Promise.allSettled([helsinkiPromise, openaiPromise]);
+
+    const helsinki = helsinkiResult.status === 'fulfilled' ? helsinkiResult.value : null;
+    const openai   = openaiResult.status === 'fulfilled' && openaiResult.value
+      ? openaiResult.value
+      : null;
+
+    // If neither worked, return error
+    if (!helsinki && !openai) {
+      return NextResponse.json({ error: 'No translation available.' }, { status: 500 });
     }
 
-    // 4. Helsinki-NLP local model (fine-tuned English→Kikuyu, translate mode only)
-    if (mode !== 'answer' && sourceLang !== 'sw') {
-      const helsinkiResult = await translateWithHelsinki(text);
-      if (helsinkiResult && helsinkiResult !== text) {
-        console.log('[Translate] Helsinki-NLP result:', helsinkiResult);
-        setCached(cacheKey, helsinkiResult);
-        return NextResponse.json({ translation: helsinkiResult, source: 'helsinki' });
-      }
-    }
-
-    // 5. GPT-4o — answer mode OR fallback translation
-    if (!apiKey) {
-      return NextResponse.json({
-        error: 'No translation available. Add an OPENAI_API_KEY for AI fallback.'
-      }, { status: 500 });
-    }
-
-    let result: string;
-    if (mode === 'answer' || (mode !== 'translate' && isQuestion(text))) {
-      result = await answerInKikuyu(text, sourceLang ?? 'en', apiKey);
-    } else {
-      result = await translateWithOpenAI(text, sourceLang ?? 'en', apiKey);
-    }
-
-    const phonetic = phoneticConvert(result);
-    setCached(cacheKey, phonetic);
     return NextResponse.json({
-      translation: phonetic,
-      source: 'gpt-4o',
-      mode: mode ?? (isQuestion(text) ? 'answer' : 'translate'),
+      // Primary translation (OpenAI preferred, Helsinki fallback)
+      translation: openai?.result ?? helsinki ?? '',
+      // Individual results for dual-output display
+      openaiTranslation:   openai?.result   ?? null,
+      helsinkiTranslation: helsinki          ?? null,
+      source: openai?.source ?? 'helsinki',
     });
 
   } catch (error: any) {
