@@ -35,10 +35,6 @@ The main UI is built around `components/TranslationCard.tsx` — a two-panel car
 
 Supports English and Kiswahili as source languages.
 
-### 🔊 Text-to-Speech Pipeline (priority order)
-1. **Meta MMS-TTS** (`localhost:5004`) — best native Kikuyu pronunciation
-2. **Coqui XTTS v2** (`localhost:5003`) — voice cloning fallback
-3. **OpenAI TTS** — cloud fallback using `OPENAI_API_KEY`
 
 Downloaded audio files are always saved as `.wav` regardless of which TTS provider served the audio.
 
@@ -51,15 +47,6 @@ Downloaded audio files are always saved as `.wav` regardless of which TTS provid
 ### 🎛️ Translation Card Actions
 After translation, the card exposes these per-panel actions:
 
-| Action | Source panel | GPT-4o panel | Helsinki panel | Bottom bar |
-|--------|:-----------:|:------------:|:--------------:|:----------:|
-| Open in Speak page | — | ✓ | ✓ | ✓ |
-| Copy to clipboard | ✓ | ✓ | ✓ | — |
-| Save phrase | — | — | — | ✓ |
-| Share (Web Share API) | — | — | — | ✓ |
-| Voice input (mic) | ✓ | — | — | — |
-| YouTube transcript | ✓ | — | — | — |
-| Video upload | ✓ | — | — | — |
 
 **TTS behaviour change:** Inline audio playback has been removed from the translation card. The volume/speak icons now navigate to `/speak?q=<encoded text>` so the dedicated Speak page handles all TTS. This applies to both the GPT-4o and Helsinki output panels, as well as the **Speak** button in the bottom action bar.
 
@@ -71,32 +58,11 @@ After translation, the card exposes these per-panel actions:
 
 ## Setup
 
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Python 3.11+ (for local servers)
-- yt-dlp (for YouTube feature)
 
 ### 1. Install frontend dependencies
 
 ```bash
 npm install
-```
-
-### 2. Configure environment variables
-
-Create a `.env.local` file in the project root:
-
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
-ELEVENLABS_VOICE_ID=your_voice_id_here
-
-# Local server URLs (optional — app falls back to cloud APIs if not running)
-PIPER_TTS_URL=http://localhost:5002
-COQUI_TTS_URL=http://localhost:5003
-MMS_TTS_URL=http://localhost:5004
-HELSINKI_TRANSLATE_URL=http://localhost:5005
 ```
 
 ### 3. (Optional) Start local servers
@@ -107,15 +73,6 @@ Each server lives in its own directory with a `requirements.txt`.
 
 Provides cached English→Kikuyu translation using the `Helsinki-NLP/opus-mt-en-kik` MarianMT model. The first run downloads ~300 MB of model weights; subsequent runs load from the local Hugging Face cache. No API key required.
 
-```bash
-cd helsinki-server
-python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # macOS/Linux
-pip install -r requirements.txt
-python main.py
-# Runs on http://localhost:5005
-```
 
 **Endpoints:**
 | Method | Path | Description |
@@ -135,16 +92,6 @@ python main.py
 
 > **Note:** Translations are cached to `.translation-cache.json` inside `helsinki-server/`. The `/health` endpoint reports how many entries are currently cached.
 
-#### Piper TTS Server
-
-```bash
-cd piper-server
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python main.py
-# Runs on http://localhost:5002
-```
 
 #### Other local servers
 
@@ -152,11 +99,6 @@ See `coqui-server/`, `mms-server/`, and `chatterbox-server/` for their respectiv
 
 ### 4. Install yt-dlp (for YouTube feature)
 
-```bash
-# Windows
-winget install yt-dlp
-# Or download from: https://github.com/yt-dlp/yt-dlp/releases
-```
 
 ---
 
