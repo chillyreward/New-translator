@@ -15,12 +15,6 @@ import {
   Loader2, Volume2, AlertCircle,
 } from "lucide-react";
 
-const VOICES = [
-  { id: "mms",     label: "MMS Kikuyu",   desc: "Meta — native Kikuyu model",   color: "violet" },
-  { id: "openai",  label: "OpenAI",        desc: "Neural TTS — natural voice",   color: "blue"   },
-  { id: "coqui",   label: "Coqui XTTS",   desc: "Voice cloning — local server", color: "emerald"},
-];
-
 const SPEEDS = [
   { value: 0.75, label: "0.75×" },
   { value: 1.0,  label: "1×"    },
@@ -41,7 +35,6 @@ export default function SpeakPage() {
 function SpeakContent() {
   const searchParams = useSearchParams();
   const [text, setText]         = useState(searchParams.get("q") ?? "");
-  const [voice, setVoice]       = useState("mms");
   const [speed, setSpeed]       = useState(1.0);
   const [state, setState]       = useState<State>("idle");
   const [error, setError]       = useState<string | null>(null);
@@ -67,15 +60,11 @@ function SpeakContent() {
     setState("loading");
 
     try {
-      // Pick endpoint based on voice
-      const endpoint = voice === "openai" ? "/api/text-to-speech" : "/api/speak";
-      const body: Record<string, unknown> = { text: text.trim() };
-      if (voice === "openai") body.voice = "onyx";
-
-      const res = await fetch(endpoint, {
+      // Always use the /api/speak endpoint (MMS → Coqui → OpenAI fallback chain)
+      const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ text: text.trim() }),
       });
 
       if (!res.ok) {
@@ -103,13 +92,13 @@ function SpeakContent() {
       setError(err instanceof Error ? err.message : "TTS failed.");
       setState("error");
     }
-  }, [text, voice, speed, audioUrl, stopAudio]);
+  }, [text, speed, audioUrl, stopAudio]);
 
   const handleDownload = () => {
     if (!audioUrl) return;
     const a = document.createElement("a");
     a.href     = audioUrl;
-    a.download = `kikuyu-tts-${Date.now()}.${voice === "openai" ? "mp3" : "wav"}`;
+    a.download = `kikuyu-tts-${Date.now()}.wav`;
     a.click();
   };
 
@@ -186,41 +175,6 @@ function SpeakContent() {
                       {copied ? <CheckCircle2 size={13} /> : <Copy size={13} />}
                       {copied ? "Copied" : "Copy"}
                     </button>
-                  </div>
-                </div>
-
-                {/* Voice selector */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3 block">
-                    Voice Engine
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {VOICES.map(v => (
-                      <button
-                        key={v.id}
-                        onClick={() => setVoice(v.id)}
-                        className={cn(
-                          "flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left",
-                          voice === v.id
-                            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                            : "border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-2 h-2 rounded-full mb-2",
-                          voice === v.id ? "bg-primary-500" : "bg-slate-300 dark:bg-slate-600"
-                        )} />
-                        <span className={cn(
-                          "text-sm font-bold",
-                          voice === v.id ? "text-primary-700 dark:text-primary-300" : "text-slate-700 dark:text-slate-300"
-                        )}>
-                          {v.label}
-                        </span>
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
-                          {v.desc}
-                        </span>
-                      </button>
-                    ))}
                   </div>
                 </div>
 
@@ -328,7 +282,7 @@ function SpeakContent() {
 
                   {/* Active voice badge */}
                   <p className="text-xs text-slate-400 dark:text-slate-600 mt-2">
-                    {VOICES.find(v => v.id === voice)?.label} · {speed}× speed
+                    MMS Kikuyu · {speed}× speed
                   </p>
                 </div>
               </div>

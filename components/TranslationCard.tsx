@@ -16,21 +16,18 @@ type LoadingState = "idle" | "translating" | "listening" | "transcribing" | "you
 
 export function TranslationCard({ initialText = "" }: { initialText?: string }) {
   const { addSavedPhrase } = useStore();
-  const [sourceLang, setSourceLang]   = useState("Auto-detect");
-  const mode                           = "translate";
-  const targetLang                     = "Gikuyu";
-  const [sourceText, setSourceText]   = useState(initialText);
+  const [sourceLang, setSourceLang]         = useState("Auto-detect");
+  const mode                                 = "translate";
+  const targetLang                           = "Gikuyu";
+  const [sourceText, setSourceText]         = useState(initialText);
   const [translatedText, setTranslatedText] = useState("");
-  const [openaiText, setOpenaiText]   = useState("");
-  const [helsinkiText, setHelsinkiText] = useState("");
-  const [isSaved, setIsSaved]         = useState(false);
-  const [loadingState, setLoadingState] = useState<LoadingState>("idle");
-  const [error, setError]             = useState<string | null>(null);
-  const [copiedSource, setCopiedSource] = useState(false);
-  const [copiedOpenai, setCopiedOpenai] = useState(false);
-  const [copiedHelsinki, setCopiedHelsinki] = useState(false);
-  const [youtubeUrl, setYoutubeUrl]   = useState("");
-  const [showYoutube, setShowYoutube] = useState(false);
+  const [isSaved, setIsSaved]               = useState(false);
+  const [loadingState, setLoadingState]     = useState<LoadingState>("idle");
+  const [error, setError]                   = useState<string | null>(null);
+  const [copiedSource, setCopiedSource]     = useState(false);
+  const [copiedTarget, setCopiedTarget]     = useState(false);
+  const [youtubeUrl, setYoutubeUrl]         = useState("");
+  const [showYoutube, setShowYoutube]       = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef   = useRef<Blob[]>([]);
@@ -46,8 +43,6 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
     clearError();
     setLoadingState("translating");
     setTranslatedText("");
-    setOpenaiText("");
-    setHelsinkiText("");
     setIsSaved(false);
 
     try {
@@ -63,8 +58,6 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Translation failed.");
       setTranslatedText(data.translation ?? "");
-      setOpenaiText(data.openaiTranslation ?? "");
-      setHelsinkiText(data.helsinkiTranslation ?? "");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Translation failed.");
     } finally {
@@ -77,7 +70,7 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
     if (!file) return;
     clearError();
     setLoadingState("video");
-    setSourceText(""); setTranslatedText(""); setOpenaiText(""); setHelsinkiText("");
+    setSourceText(""); setTranslatedText("");
     try {
       const form = new FormData();
       form.append("video", file);
@@ -98,7 +91,7 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
     if (!youtubeUrl.trim()) { setError("Please enter a YouTube URL."); return; }
     clearError();
     setLoadingState("youtube");
-    setSourceText(""); setTranslatedText(""); setOpenaiText(""); setHelsinkiText("");
+    setSourceText(""); setTranslatedText("");
     try {
       const res  = await fetch("/api/youtube-transcript", {
         method: "POST",
@@ -122,7 +115,7 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
     if (isRecording) { mediaRecorderRef.current?.stop(); return; }
     clearError();
     try {
-      const stream       = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream        = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current   = [];
@@ -153,9 +146,8 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
 
   // ─── Save / Copy ──────────────────────────────────────────────────────────
   const handleSave = () => {
-    const textToSave = openaiText || translatedText;
-    if (!textToSave || isSaved) return;
-    addSavedPhrase({ sourceText, translatedText: textToSave, sourceLang, targetLang });
+    if (!translatedText || isSaved) return;
+    addSavedPhrase({ sourceText, translatedText, sourceLang, targetLang });
     setIsSaved(true);
   };
   const handleCopySource = () => {
@@ -164,21 +156,14 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
     setCopiedSource(true);
     setTimeout(() => setCopiedSource(false), 2000);
   };
-  const handleCopyOpenai = () => {
-    if (!openaiText) return;
-    navigator.clipboard.writeText(openaiText);
-    setCopiedOpenai(true);
-    setTimeout(() => setCopiedOpenai(false), 2000);
-  };
-  const handleCopyHelsinki = () => {
-    if (!helsinkiText) return;
-    navigator.clipboard.writeText(helsinkiText);
-    setCopiedHelsinki(true);
-    setTimeout(() => setCopiedHelsinki(false), 2000);
+  const handleCopyTarget = () => {
+    if (!translatedText) return;
+    navigator.clipboard.writeText(translatedText);
+    setCopiedTarget(true);
+    setTimeout(() => setCopiedTarget(false), 2000);
   };
 
   const micLabel = loadingState === "listening" ? "Listening..." : loadingState === "transcribing" ? "Transcribing..." : "Voice Input";
-  const speakText = openaiText || translatedText;
 
   return (
     <Card className="overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl transition-all duration-300">
@@ -216,7 +201,6 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
 
         {/* ── Source ── */}
         <div className="flex-1 p-5 md:p-8 relative flex flex-col group transition-all">
-          {/* Language selector */}
           <div className="flex flex-wrap gap-1 md:gap-2 mb-4 md:mb-6">
             {SOURCE_LANGUAGES.map(lang => (
               <button key={lang}
@@ -245,33 +229,29 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
             disabled={isBusy}
           />
 
-          {/* Source toolbar */}
           <div className="flex items-center justify-between mt-6">
             <div className="flex gap-1 md:gap-2">
-              {/* Mic */}
               <Button variant="ghost" size="icon" onClick={handleMicClick}
                 disabled={loadingState === "translating" || loadingState === "transcribing"}
                 title={micLabel}
                 className={cn("rounded-xl h-10 w-10 transition-all",
-                  isRecording        ? "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 animate-pulse"
+                  isRecording ? "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 animate-pulse"
                   : loadingState === "transcribing" ? "text-amber-500 dark:text-amber-400"
                   : "text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
                 )}>
                 {loadingState === "transcribing" ? <Loader2 size={20} className="animate-spin" /> : isRecording ? <MicOff size={20} /> : <Mic size={20} />}
               </Button>
 
-              {/* YouTube */}
               <Button variant="ghost" size="icon" onClick={() => setShowYoutube(v => !v)}
                 disabled={isBusy} title="Transcribe from YouTube"
                 className={cn("rounded-xl h-10 w-10 transition-all",
-                  showYoutube            ? "text-red-500 bg-red-50 dark:bg-red-900/20"
+                  showYoutube ? "text-red-500 bg-red-50 dark:bg-red-900/20"
                   : loadingState === "youtube" ? "text-red-500 animate-pulse"
                   : "text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                 )}>
                 {loadingState === "youtube" ? <Loader2 size={20} className="animate-spin" /> : <Youtube size={20} />}
               </Button>
 
-              {/* Video upload */}
               <input ref={videoInputRef} type="file" accept="video/*,.mp4,.mov,.avi,.mkv,.webm" className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleVideoUpload(f); }} />
               <Button variant="ghost" size="icon" onClick={() => videoInputRef.current?.click()}
@@ -283,7 +263,6 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
                 {loadingState === "video" ? <Loader2 size={20} className="animate-spin" /> : <Film size={20} />}
               </Button>
 
-              {/* Copy source */}
               <Button variant="ghost" size="icon" onClick={handleCopySource}
                 disabled={!sourceText.trim()} title="Copy source text"
                 className={cn("rounded-xl h-10 w-10 transition-all",
@@ -299,101 +278,71 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
           </div>
         </div>
 
-        {/* ── Translation outputs ── */}
-        <div className="flex-1 flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
-
-          {/* GPT-4o output */}
-          <div className="flex-1 p-5 md:p-6 bg-slate-50/30 dark:bg-slate-950/30 flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 px-3 py-1.5 rounded-full border border-violet-100 dark:border-violet-800/50 bg-violet-50/50 dark:bg-violet-900/20 uppercase tracking-widest">
-                GPT-4o · Gikuyu
-              </span>
-              <div className="ml-auto flex gap-1">
-                {/* Speak this text on Speak page */}
-                <Link
-                  href={openaiText ? `/speak?q=${encodeURIComponent(openaiText)}` : "/speak"}
-                  title="Open in Speak page"
-                  className={cn(
-                    "rounded-xl h-8 w-8 flex items-center justify-center transition-all",
-                    openaiText
-                      ? "text-violet-500 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/20"
-                      : "text-slate-300 dark:text-slate-700 pointer-events-none"
-                  )}
-                >
-                  <Volume2 size={15} />
-                </Link>
-                <button onClick={handleCopyOpenai} disabled={!openaiText} title="Copy"
-                  className={cn("rounded-xl h-8 w-8 flex items-center justify-center transition-all",
-                    copiedOpenai ? "text-green-500" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
-                    !openaiText && "opacity-40 cursor-not-allowed"
-                  )}>
-                  {copiedOpenai ? <CheckCircle2 size={15} /> : <Copy size={15} />}
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 text-lg md:text-xl text-slate-900 dark:text-white min-h-[100px] font-serif leading-relaxed">
-              {loadingState === "translating" ? (
-                <div className="flex items-center gap-2 text-slate-400 dark:text-slate-600">
-                  <Loader2 size={18} className="animate-spin text-violet-500 shrink-0" />
-                  <span className="text-sm font-sans">Translating with GPT-4o…</span>
-                </div>
-              ) : openaiText ? (
-                <p className="animate-in fade-in duration-500">{openaiText}</p>
-              ) : (
-                <span className="text-slate-300 dark:text-slate-700 text-base">GPT-4o translation will appear here</span>
-              )}
+        {/* ── Translation output ── */}
+        <div className="flex-1 p-5 md:p-8 bg-slate-50/30 dark:bg-slate-950/30 relative flex flex-col group/result transition-all">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <div className="text-[10px] md:text-xs font-bold text-primary-600 dark:text-primary-400 px-4 py-2 rounded-full border border-primary-100 dark:border-primary-800/50 bg-primary-50/50 dark:bg-primary-900/20 uppercase tracking-widest">
+              Target: {targetLang}
             </div>
           </div>
 
-          {/* Helsinki output */}
-          <div className="flex-1 p-5 md:p-6 bg-blue-50/20 dark:bg-blue-950/10 flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-full border border-blue-100 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/20 uppercase tracking-widest">
-                Helsinki-NLP · Gikuyu
-              </span>
-              <div className="ml-auto flex gap-1">
-                <Link
-                  href={helsinkiText ? `/speak?q=${encodeURIComponent(helsinkiText)}` : "/speak"}
-                  title="Open in Speak page"
-                  className={cn(
-                    "rounded-xl h-8 w-8 flex items-center justify-center transition-all",
-                    helsinkiText
-                      ? "text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                      : "text-slate-300 dark:text-slate-700 pointer-events-none"
-                  )}
-                >
-                  <Volume2 size={15} />
-                </Link>
-                <button onClick={handleCopyHelsinki} disabled={!helsinkiText} title="Copy"
-                  className={cn("rounded-xl h-8 w-8 flex items-center justify-center transition-all",
-                    copiedHelsinki ? "text-green-500" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
-                    !helsinkiText && "opacity-40 cursor-not-allowed"
-                  )}>
-                  {copiedHelsinki ? <CheckCircle2 size={15} /> : <Copy size={15} />}
-                </button>
+          <div className="flex-1 text-xl md:text-2xl text-slate-900 dark:text-white min-h-[180px] font-serif leading-relaxed transition-colors">
+            {loadingState === "translating" ? (
+              <div className="flex items-center gap-3 text-slate-400 dark:text-slate-600">
+                <Loader2 size={22} className="animate-spin text-primary-500 shrink-0" />
+                <span className="text-base font-sans">Translating...</span>
               </div>
-            </div>
-            <div className="flex-1 text-lg md:text-xl text-slate-900 dark:text-white min-h-[100px] font-serif leading-relaxed">
-              {loadingState === "translating" ? (
-                <div className="flex items-center gap-2 text-slate-400 dark:text-slate-600">
-                  <Loader2 size={18} className="animate-spin text-blue-500 shrink-0" />
-                  <span className="text-sm font-sans">Translating with Helsinki-NLP…</span>
-                </div>
-              ) : helsinkiText ? (
-                <p className="animate-in fade-in duration-500">{helsinkiText}</p>
-              ) : (
-                <span className="text-slate-300 dark:text-slate-700 text-base">Helsinki-NLP translation will appear here</span>
-              )}
-            </div>
+            ) : translatedText ? (
+              <p className="animate-in fade-in duration-500">{translatedText}</p>
+            ) : (
+              <div className="text-slate-300 dark:text-slate-700 transition-colors">
+                <span className="font-medium text-slate-400 dark:text-slate-600">Wĩ mwega?</span>
+                <span className="block text-sm mt-1">How are you?</span>
+              </div>
+            )}
           </div>
 
+          <div className="flex items-center justify-between mt-6">
+            <div className="flex gap-1 md:gap-2">
+            </div>
+
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" disabled title="Translation history (coming soon)"
+                className="rounded-xl h-10 w-10 text-slate-400 dark:text-slate-500 transition-all">
+                <History size={18} />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleSave}
+                disabled={!translatedText || isSaved} title={isSaved ? "Phrase saved!" : "Save phrase"}
+                className={cn("rounded-xl h-10 w-10 transition-all",
+                  isSaved ? "text-primary-600 dark:text-primary-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100",
+                  !translatedText && "opacity-40 cursor-not-allowed"
+                )}>
+                <Bookmark size={18} className={isSaved ? "fill-current" : ""} />
+              </Button>
+              <Button variant="ghost" size="icon"
+                onClick={() => { if (translatedText && navigator.share) navigator.share({ title: "Gikuyu Translation", text: translatedText }); }}
+                disabled={!translatedText} title="Share translation"
+                className={cn("rounded-xl h-10 w-10 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-all",
+                  !translatedText && "opacity-40 cursor-not-allowed"
+                )}>
+                <Share2 size={18} />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleCopyTarget}
+                disabled={!translatedText} title="Copy translation"
+                className={cn("rounded-xl h-10 w-10 transition-all",
+                  copiedTarget ? "text-green-500 dark:text-green-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100",
+                  !translatedText && "opacity-40 cursor-not-allowed"
+                )}>
+                {copiedTarget ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+              </Button>
+            </div>
+          </div>
         </div>
+
       </div>
 
       {/* ── Bottom Action Bar ── */}
       <div className="p-5 md:p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
-
-        {/* Status */}
         <div className="text-xs text-slate-400 dark:text-slate-600 font-medium">
           {loadingState === "listening" && (
             <span className="flex items-center gap-2 text-red-500 dark:text-red-400 animate-pulse">
@@ -418,36 +367,12 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
           )}
         </div>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-2">
-          {/* Save */}
-          <Button variant="ghost" size="icon" disabled title="Translation history (coming soon)"
-            className="rounded-xl h-10 w-10 text-slate-400 dark:text-slate-500 transition-all">
-            <History size={18} />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleSave}
-            disabled={!(openaiText || translatedText) || isSaved} title={isSaved ? "Phrase saved!" : "Save phrase"}
-            className={cn("rounded-xl h-10 w-10 transition-all",
-              isSaved ? "text-primary-600 dark:text-primary-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100",
-              !(openaiText || translatedText) && "opacity-40 cursor-not-allowed"
-            )}>
-            <Bookmark size={18} className={isSaved ? "fill-current" : ""} />
-          </Button>
-          <Button variant="ghost" size="icon"
-            onClick={() => { const t = openaiText || translatedText; if (t && navigator.share) navigator.share({ title: "Gikuyu Translation", text: t }); }}
-            disabled={!(openaiText || translatedText)} title="Share translation"
-            className={cn("rounded-xl h-10 w-10 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-all",
-              !(openaiText || translatedText) && "opacity-40 cursor-not-allowed"
-            )}>
-            <Share2 size={18} />
-          </Button>
-
-          {/* Speak on Speak page */}
+        <div className="flex items-center gap-3">
           <Link
-            href={speakText ? `/speak?q=${encodeURIComponent(speakText)}` : "/speak"}
+            href={translatedText ? `/speak?q=${encodeURIComponent(translatedText)}` : "/speak"}
             className={cn(
-              "inline-flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-semibold transition-all border",
-              speakText
+              "inline-flex items-center gap-2 px-5 h-12 rounded-xl text-sm font-semibold border transition-all",
+              translatedText
                 ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800/50 hover:bg-primary-100 dark:hover:bg-primary-900/40"
                 : "text-slate-300 dark:text-slate-700 border-slate-100 dark:border-slate-800 pointer-events-none"
             )}
@@ -456,12 +381,11 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
             Speak
           </Link>
 
-          {/* Translate button */}
           <Button
             onClick={handleTranslate}
             disabled={isBusy || !sourceText.trim()}
             className={cn(
-              "px-8 h-10 text-sm font-bold uppercase tracking-widest shadow-xl shadow-primary-500/20 dark:shadow-primary-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]",
+              "w-full sm:w-auto px-10 h-12 text-sm font-bold uppercase tracking-widest shadow-xl shadow-primary-500/20 dark:shadow-primary-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]",
               (isBusy || !sourceText.trim()) && "opacity-60 cursor-not-allowed hover:scale-100"
             )}
           >

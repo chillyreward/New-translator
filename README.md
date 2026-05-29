@@ -39,6 +39,8 @@ Supports English and Kiswahili as source languages.
 2. **Coqui XTTS v2** (`localhost:5003`) — voice cloning fallback
 3. **OpenAI TTS** — cloud fallback using `OPENAI_API_KEY`
 
+Downloaded audio files are always saved as `.wav` regardless of which TTS provider served the audio.
+
 ### 📺 YouTube Pipeline
 1. Download audio from YouTube using yt-dlp
 2. Transcribe to English using OpenAI Whisper
