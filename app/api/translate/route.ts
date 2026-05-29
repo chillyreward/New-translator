@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { localTranslate, hasLocalTranslation } from '@/lib/localTranslate';
 import { searchPhrases, phoneticConvert } from '@/lib/kikuyuPhrases';
 import { getCached, setCached } from '@/lib/translationCache';
-import { audioLibrary, phraseDictionary } from '@/lib/dictionary';
 
 function findLocalTranslation(text: string): string | null {
   if (hasLocalTranslation(text)) return localTranslate(text);
@@ -129,16 +128,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Text is required.' }, { status: 400 });
     }
 
-    // 1. Check audio library — serve pre-recorded file path
-    const audioPath = audioLibrary[text.toLowerCase()];
-    if (audioPath) {
-      const kikuyuText = phraseDictionary[text.toLowerCase()]
-        ?? findLocalTranslation(text)
-        ?? text;
-      return NextResponse.json({ translation: kikuyuText, audioUrl: audioPath });
-    }
-
-    // 2. Run Helsinki and OpenAI in parallel
+    // 1. Run Helsinki and OpenAI in parallel
     const helsinkiPromise = (mode !== 'answer' && sourceLang !== 'sw')
       ? translateWithHelsinki(text)
       : Promise.resolve(null);

@@ -6,7 +6,6 @@ import { Languages, Bookmark, Trash2, Volume2, ChevronDown, ChevronRight, Youtub
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 import { useStore } from "@/lib/store";
-import { audioLibrary } from "@/lib/dictionary";
 import { useState } from "react";
 
 const navItems = [
@@ -48,12 +47,7 @@ export function Sidebar() {
     router.push(`/translate?q=${encodeURIComponent(phrase)}`);
   };
 
-  const handleSpeak = async (text: string, audioUrl?: string) => {
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audio.play();
-      return;
-    }
+  const handleSpeak = async (text: string) => {
     try {
       const res = await fetch("/api/speak", {
         method: "POST",

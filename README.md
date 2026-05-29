@@ -27,10 +27,11 @@ The main UI is built around `components/TranslationCard.tsx` — a two-panel car
 - **Video Upload**: Upload a local video file → audio extracted and transcribed (`/api/video-transcript`)
 
 ### 🔄 Translation Pipeline (priority order)
-1. **Pre-recorded audio library** — instant playback for known phrases, no API call needed
-2. **Local phrase dictionary** — fast in-process lookup for common expressions
-3. **Helsinki Translation Server** (`localhost:5005`) — `Helsinki-NLP/opus-mt-en-kik` MarianMT model with disk cache
-4. **GPT-4o direct** — fallback via `OPENAI_API_KEY` when the local server is unavailable
+1. **Local phrase dictionary** — fast in-process lookup for common expressions
+2. **Helsinki Translation Server** (`localhost:5005`) — `Helsinki-NLP/opus-mt-en-kik` MarianMT model with disk cache (runs in parallel with GPT-4o)
+3. **GPT-4o direct** — fallback via `OPENAI_API_KEY` when the local server is unavailable
+
+> **Note:** The pre-recorded audio library check has been removed from the translation pipeline. Audio playback for known phrases is handled separately on the `/speak` page rather than as part of the `/api/translate` response.
 
 Supports English and Kiswahili as source languages.
 
@@ -61,6 +62,8 @@ After translation, the card exposes these per-panel actions:
 | Video upload | ✓ | — | — | — |
 
 **TTS behaviour change:** Inline audio playback has been removed from the translation card. The volume/speak icons now navigate to `/speak?q=<encoded text>` so the dedicated Speak page handles all TTS. This applies to both the GPT-4o and Helsinki output panels, as well as the **Speak** button in the bottom action bar.
+
+**Sidebar speak behaviour:** The `handleSpeak` function in `components/Sidebar.tsx` no longer accepts a pre-recorded `audioUrl` shortcut. All speak actions from the Sidebar now go through the `/api/speak` TTS pipeline (MMS → Coqui → OpenAI) regardless of whether a pre-recorded file exists for the phrase.
 
 > **Note:** The language swap button has been removed. Gikuyu is always the target language and cannot be swapped with the source.
 
