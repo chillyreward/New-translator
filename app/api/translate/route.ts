@@ -113,6 +113,51 @@ async function translateWithHelsinki(text: string): Promise<string | null> {
   }
 }
 
+// ── Gemma TranslateGemma-12B via HuggingFace Inference API ───────────────────
+async function translateWithGemma(text: string, sourceLang: string): Promise<string | null> {
+  const hfToken = process.env.HUGGINGFACE_API_KEY;
+  if (!hfToken) return null;
+
+  const src = sourceLang === 'sw' ? 'Kiswahili' : 'English';
+  const prompt = `Translate the following ${src} text to Kikuyu. Return only the Kikuyu translation, nothing else.\n\n${text}`;
+
+  try {
+    const response = await fetch(
+      'https://api-inference.huggingface.co/models/gateremark/kikuyu_translategemma_12b_merged_V2',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${hfToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 256,
+            temperature: 0.3,
+            do_sample: true,
+            return_full_text: false,
+          },
+        }),
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    if (!response.ok) return null;
+    const data = await response.json();
+
+    // Handle model loading (503)
+    if (data?.error?.includes('loading')) return null;
+
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      return data[0].generated_text.trim();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function isQuestion(text: string): boolean {
   const t = text.trim().toLowerCase();
   return t.endsWith('?') ||
@@ -128,59 +173,47 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Text is required.' }, { status: 400 });
     }
 
-    // 1. Run Helsinki and OpenAI in parallel
-    const helsinkiPromise = (mode !== 'answer' && sourceLang !== 'sw')
-      ? translateWithHelsinki(text)
-      : Promise.resolve(null);
+    // 1. Check cache
+    const cacheKey = `${mode ?? 'translate'}:${sourceLang ?? 'en'}:${text}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json({ translation: cached, cached: true });
 
-    const openaiPromise = apiKey
-      ? (async () => {
-          // Check cache first
-          const cacheKey = `${mode ?? 'translate'}:${sourceLang ?? 'en'}:${text}`;
-          const cached = getCached(cacheKey);
-          if (cached) return { result: cached, cached: true };
-
-          // Local phrase library
-          if (mode !== 'answer') {
-            const local = findLocalTranslation(text);
-            if (local) {
-              setCached(cacheKey, local);
-              return { result: local, source: 'local' };
-            }
-          }
-
-          let result: string;
-          if (mode === 'answer' || (mode !== 'translate' && isQuestion(text))) {
-            result = await answerInKikuyu(text, sourceLang ?? 'en', apiKey);
-          } else {
-            result = await translateWithOpenAI(text, sourceLang ?? 'en', apiKey);
-          }
-          const phonetic = phoneticConvert(result);
-          setCached(cacheKey, phonetic);
-          return { result: phonetic, source: 'gpt-4o' };
-        })()
-      : Promise.resolve(null);
-
-    const [helsinkiResult, openaiResult] = await Promise.allSettled([helsinkiPromise, openaiPromise]);
-
-    const helsinki = helsinkiResult.status === 'fulfilled' ? helsinkiResult.value : null;
-    const openai   = openaiResult.status === 'fulfilled' && openaiResult.value
-      ? openaiResult.value
-      : null;
-
-    // If neither worked, return error
-    if (!helsinki && !openai) {
-      return NextResponse.json({ error: 'No translation available.' }, { status: 500 });
+    // 2. Local phrase library (fast, no AI needed)
+    if (mode !== 'answer') {
+      const local = findLocalTranslation(text);
+      if (local) {
+        setCached(cacheKey, local);
+        return NextResponse.json({ translation: local, source: 'local' });
+      }
     }
 
-    return NextResponse.json({
-      // Primary translation (OpenAI preferred, Helsinki fallback)
-      translation: openai?.result ?? helsinki ?? '',
-      // Individual results for dual-output display
-      openaiTranslation:   openai?.result   ?? null,
-      helsinkiTranslation: helsinki          ?? null,
-      source: openai?.source ?? 'helsinki',
-    });
+    // 3. Gemma TranslateGemma-12B — best quality local model
+    if (mode !== 'answer') {
+      const gemmaResult = await translateWithGemma(text, sourceLang ?? 'en');
+      if (gemmaResult && gemmaResult !== text) {
+        console.log('[Translate] Gemma result:', gemmaResult);
+        setCached(cacheKey, gemmaResult);
+        return NextResponse.json({ translation: gemmaResult, source: 'gemma' });
+      }
+    }
+
+    // 4. GPT-4o — fallback when Gemma server is not running
+    if (!apiKey) {
+      return NextResponse.json({
+        error: 'No translation available. Start gemma-translate-server or add OPENAI_API_KEY.'
+      }, { status: 500 });
+    }
+
+    let result: string;
+    if (mode === 'answer' || (mode !== 'translate' && isQuestion(text))) {
+      result = await answerInKikuyu(text, sourceLang ?? 'en', apiKey);
+    } else {
+      result = await translateWithOpenAI(text, sourceLang ?? 'en', apiKey);
+    }
+
+    const phonetic = phoneticConvert(result);
+    setCached(cacheKey, phonetic);
+    return NextResponse.json({ translation: phonetic, source: 'gpt-4o' });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Unknown server error' }, { status: 500 });

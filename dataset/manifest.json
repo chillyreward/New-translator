@@ -1,0 +1,567 @@
+[
+  {
+    "file": "public/audio/chunks/a good doctor.wav",
+    "text": "ndotitari mwega",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/agikuyu.wav",
+    "text": "agikuyu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/ankle.wav",
+    "text": "Itede",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/ankles.wav",
+    "text": "Matede",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/beards.wav",
+    "text": "Nderu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/blood.wav",
+    "text": "thakame",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/blouse.wav",
+    "text": "blauzi",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/cheeks.wav",
+    "text": "Makai",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/chest.wav",
+    "text": "Githuri",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/come here.wav",
+    "text": "uka haha",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/come in.wav",
+    "text": "ingira",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/come into the house.wav",
+    "text": "ingira mucii",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/come.wav",
+    "text": "uka",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/constipation.wav",
+    "text": "kuhindwa kwenda choo",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/coughing.wav",
+    "text": "kohota",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/doctor.wav",
+    "text": "ndotitari",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/ear.wav",
+    "text": "Gutu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/ears.wav",
+    "text": "Matu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/elbow.wav",
+    "text": "Kigokora",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/enemy.wav",
+    "text": "thu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/eye.wav",
+    "text": "Ritho",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/eyes.wav",
+    "text": "Maitho",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/face.wav",
+    "text": "uthiu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/father.wav",
+    "text": "fafa",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/feices.wav",
+    "text": "mavi",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/fever or temparature.wav",
+    "text": "homa",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/finger.wav",
+    "text": "Kiara",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/fingers.wav",
+    "text": "Ciara",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/food.wav",
+    "text": "irio",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/forehead.wav",
+    "text": "Githi",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/friend.wav",
+    "text": "murata",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/Give me water.wav",
+    "text": "he mae",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/go away.wav",
+    "text": "thii ukiuge",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/goat.wav",
+    "text": "mburi",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/gumboot.wav",
+    "text": "buti ya mpira",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/hair.wav",
+    "text": "Juere",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/hand.wav",
+    "text": "Guoko",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/head.wav",
+    "text": "Mutwe",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/heel.wav",
+    "text": "Ikinya",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/hello.wav",
+    "text": "kohana atia",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/help me.wav",
+    "text": "ndeithia",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/home.wav",
+    "text": "mucii",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/horse.wav",
+    "text": "mbarathi",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/hospital.wav",
+    "text": "hospitali",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/how are you.wav",
+    "text": "Uhoro waku",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i am going to the hospital.wav",
+    "text": "nindiguka kwa ndotitari",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i am having a stomach ache.wav",
+    "text": "ndi na mutu wa nda",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i am hungry.wav",
+    "text": "ndi muhotu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i am pregnant.wav",
+    "text": "ndi na mimba",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i am sick.wav",
+    "text": "ndi murwaru",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i am thirsty.wav",
+    "text": "ndi munyotu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i an taking medicine.wav",
+    "text": "ndi gukua dawa",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i have a headache.wav",
+    "text": "ndi na mutu wa mutwe",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i have gone to the washroom.wav",
+    "text": "naguka choo",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i have recovered.wav",
+    "text": "nathira",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i love you.wav",
+    "text": "ningwendete",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/i will call you.wav",
+    "text": "ningukuhurira thimu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/I will slap you.wav",
+    "text": "Ningukuhura",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/id.wav",
+    "text": "kadi ya utambulisho",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/keep quiet.wav",
+    "text": "kira",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/kikuyu.wav",
+    "text": "gigikuyu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/knee.wav",
+    "text": "Iru",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/leg.wav",
+    "text": "Kuguru",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/legs.wav",
+    "text": "Maguru",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/maize.wav",
+    "text": "mbembe",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/medicine.wav",
+    "text": "dawa",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/mother.wav",
+    "text": "maitu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/mouse or mice.wav",
+    "text": "mbia",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/mouth.wav",
+    "text": "Kanua",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/muscle pull.wav",
+    "text": "mwili kuuma",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/my face.wav",
+    "text": "uthiu wakwa",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/my mouth.wav",
+    "text": "Kanua gakwa",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/neck.wav",
+    "text": "Gigo",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/needle.wav",
+    "text": "sindano",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/nose.wav",
+    "text": "Iniuru",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/pain.wav",
+    "text": "mutu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/palm.wav",
+    "text": "Ruhi",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/patient.wav",
+    "text": "murwaru",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/physician.wav",
+    "text": "ndotitari",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/pregnancy.wav",
+    "text": "mimba",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/quiet.wav",
+    "text": "Tumia",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/reading.wav",
+    "text": "Guthoma",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/shirt.wav",
+    "text": "shati",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/shivering or shaking.wav",
+    "text": "kutetemeka",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/shoe.wav",
+    "text": "kiatu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/shoes.wav",
+    "text": "viatu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/shorts.wav",
+    "text": "suruali fupi",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/shoulder.wav",
+    "text": "Kiande",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/shoulders.wav",
+    "text": "Iande",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/shut up.wav",
+    "text": "Kira",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/small waist.wav",
+    "text": "Njohero njeke",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/smelling.wav",
+    "text": "kunuka",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/socks.wav",
+    "text": "soksi",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/speaking.wav",
+    "text": "Guaria",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/stomach.wav",
+    "text": "Nda",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/stomachache.wav",
+    "text": "mutu wa nda",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/stop laughing.wav",
+    "text": "tiga gutheka",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/sweater.wav",
+    "text": "sweta",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/thank you so much.wav",
+    "text": "ni ngatho muno",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/thank you.wav",
+    "text": "ni ngatho",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/that girl has nice cheeks.wav",
+    "text": "Moiretu uria ena makai mega",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/thigh.wav",
+    "text": "Kiero",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/thighs.wav",
+    "text": "Shiero",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/tie.wav",
+    "text": "tai",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/tiredness.wav",
+    "text": "kurimu",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/trouser.wav",
+    "text": "suruali",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/typesof clothes.wav",
+    "text": "aina za nguo",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/urine.wav",
+    "text": "mkojo",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/vest.wav",
+    "text": "vesti",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/waist.wav",
+    "text": "Njohero",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/water.wav",
+    "text": "maai",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/chunks/writing.wav",
+    "text": "Kwandika",
+    "source": "project_chunks"
+  },
+  {
+    "file": "public/audio/voice-training-1.wav",
+    "text": "",
+    "source": "project_chunks"
+  }
+]

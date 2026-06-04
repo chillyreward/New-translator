@@ -20,6 +20,7 @@ export const phraseDictionary: Record<string, string> = {
   "food":                           "irio",
   "i am hungry":                    "ndi muhotu",
   "i am thirsty":                   "ndi munyotu",
+  "milk":                           "iria",
   // Family & people
   "father":                         "fafa",
   "mother":                         "maitu",
