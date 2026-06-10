@@ -3,6 +3,8 @@ import { localTranslate, hasLocalTranslation } from '@/lib/localTranslate';
 import { searchPhrases, phoneticConvert } from '@/lib/kikuyuPhrases';
 import { getCached, setCached } from '@/lib/translationCache';
 
+export const maxDuration = 300; // 5 minutes for Modal cold start
+
 function findLocalTranslation(text: string): string | null {
   if (hasLocalTranslation(text)) return localTranslate(text);
   const results = searchPhrases(text);
@@ -113,47 +115,30 @@ async function translateWithHelsinki(text: string): Promise<string | null> {
   }
 }
 
-// ── Gemma TranslateGemma-12B via HuggingFace Inference API ───────────────────
+// ── Gemma TranslateGemma-12B via Modal serverless GPU ────────────────────────
 async function translateWithGemma(text: string, sourceLang: string): Promise<string | null> {
-  const hfToken = process.env.HUGGINGFACE_API_KEY;
-  if (!hfToken) return null;
-
-  const src = sourceLang === 'sw' ? 'Kiswahili' : 'English';
-  const prompt = `Translate the following ${src} text to Kikuyu. Return only the Kikuyu translation, nothing else.\n\n${text}`;
+  const modalUrl = process.env.GEMMA_TRANSLATE_URL;
+  if (!modalUrl) return null;
 
   try {
-    const response = await fetch(
-      'https://api-inference.huggingface.co/models/gateremark/kikuyu_translategemma_12b_merged_V2',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${hfToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 256,
-            temperature: 0.3,
-            do_sample: true,
-            return_full_text: false,
-          },
-        }),
-        signal: AbortSignal.timeout(30000),
-      }
-    );
+    const response = await fetch(`${modalUrl}/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, source_lang: sourceLang }),
+      signal: AbortSignal.timeout(600000), // 10 min for first cold start
+    });
 
-    if (!response.ok) return null;
-    const data = await response.json();
-
-    // Handle model loading (503)
-    if (data?.error?.includes('loading')) return null;
-
-    if (Array.isArray(data) && data[0]?.generated_text) {
-      return data[0].generated_text.trim();
+    if (!response.ok) {
+      console.warn('[Gemma/Modal] API error:', response.status);
+      return null;
     }
-    return null;
-  } catch {
+
+    const data = await response.json();
+    const result = data?.translation?.trim();
+    console.log('[Gemma/Modal] result:', result?.slice(0, 100));
+    return result || null;
+  } catch (err: any) {
+    console.warn('[Gemma/Modal] fetch failed:', err.message);
     return null;
   }
 }
@@ -187,17 +172,17 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Gemma TranslateGemma-12B — best quality local model
+    // 3. Gemma 12B via Ollama — fine-tuned Kikuyu translation model
     if (mode !== 'answer') {
       const gemmaResult = await translateWithGemma(text, sourceLang ?? 'en');
       if (gemmaResult && gemmaResult !== text) {
-        console.log('[Translate] Gemma result:', gemmaResult);
+        console.log('[Translate] Gemma/Ollama result:', gemmaResult);
         setCached(cacheKey, gemmaResult);
         return NextResponse.json({ translation: gemmaResult, source: 'gemma' });
       }
     }
 
-    // 4. GPT-4o — fallback when Gemma server is not running
+    // 4. GPT-4o — best available translation
     if (!apiKey) {
       return NextResponse.json({
         error: 'No translation available. Start gemma-translate-server or add OPENAI_API_KEY.'

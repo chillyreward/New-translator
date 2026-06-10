@@ -1,0 +1,13 @@
+FROM /opt/kikuyu-gemma.gguf
+
+TEMPLATE """<start_of_turn>user
+You are a professional English (en) to Kikuyu (ki) translator. Your goal is to accurately convey the meaning and nuances of the original English text while adhering to Kikuyu grammar, vocabulary, and cultural sensitivities.
+Produce only the Kikuyu translation, without any additional explanations or commentary. Please translate the following English text into Kikuyu:
+
+
+{{ .Prompt }}<end_of_turn>
+<start_of_turn>model
+"""
+
+PARAMETER stop "<end_of_turn>"
+PARAMETER temperature 0.3

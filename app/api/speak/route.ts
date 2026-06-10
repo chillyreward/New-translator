@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { synthesizeWithOpenAI } from '@/lib/openaiTTS';
 import { synthesizeWithCoqui } from '@/lib/coquiTTS';
 
+export const maxDuration = 60; // Allow up to 60 seconds for TTS generation
+
 export async function POST(request: Request) {
   try {
     const { text, voice } = await request.json();
