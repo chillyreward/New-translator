@@ -15,9 +15,29 @@ function ensureDirs() {
 }
 
 async function downloadVideo(url: string, outputPath: string) {
-  const ytDlp = process.platform === 'win32'
-    ? `"C:\\Users\\swanti\\AppData\\Roaming\\Python\\Python314\\Scripts\\yt-dlp.exe"`
-    : 'yt-dlp';
+  // Try yt-dlp from PATH first, then common install locations
+  let ytDlp = 'yt-dlp';
+
+  if (process.platform === 'win32') {
+    // Check if yt-dlp is in PATH
+    try {
+      const { stdout } = await execAsync('where yt-dlp');
+      ytDlp = `"${stdout.trim().split('\n')[0].trim()}"`;
+    } catch {
+      // Fall back to common locations
+      const candidates = [
+        `${process.env.APPDATA}\\Python\\Python314\\Scripts\\yt-dlp.exe`,
+        `${process.env.APPDATA}\\Python\\Python313\\Scripts\\yt-dlp.exe`,
+        `${process.env.APPDATA}\\Python\\Python312\\Scripts\\yt-dlp.exe`,
+        `${process.env.APPDATA}\\Python\\Python311\\Scripts\\yt-dlp.exe`,
+        `${process.env.APPDATA}\\Python\\Python310\\Scripts\\yt-dlp.exe`,
+      ];
+      for (const c of candidates) {
+        if (fs.existsSync(c)) { ytDlp = `"${c}"`; break; }
+      }
+    }
+  }
+
   await execAsync(`${ytDlp} -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" -o "${outputPath}" "${url}"`);
 }
 

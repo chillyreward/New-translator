@@ -57,21 +57,36 @@ Full end-to-end video dubbing into Kikuyu. Available at `/dub`.
 - **Result panel**: Inline video player for the dubbed output with a download button
 - **Transcript panel**: Scrollable list of all translated segments showing the original text, Kikuyu translation, and timestamp for each segment
 
-**Pipeline (`POST /api/dub`):**
-1. Download the YouTube video (best MP4 quality) using yt-dlp, or accept an uploaded file
+The dubbing feature uses two separate API routes depending on input type:
+
+#### `POST /api/dub` — YouTube URL
+
+**Pipeline:**
+1. Download the YouTube video (best MP4 quality) using yt-dlp
 2. Extract audio as 16 kHz mono WAV using ffmpeg
-3. Transcribe with OpenAI Whisper (`verbose_json` with segment timestamps)
+3. Transcribe with OpenAI Whisper (`verbose_json` with segment timestamps); audio files over 24 MB are split into 10-minute chunks automatically
 4. Translate each segment to Kikuyu using GPT-4o
 5. Synthesize each Kikuyu segment via Modal MMS TTS (if `MMS_TTS_URL` is set) or OpenAI TTS (`onyx` voice, 0.85× speed) as fallback
-6. Overlay synthesized segments onto a silent base track at their original timestamps using ffmpeg
-7. Mux the dubbed audio track with the original (muted) video
+6. Mix dubbed segments into a full-length audio track in pure Node.js — each segment's 16-bit PCM is copied into a silent buffer at the correct timestamp offset, then a WAV header is written. This avoids ffmpeg command-line length limits
+7. Mux the dubbed audio track with the original (muted) video using ffmpeg
 
 **Request:**
 ```json
 { "youtubeUrl": "https://www.youtube.com/watch?v=..." }
 ```
 
-**Response:**
+#### `POST /api/dub-upload` — Local file upload
+
+**Pipeline:** Same as above (steps 2–7), but accepts a `multipart/form-data` upload instead of downloading from YouTube.
+
+**Request:** `multipart/form-data` with a `video` field containing the file.
+
+**Audio mixing (upload route):** Uses an ffmpeg `adelay`/`amix` filter chain to place each segment at its correct timestamp.
+
+#### Shared response format
+
+Both endpoints return the same JSON shape:
+
 ```json
 {
   "success": true,
@@ -83,8 +98,6 @@ Full end-to-end video dubbing into Kikuyu. Available at `/dub`.
 ```
 
 **Output files** are saved to `public/dubbed/` and served statically. Temp files (raw video, audio, per-segment WAVs, and the mixed `dubbed_audio.wav`) are cleaned up after each run.
-
-**Audio mixing:** Dubbed segments are mixed in pure Node.js — each segment's PCM data is read from its WAV file, then copied into a silent buffer at the correct timestamp offset. A proper WAV header is written before the result is passed to ffmpeg. This avoids all ffmpeg command-line length limits and removes the need for a temporary `filter.txt` script file, making the pipeline simpler and fully cross-platform.
 
 **Requirements:**
 - `yt-dlp` installed and on PATH (or at `C:\Users\<user>\AppData\Roaming\Python\Python314\Scripts\yt-dlp.exe` on Windows)
@@ -291,7 +304,8 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 ├── app/
 │   ├── api/
-│   │   ├── dub/                 # Full YouTube dubbing pipeline (yt-dlp → Whisper → GPT-4o → TTS → ffmpeg)
+│   │   ├── dub/                 # YouTube dubbing pipeline (yt-dlp → Whisper → GPT-4o → TTS → Node.js PCM mix → ffmpeg)
+│   │   ├── dub-upload/          # File upload dubbing pipeline (same as dub/ but accepts multipart/form-data video)
 │   │   ├── speak/               # TTS endpoint (MMS → Coqui? → OpenAI)
 │   │   ├── transcribe/          # Whisper STT endpoint
 │   │   ├── translate/           # Translation endpoint (local → GPT-4o)
