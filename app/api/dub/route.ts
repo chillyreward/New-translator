@@ -41,7 +41,7 @@ async function downloadVideo(url: string, outputPath: string) {
   // Use cookies file if it exists, otherwise try without (may fail for age-restricted videos)
   const cookiesFile = path.join(process.env.USERPROFILE || 'C:\\Users\\Default', 'Desktop', 'cookies.txt');
   const cookiesFlag = fs.existsSync(cookiesFile) ? `--cookies "${cookiesFile}"` : '';
-  await execAsync(`${ytDlp} ${cookiesFlag} -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" -o "${outputPath}" "${url}"`);
+  await execAsync(`${ytDlp} ${cookiesFlag} --remote-components ejs:github -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" -o "${outputPath}" "${url}"`);
 }
 
 async function extractAudio(videoPath: string, audioPath: string) {
