@@ -109,20 +109,22 @@ async function downloadVideo(url: string, outputPath: string) {
     console.warn(`[Dub] No cookies.txt found at ${cookiesFile} — some videos may fail`);
   }
 
-  const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"`;
+  const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[height>=360]"`;
   // Strip extension from outputPath — yt-dlp will add it; we force mp4 with --merge-output-format
   const outputTemplate = outputPath.replace(/\.[^.]+$/, '');
 
   // Try multiple strategies in order — handles both old and new yt-dlp versions
   const strategies = [
-    // 1. Best: remote JS challenge solver (requires yt-dlp >= 2024.x)
+    // 1. Best: remote JS challenge solver with explicit video+audio
     `${ytDlp} ${cookiesFlag} --remote-components ejs:github --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
     // 2. tv_embedded client — supports cookies, no JS challenge needed
     `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
     // 3. web_embedded — another client that avoids n-challenge
     `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=web_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 4. No cookies, no challenge client — last resort for public videos
+    // 4. No cookies, tv_embedded — last resort
     `${ytDlp} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
+    // 5. Absolute last resort: any format that has video
+    `${ytDlp} ${cookiesFlag} --remote-components ejs:github --merge-output-format mp4 -f "bestvideo+bestaudio/best" -o "${outputTemplate}.%(ext)s" "${url}"`,
   ];
 
   let lastError: any;
@@ -133,10 +135,13 @@ async function downloadVideo(url: string, outputPath: string) {
       await execAsync(cmd);
       console.log(`[Dub] Strategy ${i + 1} succeeded`);
       // Find the actual downloaded file (yt-dlp picks the extension)
-      for (const ext of ['mp4', 'mkv', 'webm', 'avi']) {
+      for (const ext of ['mp4', 'mkv', 'webm', 'avi', 'm4a', 'mp3']) {
         const candidate = `${outputTemplate}.${ext}`;
         if (fs.existsSync(candidate)) {
           console.log(`[Dub] Downloaded file: ${candidate}`);
+          if (ext === 'm4a' || ext === 'mp3') {
+            console.warn(`[Dub] WARNING: Got audio-only file (${ext}) — video stream will be missing!`);
+          }
           return candidate;
         }
       }
@@ -144,7 +149,10 @@ async function downloadVideo(url: string, outputPath: string) {
       const dir = path.dirname(outputTemplate);
       const base = path.basename(outputTemplate);
       const files = fs.readdirSync(dir).filter(f => f.startsWith(base));
-      if (files.length > 0) return path.join(dir, files[0]);
+      if (files.length > 0) {
+        console.log(`[Dub] Found by scan: ${files[0]}`);
+        return path.join(dir, files[0]);
+      }
       throw new Error('Downloaded file not found after yt-dlp succeeded');
     } catch (e: any) {
       console.warn(`[Dub] Strategy ${i + 1} failed: ${e.message?.split('\n')[0]}`);
