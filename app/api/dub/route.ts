@@ -14,6 +14,38 @@ function ensureDirs() {
   [TEMP_DIR, OUTPUT_DIR].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
 }
 
+async function getFfmpegPath(): Promise<string> {
+  // Allow explicit override via env var
+  if (process.env.FFMPEG_PATH) return `"${process.env.FFMPEG_PATH}"`;
+
+  if (process.platform === 'win32') {
+    // Check PATH first
+    try {
+      const { stdout } = await execAsync('where ffmpeg');
+      const found = stdout.trim().split('\n')[0].trim();
+      console.log(`[Dub] Found ffmpeg in PATH: ${found}`);
+      return `"${found}"`;
+    } catch {}
+
+    // Common install locations on Windows
+    const candidates = [
+      'C:\\ffmpeg\\bin\\ffmpeg.exe',
+      'C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe',
+      'C:\\Program Files (x86)\\ffmpeg\\bin\\ffmpeg.exe',
+      `${process.env.LOCALAPPDATA}\\Programs\\ffmpeg\\bin\\ffmpeg.exe`,
+      `${process.env.USERPROFILE}\\ffmpeg\\bin\\ffmpeg.exe`,
+    ];
+    for (const c of candidates) {
+      if (c && fs.existsSync(c)) {
+        console.log(`[Dub] Found ffmpeg at: ${c}`);
+        return `"${c}"`;
+      }
+    }
+  }
+
+  return 'ffmpeg'; // assume it's in PATH on Linux/Mac
+}
+
 async function downloadVideo(url: string, outputPath: string) {
   // Allow explicit override via env var (useful for servers with non-standard install paths)
   let ytDlp = process.env.YT_DLP_PATH ? `"${process.env.YT_DLP_PATH}"` : 'yt-dlp';
@@ -92,7 +124,8 @@ async function downloadVideo(url: string, outputPath: string) {
 }
 
 async function extractAudio(videoPath: string, audioPath: string) {
-  await execAsync(`ffmpeg -i "${videoPath}" -vn -acodec pcm_s16le -ar 16000 -ac 1 "${audioPath}" -y`);
+  const ffmpeg = await getFfmpegPath();
+  await execAsync(`${ffmpeg} -i "${videoPath}" -vn -acodec pcm_s16le -ar 16000 -ac 1 "${audioPath}" -y`);
 }
 
 async function transcribeChunk(audioPath: string, apiKey: string) {
@@ -122,7 +155,8 @@ async function transcribeWithTimestamps(audioPath: string, apiKey: string) {
   console.log(`[Dub] Audio is ${fileSizeMB.toFixed(1)}MB — splitting into chunks...`);
   const chunkDir = path.join(path.dirname(audioPath), 'chunks_' + Date.now());
   fs.mkdirSync(chunkDir, { recursive: true });
-  await execAsync(`ffmpeg -i "${audioPath}" -f segment -segment_time 600 -c copy "${path.join(chunkDir, 'chunk_%03d.wav')}" -y`);
+  const ffmpeg = await getFfmpegPath();
+  await execAsync(`${ffmpeg} -i "${audioPath}" -f segment -segment_time 600 -c copy "${path.join(chunkDir, 'chunk_%03d.wav')}" -y`);
 
   const chunkFiles = fs.readdirSync(chunkDir).filter(f => f.endsWith('.wav')).sort().map(f => path.join(chunkDir, f));
   const allSegments: any[] = [];
@@ -266,7 +300,8 @@ function createWavHeader(dataLength: number, sampleRate: number, channels: numbe
 }
 
 async function mergeVideoAudio(videoPath: string, audioPath: string, outputPath: string) {
-  await execAsync(`ffmpeg -i "${videoPath}" -i "${audioPath}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "${outputPath}" -y`);
+  const ffmpeg = await getFfmpegPath();
+  await execAsync(`${ffmpeg} -i "${videoPath}" -i "${audioPath}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "${outputPath}" -y`);
 }
 
 export async function POST(request: Request) {
