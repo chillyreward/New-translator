@@ -37,7 +37,7 @@ MODEL_ID   = "gateremark/kikuyu_translategemma_4b_v7_highrank_rslora"
     gpu="T4",
     volumes={MODEL_DIR: model_volume},
     timeout=900,
-    scaledown_window=120,
+    scaledown_window=300,      # Keep warm 5 minutes between requests
     secrets=[modal.Secret.from_name("huggingface-secret")],
 )
 class KikuyuTranslator:
@@ -174,3 +174,12 @@ def test():
     translator = KikuyuTranslator()
     result = translator.translate.remote("I want milk")
     print(f"Translation: {result}")
+
+
+# ── Keep-alive ping every 4 minutes to prevent cold starts ───────────────────
+@app.function(image=image, schedule=modal.Period(minutes=4))
+def keepalive():
+    """Ping the translate endpoint to keep the container warm."""
+    translator = KikuyuTranslator()
+    result = translator.translate.remote("hello")
+    print(f"[Keepalive] translate: {result}")

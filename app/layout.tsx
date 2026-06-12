@@ -18,12 +18,44 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: `${APP_NAME} | Professional Translation Tool`,
-  description: "Translate English into Kikuyu instantly with AI-powered translation.",
+  title: "NeuroGrowthTech — AI Marketing for African Languages",
+  description: "AI-powered translation and marketing tools. Reach Kikuyu, Swahili, and African language speakers with intelligent content. Translate English and Kiswahili into Gikuyu instantly.",
+  keywords: [
+    "NeuroGrowthTech",
+    "AI marketing Africa",
+    "Kikuyu translation",
+    "African language AI",
+    "Gikuyu translator",
+    "AI translation Kenya",
+    "Kiswahili translation",
+    "neuro marketing technology",
+    "African language marketing",
+    "Kikuyu AI tools"
+  ],
+  openGraph: {
+    title: "NeuroGrowthTech — AI Marketing for African Languages",
+    description: "AI-powered translation and marketing tools. Reach Kikuyu, Swahili, and African language speakers.",
+    url: "https://neurogrowthtech.com",
+    siteName: "NeuroGrowthTech",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NeuroGrowthTech — AI Marketing for African Languages",
+    description: "AI-powered translation and marketing tools for African language speakers.",
+  },
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",
     apple: "/icon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
   },
 };
 

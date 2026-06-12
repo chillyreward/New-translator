@@ -1,8 +1,10 @@
-# Kikuyu Text-to-Speech App
+# NeuroGrowthTech — AI Marketing for African Languages
 
-A Next.js application that translates English or Kiswahili text to Kikuyu (Gikuyu) and speaks it aloud. Features multiple AI-powered pipelines for translation and speech synthesis.
+A Next.js application that translates English or Kiswahili text to Kikuyu (Gikuyu) and speaks it aloud. Branded as **NeuroGrowthTech**, it provides AI-powered translation and marketing tools to reach Kikuyu, Swahili, and African language speakers with intelligent content.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/chillyreward/Gikuyu-Demo)
+
+**Site:** [neurogrowthtech.com](https://neurogrowthtech.com)
 
 ## Features
 
@@ -43,6 +45,52 @@ Downloaded audio files are always saved as `.wav` regardless of which TTS provid
 2. Transcribe to English using OpenAI Whisper
 3. Translate to Kikuyu via the translation pipeline above
 4. Speak in Kikuyu via the TTS pipeline above
+
+### 🎬 YouTube Dubbing (`/dub`)
+Full end-to-end video dubbing into Kikuyu. Available at `/dub`.
+
+**UI features:**
+- **YouTube tab**: Paste a YouTube URL and click "Dub Video" to process a remote video
+- **Upload tab**: Upload a local video file (MP4, MOV, AVI, MKV, WebM) and click "Dub Video"
+- **Progress indicator**: Displays the current processing stage while dubbing is in progress
+- **Error display**: Shows a descriptive error message if dubbing fails
+- **Result panel**: Inline video player for the dubbed output with a download button
+- **Transcript panel**: Scrollable list of all translated segments showing the original text, Kikuyu translation, and timestamp for each segment
+
+**Pipeline (`POST /api/dub`):**
+1. Download the YouTube video (best MP4 quality) using yt-dlp, or accept an uploaded file
+2. Extract audio as 16 kHz mono WAV using ffmpeg
+3. Transcribe with OpenAI Whisper (`verbose_json` with segment timestamps)
+4. Translate each segment to Kikuyu using GPT-4o
+5. Synthesize each Kikuyu segment via Modal MMS TTS (if `MMS_TTS_URL` is set) or OpenAI TTS (`onyx` voice, 0.85× speed) as fallback
+6. Overlay synthesized segments onto a silent base track at their original timestamps using ffmpeg
+7. Mux the dubbed audio track with the original (muted) video
+
+**Request:**
+```json
+{ "youtubeUrl": "https://www.youtube.com/watch?v=..." }
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "videoUrl": "/dubbed/dubbed_<timestamp>.mp4",
+  "segments": [
+    { "start": 0.0, "end": 3.2, "original": "Hello everyone", "kikuyu": "Wee mwega inyui nyote" }
+  ]
+}
+```
+
+**Output files** are saved to `public/dubbed/` and served statically. Temp files (raw video, audio, per-segment WAVs, and the mixed `dubbed_audio.wav`) are cleaned up after each run.
+
+**Audio mixing:** Dubbed segments are mixed in pure Node.js — each segment's PCM data is read from its WAV file, then copied into a silent buffer at the correct timestamp offset. A proper WAV header is written before the result is passed to ffmpeg. This avoids all ffmpeg command-line length limits and removes the need for a temporary `filter.txt` script file, making the pipeline simpler and fully cross-platform.
+
+**Requirements:**
+- `yt-dlp` installed and on PATH (or at `C:\Users\<user>\AppData\Roaming\Python\Python314\Scripts\yt-dlp.exe` on Windows)
+- `ffmpeg` installed and on PATH
+- `OPENAI_API_KEY` (required — used for Whisper transcription, GPT-4o translation, and TTS fallback)
+- `MMS_TTS_URL` (optional — preferred TTS for best native Kikuyu quality; falls back to OpenAI TTS if unavailable)
 
 ### 🎛️ Translation Card Actions
 After translation, the card exposes these per-panel actions:
@@ -185,7 +233,7 @@ MMS_TTS_URL=https://<your-workspace>--kikuyu-tts-app.modal.run
 ```
 **Response:** Raw `audio/wav` bytes.
 
-**Container settings:** T4 GPU · 120s scale-down window (`scaledown_window=120`) · 120s timeout · model cached in a Modal Volume.
+**Container settings:** T4 GPU · 2-minute scale-down window (`scaledown_window=120`) · 120s timeout · model cached in a Modal Volume.
 
 **Features:**
 - Long text is automatically split into sentence/clause chunks (≤100 chars each) with 180ms silence between them for natural cadence
@@ -243,11 +291,13 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 ├── app/
 │   ├── api/
+│   │   ├── dub/                 # Full YouTube dubbing pipeline (yt-dlp → Whisper → GPT-4o → TTS → ffmpeg)
 │   │   ├── speak/               # TTS endpoint (MMS → Coqui? → OpenAI)
 │   │   ├── transcribe/          # Whisper STT endpoint
 │   │   ├── translate/           # Translation endpoint (local → GPT-4o)
 │   │   ├── tts/                 # Alternative TTS endpoint
-│   │   └── youtube-transcript/  # YouTube download + transcription
+│   │   └── youtube-transcript/  # YouTube audio download + Whisper transcription
+│   ├── dub/                     # YouTube Dubbing UI page
 │   ├── page.tsx                 # Landing page
 │   └── layout.tsx               # App layout
 ├── modal-translate/             # Modal serverless GPU deployment for TranslateGemma-4B V7
@@ -266,6 +316,24 @@ Open [http://localhost:3000](http://localhost:3000).
 ├── .env.local                   # Environment variables (not committed)
 └── README.md
 ```
+
+## SEO & Metadata
+
+Configured in `app/layout.tsx` via Next.js `Metadata`:
+
+| Field | Value |
+|-------|-------|
+| Title | NeuroGrowthTech — AI Marketing for African Languages |
+| Description | AI-powered translation and marketing tools for African language speakers |
+| Site URL | https://neurogrowthtech.com |
+| Open Graph | Enabled (`og:title`, `og:description`, `og:url`, `og:type`) |
+| Twitter Card | `summary_large_image` |
+| Robots | `index: true`, `follow: true` (including Googlebot) |
+| Icons | `/icon.png` (favicon, shortcut, Apple touch) |
+
+Keywords targeted: `NeuroGrowthTech`, `AI marketing Africa`, `Kikuyu translation`, `African language AI`, `Gikuyu translator`, `AI translation Kenya`, `Kiswahili translation`, `neuro marketing technology`.
+
+---
 
 ## License
 

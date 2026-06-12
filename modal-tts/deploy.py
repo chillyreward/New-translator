@@ -40,7 +40,7 @@ MAX_CHUNK    = 100  # chars per chunk for best quality
     gpu="T4",                   # T4 is cheapest GPU, plenty fast for TTS
     volumes={MODEL_DIR: model_volume},
     timeout=120,
-    scaledown_window=120,       # Stay warm 2 minutes between requests
+    scaledown_window=300,      # Keep warm 5 minutes between requests
     secrets=[modal.Secret.from_name("huggingface-secret")],
 )
 class KikuyuTTS:
@@ -161,3 +161,12 @@ def test():
     with open("test_output.wav", "wb") as f:
         f.write(audio)
     print(f"✓ Saved test_output.wav ({len(audio)} bytes)")
+
+
+# ── Keep-alive ping every 4 minutes ──────────────────────────────────────────
+@app.function(image=image, schedule=modal.Period(minutes=4))
+def keepalive():
+    """Ping the TTS endpoint to keep the container warm."""
+    tts   = KikuyuTTS()
+    audio = tts.synthesize.remote("Wĩ mwega")
+    print(f"[Keepalive] TTS: {len(audio)} bytes")
