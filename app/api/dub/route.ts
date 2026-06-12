@@ -61,24 +61,34 @@ async function downloadVideo(url: string, outputPath: string) {
     console.warn(`[Dub] No cookies.txt found at ${cookiesFile} — some videos may fail`);
   }
 
-  // Format selector: try best mp4, fall back to best available, then worst as last resort
   const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"`;
-  const cmd = `${ytDlp} ${cookiesFlag} --remote-components ejs:github -f ${formatSelector} -o "${outputPath}" "${url}"`;
-  console.log(`[Dub] Command: ${cmd}`);
-  
-  try {
-    await execAsync(cmd);
-  } catch (e: any) {
-    // If remote-components failed (old yt-dlp), retry without it — update yt-dlp on the server!
-    if (e.message?.includes('n challenge solving failed') || e.message?.includes('Requested format is not available')) {
-      console.warn('[Dub] Challenge solving failed — retrying with --extractor-args to bypass...');
-      const fallbackCmd = `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=android" -f ${formatSelector} -o "${outputPath}" "${url}"`;
-      console.log(`[Dub] Fallback command: ${fallbackCmd}`);
-      await execAsync(fallbackCmd);
-    } else {
-      throw e;
+
+  // Try multiple strategies in order — handles both old and new yt-dlp versions
+  const strategies = [
+    // 1. Best: remote JS challenge solver (requires yt-dlp >= 2024.x)
+    `${ytDlp} ${cookiesFlag} --remote-components ejs:github -f ${formatSelector} -o "${outputPath}" "${url}"`,
+    // 2. tv_embedded client — supports cookies, no JS challenge needed
+    `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=tv_embedded" -f ${formatSelector} -o "${outputPath}" "${url}"`,
+    // 3. web_embedded — another client that avoids n-challenge
+    `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=web_embedded" -f ${formatSelector} -o "${outputPath}" "${url}"`,
+    // 4. No cookies, no challenge client — last resort for public videos
+    `${ytDlp} --extractor-args "youtube:player_client=tv_embedded" -f ${formatSelector} -o "${outputPath}" "${url}"`,
+  ];
+
+  let lastError: any;
+  for (let i = 0; i < strategies.length; i++) {
+    const cmd = strategies[i];
+    console.log(`[Dub] Strategy ${i + 1}/${strategies.length}: ${cmd}`);
+    try {
+      await execAsync(cmd);
+      console.log(`[Dub] Strategy ${i + 1} succeeded`);
+      return; // success — exit the function
+    } catch (e: any) {
+      console.warn(`[Dub] Strategy ${i + 1} failed: ${e.message?.split('\n')[0]}`);
+      lastError = e;
     }
   }
+  throw lastError;
 }
 
 async function extractAudio(videoPath: string, audioPath: string) {
