@@ -35,6 +35,22 @@ async function getFfmpegPath(): Promise<string> {
       `${process.env.LOCALAPPDATA}\\Programs\\ffmpeg\\bin\\ffmpeg.exe`,
       `${process.env.USERPROFILE}\\ffmpeg\\bin\\ffmpeg.exe`,
     ];
+    // Also scan WinGet packages folder for any ffmpeg install
+    const wingetBase = `${process.env.LOCALAPPDATA}\\Microsoft\\WinGet\\Packages`;
+    if (wingetBase && fs.existsSync(wingetBase)) {
+      try {
+        const pkgs = fs.readdirSync(wingetBase).filter(d => d.toLowerCase().startsWith('gyan.ffmpeg'));
+        for (const pkg of pkgs) {
+          const pkgDir = path.join(wingetBase, pkg);
+          // Walk one level deeper to find bin/ffmpeg.exe
+          const builds = fs.readdirSync(pkgDir);
+          for (const build of builds) {
+            const candidate = path.join(pkgDir, build, 'bin', 'ffmpeg.exe');
+            candidates.push(candidate);
+          }
+        }
+      } catch {}
+    }
     for (const c of candidates) {
       if (c && fs.existsSync(c)) {
         console.log(`[Dub] Found ffmpeg at: ${c}`);
