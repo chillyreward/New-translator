@@ -208,6 +208,40 @@ async function transcribeWithTimestamps(audioPath: string, apiKey: string) {
   return { segments: allSegments, duration: timeOffset };
 }
 
+async function translateSegments(texts: string[], apiKey: string): Promise<string[]> {
+  // Batch all segments into one GPT-4o call — much faster than N individual calls
+  const numbered = texts.map((t, i) => `${i + 1}. ${t}`).join('\n');
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [{
+        role: 'user',
+        content: `You are an expert Kikuyu translator. Translate each numbered line to natural spoken Kikuyu. Return ONLY the translations, keeping the same numbering format.\n\n${numbered}`
+      }],
+      temperature: 0.3,
+    }),
+  });
+  const data = await res.json();
+  const raw = data.choices[0].message.content.trim();
+  // Parse "1. translation\n2. translation\n..." back into array
+  const lines = raw.split('\n').filter((l: string) => l.trim());
+  const results: string[] = new Array(texts.length).fill('');
+  for (const line of lines) {
+    const m = line.match(/^(\d+)\.\s*(.+)$/);
+    if (m) {
+      const idx = parseInt(m[1]) - 1;
+      if (idx >= 0 && idx < texts.length) results[idx] = m[2].trim();
+    }
+  }
+  // Fill any missing with individual fallback
+  for (let i = 0; i < results.length; i++) {
+    if (!results[i]) results[i] = texts[i]; // keep original if translation missing
+  }
+  return results;
+}
+
 async function translateSegment(text: string, apiKey: string): Promise<string> {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -334,22 +368,23 @@ async function mergeVideoAudio(videoPath: string, audioPath: string, outputPath:
   const ffmpeg = await getFfmpegPath();
 
   // Check if the downloaded file actually has a video stream
+  // ffmpeg always exits non-zero for -i probe, info goes to stderr (caught in e.message)
   let hasVideo = false;
   try {
-    const { stdout } = await execAsync(`${ffmpeg} -i "${videoPath}" 2>&1 || true`);
-    hasVideo = stdout.includes('Video:');
+    await execAsync(`${ffmpeg} -i "${videoPath}" -f null -`);
   } catch (e: any) {
-    // ffmpeg -i always exits non-zero, but stderr has stream info
-    hasVideo = e.message?.includes('Video:') || false;
+    const info = e.message || '';
+    hasVideo = /Stream #\d+:\d+.*Video:/i.test(info);
   }
 
+  console.log(`[Dub] Input has video stream: ${hasVideo}`);
+
   if (hasVideo) {
-    // Normal case: replace original audio with dubbed audio
+    // Replace original audio with dubbed audio, keep video stream
     await execAsync(`${ffmpeg} -i "${videoPath}" -i "${audioPath}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "${outputPath}" -y`);
   } else {
-    // Audio-only download (shouldn't happen but handle gracefully)
-    // Just copy the audio as-is into an mp4 container
-    console.warn('[Dub] Downloaded file has no video stream — outputting audio-only mp4');
+    // Audio-only input — just wrap dubbed audio in mp4
+    console.warn('[Dub] No video stream found — outputting audio-only mp4');
     await execAsync(`${ffmpeg} -i "${audioPath}" -c:a aac "${outputPath}" -y`);
   }
 }
@@ -384,14 +419,23 @@ export async function POST(request: Request) {
     const totalDuration = transcription.duration || 60;
     console.log(`[Dub] Got ${segments.length} segments, duration: ${totalDuration}s`);
 
-    const processedSegments = [];
-    for (let i = 0; i < segments.length; i++) {
-      const seg = segments[i];
-      console.log(`[Dub] Segment ${i + 1}/${segments.length}: "${seg.text.substring(0, 40)}..."`);
-      const kikuyu = await translateSegment(seg.text, openaiKey);
-      const segAudioPath = path.join(segTempDir, `seg_${i}.wav`);
-      await synthesizeSegment(kikuyu, segAudioPath, mmsUrl, openaiKey);
-      processedSegments.push({ ...seg, kikuyu });
+    const processedSegments: any[] = new Array(segments.length);
+    const CONCURRENCY = 5; // process 5 segments at a time
+
+    console.log(`[Dub] Batch translating ${segments.length} segments...`);
+    const translations = await translateSegments(segments.map((s: any) => s.text), openaiKey);
+
+    console.log(`[Dub] Synthesizing ${segments.length} segments with concurrency=${CONCURRENCY}...`);
+    for (let batch = 0; batch < segments.length; batch += CONCURRENCY) {
+      const slice = segments.slice(batch, batch + CONCURRENCY);
+      await Promise.all(slice.map(async (seg: any, j: number) => {
+        const i = batch + j;
+        const kikuyu = translations[i] || seg.text;
+        console.log(`[Dub] TTS ${i + 1}/${segments.length}: "${kikuyu.substring(0, 40)}..."`);
+        const segAudioPath = path.join(segTempDir, `seg_${i}.wav`);
+        await synthesizeSegment(kikuyu, segAudioPath, mmsUrl, openaiKey);
+        processedSegments[i] = { ...seg, kikuyu };
+      }));
     }
 
     console.log('[Dub] Building dubbed audio track...');
