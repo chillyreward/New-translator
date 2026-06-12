@@ -253,6 +253,29 @@ async function translateSegments(texts: string[], apiKey: string): Promise<strin
 }
 
 async function translateSegment(text: string, apiKey: string): Promise<string> {
+  // Try Gemma Modal endpoint first — much faster than GPT-4o for bulk translation
+  const gemmaUrl = process.env.GEMMA_TRANSLATE_URL;
+  if (gemmaUrl) {
+    try {
+      const res = await fetch(`${gemmaUrl}/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, source_lang: 'en' }),
+        signal: AbortSignal.timeout(120000), // 2 min timeout per segment
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const translation = data?.translation?.trim();
+        if (translation && translation !== text) {
+          return translation;
+        }
+      }
+    } catch (e: any) {
+      console.warn('[Dub] Gemma translation failed, falling back to GPT-4o:', e.message);
+    }
+  }
+
+  // Fall back to GPT-4o
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
@@ -445,12 +468,15 @@ export async function POST(request: Request) {
 
     console.log(`[Dub] Translating ${segments.length} segments individually...`);
     // Translate each segment individually — reliable, no parsing edge cases
-    const translations: string[] = [];
-    for (let i = 0; i < segments.length; i++) {
-      const seg = segments[i];
-      console.log(`[Dub] Translating ${i + 1}/${segments.length}: "${seg.text.substring(0, 40)}..."`);
-      const kikuyu = await translateSegment(seg.text, openaiKey);
-      translations.push(kikuyu);
+    // Run translations in parallel batches too since Gemma handles concurrent requests
+    const translations: string[] = new Array(segments.length);
+    for (let batch = 0; batch < segments.length; batch += CONCURRENCY) {
+      const slice = segments.slice(batch, batch + CONCURRENCY);
+      await Promise.all(slice.map(async (seg: any, j: number) => {
+        const i = batch + j;
+        console.log(`[Dub] Translating ${i + 1}/${segments.length}: "${seg.text.substring(0, 40)}..."`);
+        translations[i] = await translateSegment(seg.text, openaiKey);
+      }));
     }
 
     console.log(`[Dub] Synthesizing ${segments.length} segments with concurrency=${CONCURRENCY}...`);
