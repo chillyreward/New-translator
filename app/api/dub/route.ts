@@ -109,7 +109,7 @@ async function downloadVideo(url: string, outputPath: string) {
     console.warn(`[Dub] No cookies.txt found at ${cookiesFile} — some videos may fail`);
   }
 
-  const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"`;
+  const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"`;
   // Strip extension from outputPath — yt-dlp will add it; we force mp4 with --merge-output-format
   const outputTemplate = outputPath.replace(/\.[^.]+$/, '');
 
@@ -332,7 +332,26 @@ function createWavHeader(dataLength: number, sampleRate: number, channels: numbe
 
 async function mergeVideoAudio(videoPath: string, audioPath: string, outputPath: string) {
   const ffmpeg = await getFfmpegPath();
-  await execAsync(`${ffmpeg} -i "${videoPath}" -i "${audioPath}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "${outputPath}" -y`);
+
+  // Check if the downloaded file actually has a video stream
+  let hasVideo = false;
+  try {
+    const { stdout } = await execAsync(`${ffmpeg} -i "${videoPath}" 2>&1 || true`);
+    hasVideo = stdout.includes('Video:');
+  } catch (e: any) {
+    // ffmpeg -i always exits non-zero, but stderr has stream info
+    hasVideo = e.message?.includes('Video:') || false;
+  }
+
+  if (hasVideo) {
+    // Normal case: replace original audio with dubbed audio
+    await execAsync(`${ffmpeg} -i "${videoPath}" -i "${audioPath}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "${outputPath}" -y`);
+  } else {
+    // Audio-only download (shouldn't happen but handle gracefully)
+    // Just copy the audio as-is into an mp4 container
+    console.warn('[Dub] Downloaded file has no video stream — outputting audio-only mp4');
+    await execAsync(`${ffmpeg} -i "${audioPath}" -c:a aac "${outputPath}" -y`);
+  }
 }
 
 export async function POST(request: Request) {
