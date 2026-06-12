@@ -61,9 +61,24 @@ async function downloadVideo(url: string, outputPath: string) {
     console.warn(`[Dub] No cookies.txt found at ${cookiesFile} — some videos may fail`);
   }
 
-  const cmd = `${ytDlp} ${cookiesFlag} --remote-components ejs:github -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" -o "${outputPath}" "${url}"`;
+  // Format selector: try best mp4, fall back to best available, then worst as last resort
+  const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"`;
+  const cmd = `${ytDlp} ${cookiesFlag} --remote-components ejs:github -f ${formatSelector} -o "${outputPath}" "${url}"`;
   console.log(`[Dub] Command: ${cmd}`);
-  await execAsync(cmd);
+  
+  try {
+    await execAsync(cmd);
+  } catch (e: any) {
+    // If remote-components failed (old yt-dlp), retry without it — update yt-dlp on the server!
+    if (e.message?.includes('n challenge solving failed') || e.message?.includes('Requested format is not available')) {
+      console.warn('[Dub] Challenge solving failed — retrying with --extractor-args to bypass...');
+      const fallbackCmd = `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=android" -f ${formatSelector} -o "${outputPath}" "${url}"`;
+      console.log(`[Dub] Fallback command: ${fallbackCmd}`);
+      await execAsync(fallbackCmd);
+    } else {
+      throw e;
+    }
+  }
 }
 
 async function extractAudio(videoPath: string, audioPath: string) {
