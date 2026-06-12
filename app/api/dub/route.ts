@@ -441,10 +441,17 @@ export async function POST(request: Request) {
     console.log(`[Dub] Got ${segments.length} segments, duration: ${totalDuration}s`);
 
     const processedSegments: any[] = new Array(segments.length);
-    const CONCURRENCY = 5; // process 5 segments at a time
+    const CONCURRENCY = 5; // synthesize 5 segments at a time
 
-    console.log(`[Dub] Batch translating ${segments.length} segments...`);
-    const translations = await translateSegments(segments.map((s: any) => s.text), openaiKey);
+    console.log(`[Dub] Translating ${segments.length} segments individually...`);
+    // Translate each segment individually — reliable, no parsing edge cases
+    const translations: string[] = [];
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      console.log(`[Dub] Translating ${i + 1}/${segments.length}: "${seg.text.substring(0, 40)}..."`);
+      const kikuyu = await translateSegment(seg.text, openaiKey);
+      translations.push(kikuyu);
+    }
 
     console.log(`[Dub] Synthesizing ${segments.length} segments with concurrency=${CONCURRENCY}...`);
     for (let batch = 0; batch < segments.length; batch += CONCURRENCY) {
