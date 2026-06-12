@@ -109,22 +109,24 @@ async function downloadVideo(url: string, outputPath: string) {
     console.warn(`[Dub] No cookies.txt found at ${cookiesFile} — some videos may fail`);
   }
 
-  const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"`;
+  // Use formats that have video+audio already combined (no DASH merging needed)
+  // 18 = 360p mp4 with audio (https, single file — most reliable)
+  // 93-11/94-11/95-11 = HLS streams with video+audio combined (en-US original)
+  // Fall back to DASH merge as last resort
+  const formatSelector = `"18/93-11/94-11/95-11/96-11/bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"`;
   // Strip extension from outputPath — yt-dlp will add it; we force mp4 with --merge-output-format
   const outputTemplate = outputPath.replace(/\.[^.]+$/, '');
 
   // Try multiple strategies in order — handles both old and new yt-dlp versions
   const strategies = [
-    // 1. Best: remote JS challenge solver with explicit video+audio
+    // 1. Prefer combined video+audio formats — no JS challenge needed for merging
+    `${ytDlp} ${cookiesFlag} --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
+    // 2. Same but with remote components for better n-challenge solving
     `${ytDlp} ${cookiesFlag} --remote-components ejs:github --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 2. tv_embedded client — supports cookies, no JS challenge needed
+    // 3. tv_embedded client fallback
     `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 3. web_embedded — another client that avoids n-challenge
-    `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=web_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 4. No cookies, tv_embedded
-    `${ytDlp} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 5. No cookies, web_creator client
-    `${ytDlp} --extractor-args "youtube:player_client=web_creator" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
+    // 4. No cookies fallback
+    `${ytDlp} --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
   ];
 
   let lastError: any;
