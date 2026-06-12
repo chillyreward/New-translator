@@ -55,7 +55,7 @@ async function downloadVideo(url: string, outputPath: string) {
 
   // Use cookies file if it exists on the Desktop (works on both swanti and Jambo server)
   const cookiesFile = path.join(process.env.USERPROFILE || 'C:\\Users\\Default', 'Desktop', 'cookies.txt');
-  const cookiesFlag = fs.existsSync(cookiesFile) ? `--cookies "${cookiesFile}" --no-cookies-on-error` : '';
+  const cookiesFlag = fs.existsSync(cookiesFile) ? `--cookies "${cookiesFile}"` : '';
 
   if (cookiesFile && !fs.existsSync(cookiesFile)) {
     console.warn(`[Dub] No cookies.txt found at ${cookiesFile} — some videos may fail`);
