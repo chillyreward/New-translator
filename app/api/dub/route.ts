@@ -110,17 +110,19 @@ async function downloadVideo(url: string, outputPath: string) {
   }
 
   const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"`;
+  // Strip extension from outputPath — yt-dlp will add it; we force mp4 with --merge-output-format
+  const outputTemplate = outputPath.replace(/\.[^.]+$/, '');
 
   // Try multiple strategies in order — handles both old and new yt-dlp versions
   const strategies = [
     // 1. Best: remote JS challenge solver (requires yt-dlp >= 2024.x)
-    `${ytDlp} ${cookiesFlag} --remote-components ejs:github -f ${formatSelector} -o "${outputPath}" "${url}"`,
+    `${ytDlp} ${cookiesFlag} --remote-components ejs:github --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
     // 2. tv_embedded client — supports cookies, no JS challenge needed
-    `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=tv_embedded" -f ${formatSelector} -o "${outputPath}" "${url}"`,
+    `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
     // 3. web_embedded — another client that avoids n-challenge
-    `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=web_embedded" -f ${formatSelector} -o "${outputPath}" "${url}"`,
+    `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=web_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
     // 4. No cookies, no challenge client — last resort for public videos
-    `${ytDlp} --extractor-args "youtube:player_client=tv_embedded" -f ${formatSelector} -o "${outputPath}" "${url}"`,
+    `${ytDlp} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
   ];
 
   let lastError: any;
@@ -130,7 +132,20 @@ async function downloadVideo(url: string, outputPath: string) {
     try {
       await execAsync(cmd);
       console.log(`[Dub] Strategy ${i + 1} succeeded`);
-      return; // success — exit the function
+      // Find the actual downloaded file (yt-dlp picks the extension)
+      for (const ext of ['mp4', 'mkv', 'webm', 'avi']) {
+        const candidate = `${outputTemplate}.${ext}`;
+        if (fs.existsSync(candidate)) {
+          console.log(`[Dub] Downloaded file: ${candidate}`);
+          return candidate;
+        }
+      }
+      // Fallback: scan the temp dir for any new video file
+      const dir = path.dirname(outputTemplate);
+      const base = path.basename(outputTemplate);
+      const files = fs.readdirSync(dir).filter(f => f.startsWith(base));
+      if (files.length > 0) return path.join(dir, files[0]);
+      throw new Error('Downloaded file not found after yt-dlp succeeded');
     } catch (e: any) {
       console.warn(`[Dub] Strategy ${i + 1} failed: ${e.message?.split('\n')[0]}`);
       lastError = e;
@@ -332,17 +347,17 @@ export async function POST(request: Request) {
     const mmsUrl = process.env.MMS_TTS_URL;
     if (!openaiKey) return NextResponse.json({ error: 'Missing OPENAI_API_KEY' }, { status: 500 });
 
-    const videoPath  = path.join(TEMP_DIR, `video_${timestamp}.mp4`);
+    const videoPath  = path.join(TEMP_DIR, `video_${timestamp}`); // no extension — yt-dlp picks it
     const audioPath  = path.join(TEMP_DIR, `audio_${timestamp}.wav`);
     const outputPath = path.join(OUTPUT_DIR, `dubbed_${timestamp}.mp4`);
     const segTempDir = path.join(TEMP_DIR, `segs_${timestamp}`);
     fs.mkdirSync(segTempDir, { recursive: true });
 
     console.log('[Dub] Downloading video...');
-    await downloadVideo(youtubeUrl, videoPath);
+    const actualVideoPath = await downloadVideo(youtubeUrl, videoPath);
 
     console.log('[Dub] Extracting audio...');
-    await extractAudio(videoPath, audioPath);
+    await extractAudio(actualVideoPath, audioPath);
 
     console.log('[Dub] Transcribing...');
     const transcription = await transcribeWithTimestamps(audioPath, openaiKey);
@@ -364,9 +379,9 @@ export async function POST(request: Request) {
     const dubbedAudioPath = await buildDubbedAudio(processedSegments, segTempDir, totalDuration);
 
     console.log('[Dub] Merging with video...');
-    await mergeVideoAudio(videoPath, dubbedAudioPath, outputPath);
+    await mergeVideoAudio(actualVideoPath, dubbedAudioPath, outputPath);
 
-    fs.unlinkSync(videoPath);
+    fs.unlinkSync(actualVideoPath);
     fs.unlinkSync(audioPath);
     fs.rmSync(segTempDir, { recursive: true, force: true });
 
