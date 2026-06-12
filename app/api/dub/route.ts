@@ -15,33 +15,55 @@ function ensureDirs() {
 }
 
 async function downloadVideo(url: string, outputPath: string) {
-  // Try yt-dlp from PATH first, then common install locations
-  let ytDlp = 'yt-dlp';
+  // Allow explicit override via env var (useful for servers with non-standard install paths)
+  let ytDlp = process.env.YT_DLP_PATH ? `"${process.env.YT_DLP_PATH}"` : 'yt-dlp';
 
-  if (process.platform === 'win32') {
-    // Check if yt-dlp is in PATH
+  if (!process.env.YT_DLP_PATH && process.platform === 'win32') {
+    // Check if yt-dlp is in PATH first
     try {
       const { stdout } = await execAsync('where yt-dlp');
       ytDlp = `"${stdout.trim().split('\n')[0].trim()}"`;
+      console.log(`[Dub] Found yt-dlp in PATH: ${ytDlp}`);
     } catch {
-      // Fall back to common locations
-      const candidates = [
-        `${process.env.APPDATA}\\Python\\Python314\\Scripts\\yt-dlp.exe`,
-        `${process.env.APPDATA}\\Python\\Python313\\Scripts\\yt-dlp.exe`,
-        `${process.env.APPDATA}\\Python\\Python312\\Scripts\\yt-dlp.exe`,
-        `${process.env.APPDATA}\\Python\\Python311\\Scripts\\yt-dlp.exe`,
-        `${process.env.APPDATA}\\Python\\Python310\\Scripts\\yt-dlp.exe`,
-      ];
+      // Fall back to common install locations — check both APPDATA (Roaming) and LOCALAPPDATA
+      const appdata = process.env.APPDATA || '';
+      const localappdata = process.env.LOCALAPPDATA || '';
+      const versions = ['Python314', 'Python313', 'Python312', 'Python311', 'Python310', 'Python39'];
+      const candidates: string[] = [];
+      for (const ver of versions) {
+        candidates.push(`${appdata}\\${ver}\\Scripts\\yt-dlp.exe`);
+        candidates.push(`${appdata}\\Python\\${ver}\\Scripts\\yt-dlp.exe`);
+        candidates.push(`${localappdata}\\Programs\\Python\\${ver}\\Scripts\\yt-dlp.exe`);
+        candidates.push(`${localappdata}\\Programs\\Python\\Python${ver.replace('Python','')}\\Scripts\\yt-dlp.exe`);
+      }
+      // Also check direct LOCALAPPDATA paths (e.g. C:\Users\...\AppData\Local\Programs\Python\Python310\Scripts)
+      candidates.push(`${localappdata}\\Programs\\Python\\Python310\\Scripts\\yt-dlp.exe`);
+      candidates.push(`${localappdata}\\Programs\\Python\\Python311\\Scripts\\yt-dlp.exe`);
+      candidates.push(`${localappdata}\\Programs\\Python\\Python312\\Scripts\\yt-dlp.exe`);
+
       for (const c of candidates) {
-        if (fs.existsSync(c)) { ytDlp = `"${c}"`; break; }
+        if (c && fs.existsSync(c)) {
+          ytDlp = `"${c}"`;
+          console.log(`[Dub] Found yt-dlp at: ${c}`);
+          break;
+        }
       }
     }
   }
 
-  // Use cookies file if it exists, otherwise try without (may fail for age-restricted videos)
+  console.log(`[Dub] Using yt-dlp: ${ytDlp}`);
+
+  // Use cookies file if it exists on the Desktop (works on both swanti and Jambo server)
   const cookiesFile = path.join(process.env.USERPROFILE || 'C:\\Users\\Default', 'Desktop', 'cookies.txt');
-  const cookiesFlag = fs.existsSync(cookiesFile) ? `--cookies "${cookiesFile}"` : '';
-  await execAsync(`${ytDlp} ${cookiesFlag} --remote-components ejs:github -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" -o "${outputPath}" "${url}"`);
+  const cookiesFlag = fs.existsSync(cookiesFile) ? `--cookies "${cookiesFile}" --no-cookies-on-error` : '';
+
+  if (cookiesFile && !fs.existsSync(cookiesFile)) {
+    console.warn(`[Dub] No cookies.txt found at ${cookiesFile} — some videos may fail`);
+  }
+
+  const cmd = `${ytDlp} ${cookiesFlag} --remote-components ejs:github -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" -o "${outputPath}" "${url}"`;
+  console.log(`[Dub] Command: ${cmd}`);
+  await execAsync(cmd);
 }
 
 async function extractAudio(videoPath: string, audioPath: string) {
