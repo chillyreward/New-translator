@@ -38,7 +38,7 @@ async function downloadVideo(url: string, outputPath: string) {
     }
   }
 
-  await execAsync(`${ytDlp} -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" -o "${outputPath}" "${url}"`);
+  await execAsync(`${ytDlp} --cookies-from-browser chrome -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" -o "${outputPath}" "${url}"`);
 }
 
 async function extractAudio(videoPath: string, audioPath: string) {

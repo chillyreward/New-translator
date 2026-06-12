@@ -100,7 +100,8 @@ Both endpoints return the same JSON shape:
 **Output files** are saved to `public/dubbed/` and served statically. Temp files (raw video, audio, per-segment WAVs, and the mixed `dubbed_audio.wav`) are cleaned up after each run.
 
 **Requirements:**
-- `yt-dlp` installed and on PATH (or at `C:\Users\<user>\AppData\Roaming\Python\Python314\Scripts\yt-dlp.exe` on Windows)
+- `yt-dlp` installed and on PATH (or at `C:\Users\<user>\AppData\Roaming\Python\Python3xx\Scripts\yt-dlp.exe` on Windows — the route auto-detects Python 3.10–3.14 install locations)
+- yt-dlp uses `--cookies-from-browser chrome` to handle age-restricted or sign-in-required videos; Chrome must be installed and logged in to YouTube if needed
 - `ffmpeg` installed and on PATH
 - `OPENAI_API_KEY` (required — used for Whisper transcription, GPT-4o translation, and TTS fallback)
 - `MMS_TTS_URL` (optional — preferred TTS for best native Kikuyu quality; falls back to OpenAI TTS if unavailable)
