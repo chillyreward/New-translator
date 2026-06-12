@@ -109,7 +109,7 @@ async function downloadVideo(url: string, outputPath: string) {
     console.warn(`[Dub] No cookies.txt found at ${cookiesFile} — some videos may fail`);
   }
 
-  const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[height>=360]"`;
+  const formatSelector = `"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"`;
   // Strip extension from outputPath — yt-dlp will add it; we force mp4 with --merge-output-format
   const outputTemplate = outputPath.replace(/\.[^.]+$/, '');
 
@@ -121,10 +121,10 @@ async function downloadVideo(url: string, outputPath: string) {
     `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
     // 3. web_embedded — another client that avoids n-challenge
     `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=web_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 4. No cookies, tv_embedded — last resort
+    // 4. No cookies, tv_embedded
     `${ytDlp} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 5. Absolute last resort: any format that has video
-    `${ytDlp} ${cookiesFlag} --remote-components ejs:github --merge-output-format mp4 -f "bestvideo+bestaudio/best" -o "${outputTemplate}.%(ext)s" "${url}"`,
+    // 5. No cookies, web_creator client
+    `${ytDlp} --extractor-args "youtube:player_client=web_creator" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
   ];
 
   let lastError: any;
@@ -372,27 +372,38 @@ function createWavHeader(dataLength: number, sampleRate: number, channels: numbe
   return header;
 }
 
+async function hasVideoStream(filePath: string): Promise<boolean> {
+  const ffmpeg = await getFfmpegPath();
+  // ffprobe is in the same bin dir as ffmpeg
+  const ffprobe = ffmpeg.replace(/ffmpeg(\.exe)?"/i, 'ffprobe$1"');
+  try {
+    const { stdout } = await execAsync(
+      `${ffprobe} -v quiet -print_format json -show_streams "${filePath}"`
+    );
+    const info = JSON.parse(stdout);
+    return (info.streams || []).some((s: any) => s.codec_type === 'video');
+  } catch {
+    // ffprobe not available — fall back to ffmpeg stderr parsing
+    try {
+      await execAsync(`${ffmpeg} -i "${filePath}" -t 0 -f null - 2>&1`);
+    } catch (e: any) {
+      return /Stream #\d+:\d+.*Video:/i.test(e.message || '');
+    }
+    return false;
+  }
+}
+
 async function mergeVideoAudio(videoPath: string, audioPath: string, outputPath: string) {
   const ffmpeg = await getFfmpegPath();
-
-  // Check if the downloaded file actually has a video stream
-  // ffmpeg always exits non-zero for -i probe, info goes to stderr (caught in e.message)
-  let hasVideo = false;
-  try {
-    await execAsync(`${ffmpeg} -i "${videoPath}" -f null -`);
-  } catch (e: any) {
-    const info = e.message || '';
-    hasVideo = /Stream #\d+:\d+.*Video:/i.test(info);
-  }
-
-  console.log(`[Dub] Input has video stream: ${hasVideo}`);
+  const hasVideo = await hasVideoStream(videoPath);
+  console.log(`[Dub] Input has video stream: ${hasVideo} (${path.basename(videoPath)})`);
 
   if (hasVideo) {
     // Replace original audio with dubbed audio, keep video stream
     await execAsync(`${ffmpeg} -i "${videoPath}" -i "${audioPath}" -c:v copy -map 0:v:0 -map 1:a:0 -shortest "${outputPath}" -y`);
   } else {
     // Audio-only input — just wrap dubbed audio in mp4
-    console.warn('[Dub] No video stream found — outputting audio-only mp4');
+    console.warn('[Dub] No video stream — outputting audio-only mp4');
     await execAsync(`${ffmpeg} -i "${audioPath}" -c:a aac "${outputPath}" -y`);
   }
 }
