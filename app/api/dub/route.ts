@@ -293,7 +293,6 @@ async function translateSegment(text: string, apiKey: string): Promise<string> {
 }
 
 async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: string, openaiKey?: string) {
-  // Truncate to safe TTS limit (4096 chars for OpenAI, shorter for MMS)
   const safeText = text.slice(0, 400).trim();
 
   if (mmsUrl) {
@@ -301,7 +300,7 @@ async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: stri
       const res = await fetch(`${mmsUrl}/synthesize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: safeText }),
+        body: JSON.stringify({ text: safeText, speed: 0.85 }),
         signal: AbortSignal.timeout(60000),
       });
       if (res.ok) {
@@ -317,7 +316,7 @@ async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: stri
     const res = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-      body: JSON.stringify({ model: 'tts-1', voice: 'onyx', input: safeText, response_format: 'wav', speed: 0.85 }),
+      body: JSON.stringify({ model: 'tts-1', voice: 'onyx', input: safeText, response_format: 'wav', speed: 0.78 }),
       signal: AbortSignal.timeout(30000),
     });
     if (res.ok) {
@@ -331,46 +330,112 @@ async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: stri
   throw new Error('No TTS engine available');
 }
 
-async function buildDubbedAudio(segments: any[], tempDir: string, totalDuration: number): Promise<string> {
-  // Use a concat list file approach — much simpler and no command length limit
-  // Strategy: place each segment at its timestamp by creating a full-length track per segment
-  // then mix them all using a concat list
+/**
+ * Re-encode a WAV segment to exactly 24kHz 16-bit mono PCM using ffmpeg.
+ * This normalises whatever format TTS engines return (different sample rates,
+ * bit depths, header sizes) into a consistent format for stitching.
+ */
+async function normalizeSegmentWav(inputPath: string, outputPath: string, targetDuration?: number): Promise<void> {
+  const ffmpeg = await getFfmpegPath();
+  const sampleRate = 24000;
 
+  if (targetDuration && targetDuration > 0.5) {
+    // Get actual audio duration first
+    let actualDuration = 0;
+    try {
+      const { stdout } = await execAsync(
+        `${ffmpeg} -i "${inputPath}" -f null - 2>&1 || true`
+      );
+      const m = (stdout || '').match(/Duration:\s*(\d+):(\d+):([\d.]+)/);
+      if (m) actualDuration = parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3]);
+    } catch (e: any) {
+      const m = (e.message || '').match(/Duration:\s*(\d+):(\d+):([\d.]+)/);
+      if (m) actualDuration = parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3]);
+    }
+
+    if (actualDuration > 0.1) {
+      // Calculate tempo to stretch/compress audio to fit the segment duration
+      // Clamp between 0.5x (half speed) and 1.2x (slightly faster) for naturalness
+      const rawTempo = actualDuration / targetDuration;
+      const tempo = Math.max(0.5, Math.min(1.2, rawTempo));
+      console.log(`[Dub] Segment duration: ${targetDuration.toFixed(2)}s, audio: ${actualDuration.toFixed(2)}s, tempo: ${tempo.toFixed(2)}x`);
+
+      // atempo only accepts 0.5–2.0; chain filters if needed
+      let atempoFilter = '';
+      if (tempo <= 0.5) {
+        atempoFilter = 'atempo=0.5';
+      } else if (tempo <= 1.0) {
+        atempoFilter = `atempo=${tempo.toFixed(3)}`;
+      } else {
+        atempoFilter = `atempo=${tempo.toFixed(3)}`;
+      }
+
+      await execAsync(
+        `${ffmpeg} -i "${inputPath}" -af "${atempoFilter}" -acodec pcm_s16le -ar ${sampleRate} -ac 1 "${outputPath}" -y`
+      );
+      return;
+    }
+  }
+
+  // No time-stretching — just re-encode to target format
+  await execAsync(
+    `${ffmpeg} -i "${inputPath}" -acodec pcm_s16le -ar ${sampleRate} -ac 1 "${outputPath}" -y`
+  );
+}
+
+async function buildDubbedAudio(segments: any[], tempDir: string, totalDuration: number): Promise<string> {
   const dubbedAudioPath = path.join(tempDir, 'dubbed_audio.wav');
   const sampleRate = 24000;
   const totalSamples = Math.ceil(totalDuration * sampleRate);
-
-  // Build dubbed audio using Node.js Buffer directly — no ffmpeg command length limits
-  // Create a silent buffer for the full duration
   const silenceBuffer = Buffer.alloc(totalSamples * 2, 0); // 16-bit PCM = 2 bytes per sample
 
-  // For each segment, read the WAV and place it at the right position
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
-    const segPath = path.join(tempDir, `seg_${i}.wav`);
-    if (!fs.existsSync(segPath)) continue;
+    const rawSegPath = path.join(tempDir, `seg_${i}.wav`);
+    const normSegPath = path.join(tempDir, `seg_${i}_norm.wav`);
+    if (!fs.existsSync(rawSegPath)) continue;
 
     try {
-      const segBuffer = fs.readFileSync(segPath);
-      // Skip WAV header (44 bytes) and get PCM data
-      const pcmData = segBuffer.slice(44);
+      // Calculate how long this segment slot is (time until next segment or end)
+      const segDuration = seg.end - seg.start;
+
+      // Normalize: re-encode to exact 24kHz 16-bit mono + time-stretch to fit slot
+      await normalizeSegmentWav(rawSegPath, normSegPath, segDuration);
+
+      const segBuffer = fs.readFileSync(normSegPath);
+
+      // Parse WAV header properly — find the 'data' chunk offset
+      let dataOffset = 44; // default
+      let dataSize = segBuffer.length - 44;
+      if (segBuffer.slice(0, 4).toString('ascii') === 'RIFF') {
+        // Scan for 'data' chunk marker
+        for (let pos = 12; pos < Math.min(segBuffer.length - 8, 200); pos++) {
+          if (segBuffer.slice(pos, pos + 4).toString('ascii') === 'data') {
+            dataSize = segBuffer.readUInt32LE(pos + 4);
+            dataOffset = pos + 8;
+            break;
+          }
+        }
+      }
+
+      const pcmData = segBuffer.slice(dataOffset, dataOffset + dataSize);
       const startSample = Math.floor(seg.start * sampleRate);
       const startByte = startSample * 2;
 
-      // Copy segment PCM into the silence buffer at the right position
       const copyLen = Math.min(pcmData.length, silenceBuffer.length - startByte);
       if (copyLen > 0 && startByte < silenceBuffer.length) {
         pcmData.copy(silenceBuffer, startByte, 0, copyLen);
       }
+
+      // Clean up normalized file
+      try { fs.unlinkSync(normSegPath); } catch {}
     } catch (e: any) {
       console.warn(`[Dub] Skipping segment ${i}:`, e.message);
     }
   }
 
-  // Write as WAV file with proper header
   const wavHeader = createWavHeader(silenceBuffer.length, sampleRate, 1, 16);
   fs.writeFileSync(dubbedAudioPath, Buffer.concat([wavHeader, silenceBuffer]));
-
   console.log(`[Dub] Built dubbed audio: ${(silenceBuffer.length / 1024 / 1024).toFixed(1)}MB`);
   return dubbedAudioPath;
 }
