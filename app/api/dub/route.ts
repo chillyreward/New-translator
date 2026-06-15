@@ -252,8 +252,29 @@ async function translateSegments(texts: string[], apiKey: string): Promise<strin
   return results;
 }
 
+const KIKUYU_DUB_PROMPT = `You are an expert Kikuyu (Gĩkũyũ) linguist and native speaker from Central Kenya.
+Translate spoken English into natural, fluent Kikuyu suitable for voice dubbing.
+
+RULES:
+- Use proper diacritics always: ĩ (mid-central vowel), ũ (rounded back vowel)
+- Keep translations concise — dubbing must fit the original speech timing
+- Use natural spoken register, not formal/written Kikuyu
+- Keep proper nouns (names, places, brands) unchanged
+- Nĩ = emphasis prefix before verbs; gũ- = verb infinitive prefix
+- Double vowels = long sounds: ũũ="oo", ĩĩ="ee"; ci/ce → "sh" sound
+- Return ONLY the Kikuyu translation, nothing else
+
+EXAMPLES:
+"Hello" → "Wee mwega"
+"How are you?" → "Wee mwega?"
+"I am fine" → "Nĩ mwega"
+"Thank you" → "Nĩ ngatho"
+"Come here" → "Ũka haha"
+"I am going" → "Nĩndĩkienda"
+"I don't understand" → "Ndĩngĩũndũ"`;
+
 async function translateSegment(text: string, apiKey: string): Promise<string> {
-  // Try Gemma Modal endpoint first — much faster than GPT-4o for bulk translation
+  // Try Gemma Modal endpoint first — fine-tuned for Kikuyu, faster
   const gemmaUrl = process.env.GEMMA_TRANSLATE_URL;
   if (gemmaUrl) {
     try {
@@ -261,12 +282,12 @@ async function translateSegment(text: string, apiKey: string): Promise<string> {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, source_lang: 'en' }),
-        signal: AbortSignal.timeout(120000), // 2 min timeout per segment
+        signal: AbortSignal.timeout(120000),
       });
       if (res.ok) {
         const data = await res.json();
         const translation = data?.translation?.trim();
-        if (translation && translation !== text) {
+        if (translation && translation !== text && translation.length > 2) {
           return translation;
         }
       }
@@ -275,17 +296,17 @@ async function translateSegment(text: string, apiKey: string): Promise<string> {
     }
   }
 
-  // Fall back to GPT-4o
+  // Fall back to GPT-4o with full Kikuyu linguistic prompt
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: 'gpt-4o',
-      messages: [{
-        role: 'user',
-        content: `You are an expert Kikuyu translator. Translate this to natural spoken Kikuyu. Return ONLY the Kikuyu translation.\n\n${text}`
-      }],
-      temperature: 0.3,
+      messages: [
+        { role: 'system', content: KIKUYU_DUB_PROMPT },
+        { role: 'user', content: text },
+      ],
+      temperature: 0.2,
     }),
   });
   const data = await res.json();
