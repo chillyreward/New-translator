@@ -119,14 +119,14 @@ async function downloadVideo(url: string, outputPath: string) {
 
   // Try multiple strategies in order — handles both old and new yt-dlp versions
   const strategies = [
-    // 1. Prefer combined video+audio formats — no JS challenge needed for merging
-    `${ytDlp} ${cookiesFlag} --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 2. Same but with remote components for better n-challenge solving
+    // 1. Best: cookies + remote JS solver + combined formats
     `${ytDlp} ${cookiesFlag} --remote-components ejs:github --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 3. tv_embedded client fallback
+    // 2. Cookies + combined formats, no JS solver
+    `${ytDlp} ${cookiesFlag} --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
+    // 3. tv_embedded client — bypasses JS challenge entirely
     `${ytDlp} ${cookiesFlag} --extractor-args "youtube:player_client=tv_embedded" --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
-    // 4. No cookies fallback
-    `${ytDlp} --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
+    // 4. No cookies fallback for public videos
+    `${ytDlp} --remote-components ejs:github --merge-output-format mp4 -f ${formatSelector} -o "${outputTemplate}.%(ext)s" "${url}"`,
   ];
 
   let lastError: any;
