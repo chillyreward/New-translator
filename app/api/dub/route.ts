@@ -314,7 +314,7 @@ async function translateSegment(text: string, apiKey: string): Promise<string> {
 }
 
 async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: string, openaiKey?: string) {
-  const safeText = text.slice(0, 400).trim();
+  const safeText = text.slice(0, 500).trim();
 
   if (mmsUrl) {
     try {
@@ -349,6 +349,68 @@ async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: stri
   }
 
   throw new Error('No TTS engine available');
+}
+
+/**
+ * Synthesize a group of consecutive segments as ONE TTS call for consistent tone.
+ * The combined audio is then split back by word-count ratio into per-segment files.
+ */
+async function synthesizeGroup(
+  segments: Array<{ text: string; index: number }>,
+  tempDir: string,
+  mmsUrl?: string,
+  openaiKey?: string
+): Promise<void> {
+  const ffmpeg = await getFfmpegPath();
+
+  // Join all texts with a natural pause marker
+  const combined = segments.map(s => s.text).join(' ... ');
+  const groupPath = path.join(tempDir, `group_${segments[0].index}.wav`);
+
+  await synthesizeSegment(combined, groupPath, mmsUrl, openaiKey);
+
+  if (!fs.existsSync(groupPath)) {
+    // Fallback: synthesize each individually
+    for (const seg of segments) {
+      await synthesizeSegment(seg.text, path.join(tempDir, `seg_${seg.index}.wav`), mmsUrl, openaiKey);
+    }
+    return;
+  }
+
+  // Get total duration of the combined audio
+  let totalAudioDuration = 0;
+  try {
+    await execAsync(`${ffmpeg} -i "${groupPath}" -f null - 2>&1`);
+  } catch (e: any) {
+    const m = (e.message || '').match(/Duration:\s*(\d+):(\d+):([\d.]+)/);
+    if (m) totalAudioDuration = parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3]);
+  }
+
+  if (totalAudioDuration < 0.1 || segments.length === 1) {
+    // Single segment — just rename
+    fs.renameSync(groupPath, path.join(tempDir, `seg_${segments[0].index}.wav`));
+    return;
+  }
+
+  // Split by word-count proportion — each segment gets a slice of the combined audio
+  const totalWords = segments.reduce((sum, s) => sum + s.text.split(' ').length, 0);
+  let timeOffset = 0;
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    const segWords = seg.text.split(' ').length;
+    const segDuration = (segWords / totalWords) * totalAudioDuration;
+    const segPath = path.join(tempDir, `seg_${seg.index}.wav`);
+
+    await execAsync(
+      `${ffmpeg} -i "${groupPath}" -ss ${timeOffset.toFixed(3)} -t ${segDuration.toFixed(3)} ` +
+      `-acodec pcm_s16le -ar 24000 -ac 1 "${segPath}" -y`
+    );
+
+    timeOffset += segDuration;
+  }
+
+  try { fs.unlinkSync(groupPath); } catch {}
 }
 
 /**
@@ -442,6 +504,21 @@ async function buildDubbedAudio(segments: any[], tempDir: string, totalDuration:
       const pcmData = segBuffer.slice(dataOffset, dataOffset + dataSize);
       const startSample = Math.floor(seg.start * sampleRate);
       const startByte = startSample * 2;
+
+      // Apply short fade-in (20ms) and fade-out (20ms) to smooth hard cuts
+      const fadeFrames = Math.floor(0.02 * sampleRate); // 20ms
+      for (let f = 0; f < fadeFrames && f * 2 + 1 < pcmData.length; f++) {
+        const factor = f / fadeFrames;
+        const sampleIn = pcmData.readInt16LE(f * 2);
+        pcmData.writeInt16LE(Math.round(sampleIn * factor), f * 2);
+      }
+      for (let f = 0; f < fadeFrames; f++) {
+        const pos = pcmData.length - 2 - f * 2;
+        if (pos < 0) break;
+        const factor = f / fadeFrames;
+        const sampleOut = pcmData.readInt16LE(pos);
+        pcmData.writeInt16LE(Math.round(sampleOut * factor), pos);
+      }
 
       const copyLen = Math.min(pcmData.length, silenceBuffer.length - startByte);
       if (copyLen > 0 && startByte < silenceBuffer.length) {
@@ -565,17 +642,21 @@ export async function POST(request: Request) {
       }));
     }
 
-    console.log(`[Dub] Synthesizing ${segments.length} segments with concurrency=${CONCURRENCY}...`);
-    for (let batch = 0; batch < segments.length; batch += CONCURRENCY) {
-      const slice = segments.slice(batch, batch + CONCURRENCY);
-      await Promise.all(slice.map(async (seg: any, j: number) => {
-        const i = batch + j;
-        const kikuyu = translations[i] || seg.text;
-        console.log(`[Dub] TTS ${i + 1}/${segments.length}: "${kikuyu.substring(0, 40)}..."`);
-        const segAudioPath = path.join(segTempDir, `seg_${i}.wav`);
-        await synthesizeSegment(kikuyu, segAudioPath, mmsUrl, openaiKey);
-        processedSegments[i] = { ...seg, kikuyu };
+    console.log(`[Dub] Synthesizing ${segments.length} segments in groups of 4 for consistent tone...`);
+    // Group synthesis: synthesize 4 segments at a time as one TTS call
+    // This keeps the voice engine in the same prosodic state across sentences
+    const GROUP_SIZE = 4;
+    for (let batch = 0; batch < segments.length; batch += GROUP_SIZE) {
+      const groupSegs = segments.slice(batch, batch + GROUP_SIZE).map((seg: any, j: number) => ({
+        text: translations[batch + j] || seg.text,
+        index: batch + j,
       }));
+      console.log(`[Dub] TTS group ${Math.floor(batch / GROUP_SIZE) + 1}: segments ${batch + 1}–${batch + groupSegs.length}`);
+      await synthesizeGroup(groupSegs, segTempDir, mmsUrl, openaiKey);
+      // Store processed segments
+      groupSegs.forEach((gs, j) => {
+        processedSegments[gs.index] = { ...segments[batch + j], kikuyu: gs.text };
+      });
     }
 
     console.log('[Dub] Building dubbed audio track...');
