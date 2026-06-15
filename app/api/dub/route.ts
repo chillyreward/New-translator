@@ -635,14 +635,12 @@ export async function POST(request: Request) {
     console.log(`[Dub] Got ${segments.length} segments, duration: ${totalDuration}s`);
 
     const processedSegments: any[] = new Array(segments.length);
-    const CONCURRENCY = 5; // synthesize 5 segments at a time
+    const TRANSLATE_CONCURRENCY = 5;
 
-    console.log(`[Dub] Translating ${segments.length} segments individually...`);
-    // Translate each segment individually — reliable, no parsing edge cases
-    // Run translations in parallel batches too since Gemma handles concurrent requests
+    console.log(`[Dub] Translating ${segments.length} segments (${TRANSLATE_CONCURRENCY} parallel)...`);
     const translations: string[] = new Array(segments.length);
-    for (let batch = 0; batch < segments.length; batch += CONCURRENCY) {
-      const slice = segments.slice(batch, batch + CONCURRENCY);
+    for (let batch = 0; batch < segments.length; batch += TRANSLATE_CONCURRENCY) {
+      const slice = segments.slice(batch, batch + TRANSLATE_CONCURRENCY);
       await Promise.all(slice.map(async (seg: any, j: number) => {
         const i = batch + j;
         console.log(`[Dub] Translating ${i + 1}/${segments.length}: "${seg.text.substring(0, 40)}..."`);
@@ -650,34 +648,44 @@ export async function POST(request: Request) {
       }));
     }
 
-    console.log(`[Dub] Synthesizing ${segments.length} segments in groups of 4 for consistent tone...`);
-    // Group synthesis: synthesize 4 segments at a time as one TTS call
-    // This keeps the voice engine in the same prosodic state across sentences
-    const GROUP_SIZE = 4;
+    console.log(`[Dub] Synthesizing ${segments.length} segments in groups of 2 for consistent tone...`);
+    // Group synthesis: 2 segments per TTS call — shorter text = faster MMS response, less timeout risk
+    // Still keeps adjacent sentences in same TTS call for consistent prosody
+    const GROUP_SIZE = 2;
+    // Process 3 groups in parallel — balances speed vs Modal rate limits
+    const TTS_PARALLEL = 3;
+    const allGroups: Array<Array<{text: string; index: number}>> = [];
     for (let batch = 0; batch < segments.length; batch += GROUP_SIZE) {
-      const groupSegs = segments.slice(batch, batch + GROUP_SIZE).map((seg: any, j: number) => ({
+      allGroups.push(segments.slice(batch, batch + GROUP_SIZE).map((seg: any, j: number) => ({
         text: translations[batch + j] || seg.text,
         index: batch + j,
-      }));
-      console.log(`[Dub] TTS group ${Math.floor(batch / GROUP_SIZE) + 1}: segments ${batch + 1}–${batch + groupSegs.length}`);
-      try {
-        await synthesizeGroup(groupSegs, segTempDir, mmsUrl, openaiKey);
-      } catch (e: any) {
-        // Group failed — fall back to individual MMS synthesis for this group
-        // Still uses MMS to maintain the same speaker/voice throughout
-        console.warn(`[Dub] Group ${Math.floor(batch / GROUP_SIZE) + 1} failed (${e.message?.split('\n')[0]}), retrying individually with MMS...`);
-        for (const gs of groupSegs) {
-          try {
-            await synthesizeSegment(gs.text, path.join(segTempDir, `seg_${gs.index}.wav`), mmsUrl, undefined);
-          } catch (se: any) {
-            console.warn(`[Dub] Segment ${gs.index} MMS TTS failed:`, se.message);
+      })));
+    }
+
+    for (let g = 0; g < allGroups.length; g += TTS_PARALLEL) {
+      const parallelGroups = allGroups.slice(g, g + TTS_PARALLEL);
+      await Promise.all(parallelGroups.map(async (groupSegs, pi) => {
+        const groupNum = g + pi + 1;
+        const firstSeg = groupSegs[0].index + 1;
+        const lastSeg = groupSegs[groupSegs.length - 1].index + 1;
+        console.log(`[Dub] TTS group ${groupNum}: segments ${firstSeg}–${lastSeg}`);
+        try {
+          await synthesizeGroup(groupSegs, segTempDir, mmsUrl, openaiKey);
+        } catch (e: any) {
+          console.warn(`[Dub] Group ${groupNum} failed (${e.message?.split('\n')[0]}), retrying individually with MMS...`);
+          for (const gs of groupSegs) {
+            try {
+              await synthesizeSegment(gs.text, path.join(segTempDir, `seg_${gs.index}.wav`), mmsUrl, undefined);
+            } catch (se: any) {
+              console.warn(`[Dub] Segment ${gs.index} MMS TTS failed:`, se.message);
+            }
           }
         }
-      }
-      // Store processed segments
-      groupSegs.forEach((gs, j) => {
-        processedSegments[gs.index] = { ...segments[batch + j], kikuyu: gs.text };
-      });
+        groupSegs.forEach(gs => {
+          const origIdx = gs.index;
+          processedSegments[origIdx] = { ...segments[origIdx], kikuyu: gs.text };
+        });
+      }));
     }
 
     console.log('[Dub] Building dubbed audio track...');
