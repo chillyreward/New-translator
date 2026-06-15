@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Languages } from "lucide-react";
 import { Button } from "./Button";
+import { ThemeToggle } from "./ThemeToggle";
 import { usePathname } from "next/navigation";
 import { APP_NAME } from "@/lib/constants";
 
@@ -26,6 +27,8 @@ export function Navbar() {
           <Link href="/support" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
             Support
           </Link>
+
+          <ThemeToggle />
 
           {pathname === "/" && (
             <div className="flex items-center gap-3 ml-2">

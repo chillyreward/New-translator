@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 import { useStore } from "@/lib/store";
 import { useState } from "react";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
   { name: "Translate", href: "/translate", icon: Languages },
@@ -202,6 +203,12 @@ export function Sidebar() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Theme toggle at bottom of sidebar */}
+      <div className="shrink-0 px-4 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Appearance</span>
+        <ThemeToggle />
       </div>
     </aside>
   );
