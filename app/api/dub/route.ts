@@ -4,7 +4,7 @@ import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 
-export const maxDuration = 300;
+export const maxDuration = 800; // 13 min — long videos need more time
 
 const execAsync = promisify(exec);
 const TEMP_DIR = path.join(process.cwd(), 'temp');
@@ -322,7 +322,7 @@ async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: stri
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: safeText, speed: 0.85 }),
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.timeout(180000), // 3 min — Modal cold start can be slow
       });
       if (res.ok) {
         fs.writeFileSync(outputPath, Buffer.from(await res.arrayBuffer()));
@@ -338,7 +338,7 @@ async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: stri
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
       body: JSON.stringify({ model: 'tts-1', voice: 'onyx', input: safeText, response_format: 'wav', speed: 0.78 }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(60000),
     });
     if (res.ok) {
       fs.writeFileSync(outputPath, Buffer.from(await res.arrayBuffer()));
@@ -371,6 +371,7 @@ async function synthesizeGroup(
 
   if (!fs.existsSync(groupPath)) {
     // Fallback: synthesize each individually
+    console.warn('[Dub] Group synthesis produced no file — falling back to individual synthesis');
     for (const seg of segments) {
       await synthesizeSegment(seg.text, path.join(tempDir, `seg_${seg.index}.wav`), mmsUrl, openaiKey);
     }
@@ -652,7 +653,19 @@ export async function POST(request: Request) {
         index: batch + j,
       }));
       console.log(`[Dub] TTS group ${Math.floor(batch / GROUP_SIZE) + 1}: segments ${batch + 1}–${batch + groupSegs.length}`);
-      await synthesizeGroup(groupSegs, segTempDir, mmsUrl, openaiKey);
+      try {
+        await synthesizeGroup(groupSegs, segTempDir, mmsUrl, openaiKey);
+      } catch (e: any) {
+        // Group failed — fall back to individual synthesis for this group
+        console.warn(`[Dub] Group ${Math.floor(batch / GROUP_SIZE) + 1} failed (${e.message?.split('\n')[0]}), falling back to individual...`);
+        for (const gs of groupSegs) {
+          try {
+            await synthesizeSegment(gs.text, path.join(segTempDir, `seg_${gs.index}.wav`), mmsUrl, openaiKey);
+          } catch (se: any) {
+            console.warn(`[Dub] Segment ${gs.index} TTS failed:`, se.message);
+          }
+        }
+      }
       // Store processed segments
       groupSegs.forEach((gs, j) => {
         processedSegments[gs.index] = { ...segments[batch + j], kikuyu: gs.text };
