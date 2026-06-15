@@ -23,6 +23,30 @@ EXAMPLES:
 "I don't understand" → "Ndĩngĩũndũ"`;
 
 export async function aiTranslate(text: string): Promise<string> {
+  // 1. Try Gemma (gateremark fine-tuned) first — primary translator
+  const gemmaUrl = process.env.GEMMA_TRANSLATE_URL;
+  if (gemmaUrl) {
+    try {
+      const res = await fetch(`${gemmaUrl}/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, source_lang: 'en' }),
+        signal: AbortSignal.timeout(120000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const translation = data?.translation?.trim();
+        if (translation && translation !== text && translation.length > 2) {
+          console.log('[aiTranslate] Gemma result:', translation.slice(0, 80));
+          return translation;
+        }
+      }
+    } catch (e: any) {
+      console.warn('[aiTranslate] Gemma failed, falling back to GPT-4o:', e.message);
+    }
+  }
+
+  // 2. GPT-4o fallback — only when Gemma is unreachable
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return text;
 
@@ -39,10 +63,7 @@ export async function aiTranslate(text: string): Promise<string> {
           role: "system",
           content: `${KIKUYU_GUIDE}\n\nTASK: Translate the given English text into natural spoken Kikuyu.\n- Use proper diacritics (ĩ, ũ) always\n- Match the register — casual stays casual, formal stays formal\n- Keep proper nouns (names, places) as-is\n- Return ONLY the Kikuyu translation. No explanations, no alternatives.`,
         },
-        {
-          role: "user",
-          content: text,
-        },
+        { role: "user", content: text },
       ],
       temperature: 0.2,
     }),

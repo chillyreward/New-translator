@@ -163,7 +163,7 @@ export async function POST(request: Request) {
     const cached = getCached(cacheKey);
     if (cached) return NextResponse.json({ translation: cached, cached: true });
 
-    // 2. Local phrase library (fast, no AI needed)
+    // 2. Local phrase library (fast, no AI needed) — skip for 'answer' mode
     if (mode !== 'answer') {
       const local = findLocalTranslation(text);
       if (local) {
@@ -172,23 +172,24 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Gemma 12B via Ollama — fine-tuned Kikuyu translation model
-    if (mode !== 'answer') {
-      const gemmaResult = await translateWithGemma(text, sourceLang ?? 'en');
-      if (gemmaResult && gemmaResult !== text) {
-        console.log('[Translate] Gemma/Ollama result:', gemmaResult);
-        setCached(cacheKey, gemmaResult);
-        return NextResponse.json({ translation: gemmaResult, source: 'gemma' });
-      }
+    // 3. Gemma (gateremark fine-tuned) — PRIMARY translator for ALL modes
+    // This is the best model for Kikuyu — use it for translate AND answer
+    const gemmaResult = await translateWithGemma(text, sourceLang ?? 'en');
+    if (gemmaResult && gemmaResult !== text && gemmaResult.length > 2) {
+      console.log('[Translate] Gemma result:', gemmaResult.slice(0, 100));
+      const phonetic = phoneticConvert(gemmaResult);
+      setCached(cacheKey, phonetic);
+      return NextResponse.json({ translation: phonetic, source: 'gemma' });
     }
 
-    // 4. GPT-4o — best available translation
+    // 4. GPT-4o — fallback only when Gemma is unreachable or returned empty
     if (!apiKey) {
       return NextResponse.json({
-        error: 'No translation available. Start gemma-translate-server or add OPENAI_API_KEY.'
+        error: 'No translation available. Check GEMMA_TRANSLATE_URL or add OPENAI_API_KEY.'
       }, { status: 500 });
     }
 
+    console.log('[Translate] Gemma unavailable — falling back to GPT-4o');
     let result: string;
     if (mode === 'answer' || (mode !== 'translate' && isQuestion(text))) {
       result = await answerInKikuyu(text, sourceLang ?? 'en', apiKey);
