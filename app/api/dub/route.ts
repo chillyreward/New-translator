@@ -317,22 +317,29 @@ async function synthesizeSegment(text: string, outputPath: string, mmsUrl?: stri
   const safeText = text.slice(0, 500).trim();
 
   if (mmsUrl) {
-    try {
-      const res = await fetch(`${mmsUrl}/synthesize`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: safeText, speed: 0.85 }),
-        signal: AbortSignal.timeout(180000), // 3 min — Modal cold start can be slow
-      });
-      if (res.ok) {
-        fs.writeFileSync(outputPath, Buffer.from(await res.arrayBuffer()));
-        return;
+    // Retry up to 3 times — Modal can be slow on cold start mid-job
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(`${mmsUrl}/synthesize`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: safeText, speed: 0.85 }),
+          signal: AbortSignal.timeout(180000), // 3 min per attempt
+        });
+        if (res.ok) {
+          fs.writeFileSync(outputPath, Buffer.from(await res.arrayBuffer()));
+          return;
+        }
+        console.warn(`[Dub] MMS TTS attempt ${attempt} returned ${res.status}`);
+      } catch (e: any) {
+        console.warn(`[Dub] MMS TTS attempt ${attempt} failed: ${e.message?.split('\n')[0]}`);
+        if (attempt < 3) await new Promise(r => setTimeout(r, 2000)); // wait 2s before retry
       }
-    } catch (e: any) {
-      console.warn('[Dub] MMS TTS failed:', e.message);
     }
+    throw new Error('MMS TTS failed after 3 attempts — keeping MMS speaker consistent');
   }
 
+  // MMS not configured — only then fall back to OpenAI TTS
   if (openaiKey) {
     const res = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -656,13 +663,14 @@ export async function POST(request: Request) {
       try {
         await synthesizeGroup(groupSegs, segTempDir, mmsUrl, openaiKey);
       } catch (e: any) {
-        // Group failed — fall back to individual synthesis for this group
-        console.warn(`[Dub] Group ${Math.floor(batch / GROUP_SIZE) + 1} failed (${e.message?.split('\n')[0]}), falling back to individual...`);
+        // Group failed — fall back to individual MMS synthesis for this group
+        // Still uses MMS to maintain the same speaker/voice throughout
+        console.warn(`[Dub] Group ${Math.floor(batch / GROUP_SIZE) + 1} failed (${e.message?.split('\n')[0]}), retrying individually with MMS...`);
         for (const gs of groupSegs) {
           try {
-            await synthesizeSegment(gs.text, path.join(segTempDir, `seg_${gs.index}.wav`), mmsUrl, openaiKey);
+            await synthesizeSegment(gs.text, path.join(segTempDir, `seg_${gs.index}.wav`), mmsUrl, undefined);
           } catch (se: any) {
-            console.warn(`[Dub] Segment ${gs.index} TTS failed:`, se.message);
+            console.warn(`[Dub] Segment ${gs.index} MMS TTS failed:`, se.message);
           }
         }
       }
