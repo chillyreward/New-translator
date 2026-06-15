@@ -177,9 +177,10 @@ export async function POST(request: Request) {
     const gemmaResult = await translateWithGemma(text, sourceLang ?? 'en');
     if (gemmaResult && gemmaResult !== text && gemmaResult.length > 2) {
       console.log('[Translate] Gemma result:', gemmaResult.slice(0, 100));
-      const phonetic = phoneticConvert(gemmaResult);
-      setCached(cacheKey, phonetic);
-      return NextResponse.json({ translation: phonetic, source: 'gemma' });
+      // Do NOT phoneticConvert Gemma output — it already has proper diacritics (ĩ, ũ)
+      // phoneticConvert strips diacritics (ũ→u, ĩ→i) which corrupts the output
+      setCached(cacheKey, gemmaResult);
+      return NextResponse.json({ translation: gemmaResult, source: 'gemma' });
     }
 
     // 4. GPT-4o — fallback only when Gemma is unreachable or returned empty
