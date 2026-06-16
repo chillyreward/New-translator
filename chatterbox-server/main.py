@@ -1,13 +1,20 @@
 """
-Coqui TTS Voice Cloning Server
-Uses your WAV chunks as voice reference for cloning.
+Chatterbox TTS Server — Resemble AI
+Outputs 24kHz WAV — full quality, voice-cloned from c-elo reference.
+
+Model: ResembleAI/chatterbox
+- 0.5B Llama backbone trained on 0.5M hours
+- Outperforms ElevenLabs in side-by-side evaluations
+- Supports emotion exaggeration control
+- Zero-shot voice cloning from reference audio
 
 Setup:
-    cd coqui-server
-    python -m venv venv311
+    cd chatterbox-server
     venv311\\Scripts\\activate
-    pip install coqui-tts fastapi uvicorn soundfile
+    pip install -r requirements.txt
     python main.py
+
+Server: http://localhost:5003
 """
 
 from fastapi import FastAPI, HTTPException
@@ -16,143 +23,75 @@ from pydantic import BaseModel
 import os
 import hashlib
 import io
-import csv
 import numpy as np
 import soundfile as sf
 import torch
 
-app = FastAPI(title="Coqui TTS Kikuyu Voice Server")
+app = FastAPI(title="Chatterbox TTS — Kikuyu Voice Server")
 
 CACHE_DIR = os.getenv("CACHE_DIR", "../public/audio/cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-# Load best speaker reference WAVs from chunks
-_CHUNKS_DIR = "../public/audio/chunks"
-_MAIN_SAMPLE = "../public/audio/voice-training-1.wav"
+# Reference voice — c-elo's WhatsApp audio converted to 24kHz WAV
+# This is used for zero-shot voice cloning
+REFERENCE_WAV = os.path.join(os.path.dirname(__file__), "celo_reference.wav")
 
-# Pick the best reference — longer phrases work better for voice cloning
-PREFERRED_REFS = [
-    "that girl has nice cheeks.wav",
-    "i will slap you.wav",
-    "come into the house.wav",
-    "stop laughing.wav",
-    "thank you so much.wav",
-    "i will call you.wav",
-    "i am going to the hospital.wav",
-    "how are you.wav",
-    "i love you.wav",
-    "help me.wav",
+# Fallback references in order
+FALLBACK_REFS = [
+    os.path.join(os.path.dirname(__file__), "celo_reference.wav"),
+    "../public/audio/voice-training-1.wav",
 ]
-
-import csv
-import numpy as np
-
-def build_reference_from_metadata(metadata_path: str, chunks_dir: str, max_duration: float = 30.0) -> str:
-    """
-    Concatenate the best WAV clips from metadata.csv into a single reference file.
-    Coqui works best with 10-30s of clean speech.
-    """
-    output_path = os.path.join(os.path.dirname(metadata_path), "combined_reference.wav")
-
-    if not os.path.exists(metadata_path):
-        return None
-
-    clips = []
-    total_duration = 0.0
-
-    with open(metadata_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f, delimiter="|")
-        for row in reader:
-            wav_rel = row.get("audio_file", "")
-            wav_path = os.path.join(os.path.dirname(metadata_path), wav_rel)
-            if not os.path.exists(wav_path):
-                # Try chunks dir
-                fname = os.path.basename(wav_rel)
-                wav_path = os.path.join(chunks_dir, fname)
-            if not os.path.exists(wav_path):
-                continue
-            try:
-                data, sr = sf.read(wav_path)
-                duration = len(data) / sr
-                if duration >= 1.5:  # skip very short clips
-                    clips.append((data, sr, duration))
-                    total_duration += duration
-                    if total_duration >= max_duration:
-                        break
-            except Exception:
-                continue
-
-    if not clips:
-        return None
-
-    # Resample all to same rate and concatenate
-    target_sr = clips[0][1]
-    combined = []
-    silence = np.zeros(int(target_sr * 0.3))  # 300ms silence between clips
-
-    for data, sr, _ in clips:
-        if sr != target_sr:
-            # Simple resample by ratio
-            ratio = target_sr / sr
-            new_len = int(len(data) * ratio)
-            data = np.interp(np.linspace(0, len(data), new_len), np.arange(len(data)), data)
-        if data.ndim > 1:
-            data = data[:, 0]  # mono
-        combined.append(data)
-        combined.append(silence)
-
-    combined_audio = np.concatenate(combined)
-    sf.write(output_path, combined_audio, target_sr)
-    print(f"[Reference] Built combined reference: {total_duration:.1f}s from {len(clips)} clips → {output_path}")
-    return output_path
 
 
 def get_reference_wav() -> str:
-    """Return the best available reference WAV for voice cloning."""
-    # Try building from metadata.csv first (best quality — multiple clips)
-    metadata_path = "../coqui-server/dataset/metadata.csv"
-    chunks_dir = "../public/audio/chunks"
+    for ref in FALLBACK_REFS:
+        if os.path.exists(ref):
+            print(f"[Reference] Using: {ref}")
+            return ref
+    raise RuntimeError(
+        "No reference WAV found. Run: ffmpeg -i <audio> -ar 24000 -ac 1 chatterbox-server/celo_reference.wav"
+    )
 
-    combined = build_reference_from_metadata(metadata_path, chunks_dir)
-    if combined and os.path.exists(combined):
-        return combined
 
-    # Fall back to main training file
-    if os.path.exists(_MAIN_SAMPLE):
-        return _MAIN_SAMPLE
-
-    # Fall back to preferred chunks
-    for fname in PREFERRED_REFS:
-        path = os.path.join(_CHUNKS_DIR, fname)
-        if os.path.exists(path):
-            return path
-
-    # Last resort: any chunk
-    if os.path.exists(_CHUNKS_DIR):
-        wavs = [f for f in os.listdir(_CHUNKS_DIR) if f.endswith(".wav")]
-        if wavs:
-            return os.path.join(_CHUNKS_DIR, wavs[0])
-
-    raise RuntimeError("No reference WAV found")
-
-print("Loading Coqui TTS model...")
+print("Loading Chatterbox TTS model (ResembleAI)...")
 from chatterbox.tts import ChatterboxTTS
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model = ChatterboxTTS.from_pretrained(device=device)
 reference_wav = get_reference_wav()
-print(f"Model loaded on {device}")
-print(f"Reference voice: {reference_wav}")
+print(f"✓ Chatterbox loaded on {device} | sample_rate={model.sr}Hz")
+print(f"✓ Reference voice: {reference_wav}")
 
 
-def get_cache_path(text: str) -> str:
-    key = hashlib.md5(text.encode()).hexdigest()
-    return os.path.join(CACHE_DIR, f"coqui_{key}.wav")
+def get_cache_path(text: str, speed: float, exaggeration: float) -> str:
+    key = hashlib.md5(f"{text}|{speed}|{exaggeration}".encode()).hexdigest()
+    return os.path.join(CACHE_DIR, f"chatterbox_{key}.wav")
+
+
+def split_chunks(text: str, max_chars: int = 200) -> list[str]:
+    """Split long text into sentence chunks for better quality."""
+    import re
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    chunks = []
+    current = ""
+    for s in sentences:
+        if len(current) + len(s) + 1 <= max_chars:
+            current = (current + " " + s).strip() if current else s
+        else:
+            if current:
+                chunks.append(current)
+            current = s
+    if current:
+        chunks.append(current)
+    return chunks or [text]
 
 
 class SynthRequest(BaseModel):
     text: str
-    language: str = "en"
+    speed: float = 0.75          # speaking pace — lower = slower, matches normal Kikuyu cadence
+    exaggeration: float = 0.3    # emotion expressiveness (0=neutral, 1=very expressive)
+    cfg_weight: float = 0.5      # voice similarity to reference (higher = more like c-elo)
+    use_cache: bool = True
 
 
 @app.post("/synthesize")
@@ -160,33 +99,68 @@ async def synthesize(req: SynthRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="No text provided")
 
-    cache_path = get_cache_path(req.text)
-    if os.path.exists(cache_path):
-        print(f"[Cache HIT] {req.text[:40]}")
+    # Clamp parameters
+    speed       = max(0.5, min(1.5, req.speed))
+    exaggeration = max(0.0, min(1.0, req.exaggeration))
+    cfg_weight   = max(0.0, min(1.0, req.cfg_weight))
+
+    cache_path = get_cache_path(req.text, speed, exaggeration)
+    if req.use_cache and os.path.exists(cache_path):
+        print(f"[Cache HIT] {req.text[:50]}")
         with open(cache_path, "rb") as f:
             return Response(content=f.read(), media_type="audio/wav")
 
-    print(f"[Synthesizing] {req.text[:40]}...")
+    print(f"[Synthesizing] speed={speed} exag={exaggeration} | '{req.text[:60]}...'")
+
     try:
-        wav = model.generate(
-            req.text,
-            audio_prompt_path=reference_wav,
-            exaggeration=0.3,   # 0=neutral, 1=expressive
-            cfg_weight=0.5,     # voice similarity weight
-        )
+        chunks = split_chunks(req.text)
+        silence_frames = int(model.sr * 0.18)  # 180ms between sentences
+        parts = []
+
+        for i, chunk in enumerate(chunks):
+            print(f"  Chunk {i+1}/{len(chunks)}: '{chunk[:50]}'")
+            wav = model.generate(
+                chunk,
+                audio_prompt_path=reference_wav,
+                exaggeration=exaggeration,
+                cfg_weight=cfg_weight,
+            )
+            arr = wav.squeeze().cpu().numpy()
+
+            # Apply speed by resampling (time-stretch without pitch change)
+            if abs(speed - 1.0) > 0.05:
+                target_len = int(len(arr) / speed)
+                arr = np.interp(
+                    np.linspace(0, len(arr), target_len),
+                    np.arange(len(arr)),
+                    arr
+                )
+
+            parts.append(arr)
+            if i < len(chunks) - 1:
+                parts.append(np.zeros(silence_frames, dtype=np.float32))
+
+        full = np.concatenate(parts).astype(np.float32)
+
+        # Normalize to -18 LUFS equivalent (~0.25 peak) — matches c-elo's natural volume
+        peak = np.max(np.abs(full))
+        if peak > 0:
+            full = full * (0.25 / peak)
 
         buf = io.BytesIO()
-        sf.write(buf, wav.squeeze().numpy(), model.sr, format="WAV")
+        sf.write(buf, full, model.sr, format="WAV", subtype="PCM_16")
         buf.seek(0)
         audio_bytes = buf.read()
 
-        with open(cache_path, "wb") as f:
-            f.write(audio_bytes)
-        print(f"[Cached] {cache_path}")
+        if req.use_cache:
+            with open(cache_path, "wb") as f:
+                f.write(audio_bytes)
 
+        print(f"  ✓ Done — {len(full)/model.sr:.2f}s @ {model.sr}Hz")
         return Response(content=audio_bytes, media_type="audio/wav")
 
     except Exception as e:
+        print(f"[ERROR] {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -195,7 +169,9 @@ async def health():
     cache_count = len([f for f in os.listdir(CACHE_DIR) if f.endswith(".wav")])
     return {
         "status": "ok",
-        "engine": "coqui-tts",
+        "engine": "chatterbox-tts",
+        "model": "ResembleAI/chatterbox",
+        "sample_rate": model.sr,
         "reference_wav": reference_wav,
         "device": device,
         "cached_phrases": cache_count,
@@ -206,7 +182,7 @@ async def health():
 async def clear_cache():
     cleared = 0
     for f in os.listdir(CACHE_DIR):
-        if f.startswith("coqui_") and f.endswith(".wav"):
+        if f.startswith("chatterbox_") and f.endswith(".wav"):
             os.remove(os.path.join(CACHE_DIR, f))
             cleared += 1
     return {"cleared": cleared}
@@ -214,4 +190,4 @@ async def clear_cache():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5003)
+    uvicorn.run(app, host="0.0.0.0", port=5003, log_level="info")

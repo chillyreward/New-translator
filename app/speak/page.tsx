@@ -15,11 +15,13 @@ import {
   Loader2, Volume2, AlertCircle,
 } from "lucide-react";
 
+// UI labels → actual synthesis speeds sent to MMS/OpenAI
+// MMS VITS speaking_rate: 0.6 = slow & clear, 0.75 = natural, 0.9 = normal, 1.1 = fast
 const SPEEDS = [
-  { value: 0.75, label: "0.75×" },
-  { value: 1.0,  label: "1×"    },
-  { value: 1.25, label: "1.25×" },
-  { value: 1.5,  label: "1.5×"  },
+  { value: 0.6,  label: "Slow"   },
+  { value: 0.75, label: "Normal" },
+  { value: 0.9,  label: "Fast"   },
+  { value: 1.1,  label: "Faster" },
 ];
 
 type State = "idle" | "loading" | "playing" | "error";
@@ -35,7 +37,7 @@ export default function SpeakPage() {
 function SpeakContent() {
   const searchParams = useSearchParams();
   const [text, setText]         = useState(searchParams.get("q") ?? "");
-  const [speed, setSpeed]       = useState(1.0);
+  const [speed, setSpeed]       = useState(0.75);
   const [state, setState]       = useState<State>("idle");
   const [error, setError]       = useState<string | null>(null);
   const [copied, setCopied]     = useState(false);
@@ -64,7 +66,7 @@ function SpeakContent() {
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim() }),
+        body: JSON.stringify({ text: text.trim(), speed }),
       });
 
       if (!res.ok) {
@@ -80,7 +82,7 @@ function SpeakContent() {
       setAudioUrl(url);
 
       const audio = new Audio(url);
-      audio.playbackRate = speed;
+      // Speed is already baked into the synthesized audio — don't double-apply
       audioRef.current   = audio;
 
       audio.onended = () => setState("idle");
@@ -282,7 +284,7 @@ function SpeakContent() {
 
                   {/* Active voice badge */}
                   <p className="text-xs text-slate-400 dark:text-slate-600 mt-2">
-                    MMS Kikuyu · {speed}× speed
+                    MMS Kikuyu · {SPEEDS.find(s => s.value === speed)?.label ?? speed + '×'} speed
                   </p>
                 </div>
               </div>

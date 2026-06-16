@@ -1,6 +1,7 @@
-coqui-tts
+chatterbox-tts
 fastapi==0.111.0
 uvicorn==0.30.1
 soundfile==0.12.1
-torch
-torchaudio
+numpy>=1.24.0
+torch>=2.0.0
+torchaudio>=2.0.0

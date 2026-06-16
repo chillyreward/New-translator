@@ -7,6 +7,7 @@ export async function synthesizeWithOpenAI(
   text: string,
   apiKey: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova",
+  speed: number = 0.85,
   model: "tts-1" | "tts-1-hd" = "tts-1"
 ): Promise<ArrayBuffer> {
   const response = await fetch("https://api.openai.com/v1/audio/speech", {
@@ -20,7 +21,7 @@ export async function synthesizeWithOpenAI(
       voice,
       input: text,
       response_format: "mp3",
-      speed: 0.6,
+      speed: Math.max(0.25, Math.min(4.0, speed)),
     }),
   });
 
