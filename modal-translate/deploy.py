@@ -30,9 +30,8 @@ image = (
         "fastapi>=0.111.0",
         "pydantic>=2.0.0",
         "triton",
-    )
-    .pip_install(
-        "unsloth @ git+https://github.com/unslothai/unsloth.git",
+        "unsloth",          # PyPI wheel — no build tools needed
+        "unsloth_zoo",
     )
 )
 
