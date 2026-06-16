@@ -1,37 +1,44 @@
 """
-Kikuyu TranslateGemma-4B V7 on Modal Serverless GPU
+Kikuyu TranslateGemma-4B V7 on Modal — Unsloth inference
 Model: gateremark/kikuyu_translategemma_4b_v7_highrank_rslora
-Base:  google/translategemma-4b-it
 BLEU: 21.93, chrF++: 42.87
+
+The model card recommends Unsloth for inference but it's a TEXT-ONLY model
+(no vision/processor). We use FastLanguageModel with load_in_4bit=False
+and access the underlying text tokenizer directly — NOT AutoProcessor.
 
 Deploy:
     py -3.11 -m modal deploy deploy.py
-
-Endpoint:
-    POST https://<workspace>--kikuyu-translate-kikuyu-translate-app.modal.run/translate
-    Body: { "text": "Hello", "source_lang": "en" }
 """
 
 import modal
 
 app = modal.App("kikuyu-translate")
 
+# Use Modal's official CUDA image — has compatible torch + CUDA pre-installed
 image = (
-    modal.Image.debian_slim(python_version="3.11")
+    modal.Image.from_registry(
+        "nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04",
+        add_python="3.11",
+    )
     .pip_install(
-        "transformers>=4.40.0",
-        "torch>=2.2.0",
+        "torch==2.3.0",
+        "transformers==4.44.0",
         "accelerate>=0.27.0",
-        "fastapi>=0.111.0",
         "sentencepiece>=0.1.99",
         "huggingface_hub>=0.20.0",
+        "fastapi>=0.111.0",
         "pydantic>=2.0.0",
+        "triton",
+    )
+    .pip_install(
+        "unsloth @ git+https://github.com/unslothai/unsloth.git",
     )
 )
 
-model_volume = modal.Volume.from_name("kikuyu-gemma-v7-stable", create_if_missing=True)
-MODEL_DIR  = "/model"
-MODEL_ID   = "gateremark/kikuyu_translategemma_4b_v7_highrank_rslora"
+model_volume = modal.Volume.from_name("kikuyu-gemma-unsloth", create_if_missing=True)
+MODEL_DIR = "/model"
+MODEL_ID  = "gateremark/kikuyu_translategemma_4b_v7_highrank_rslora"
 
 
 @app.cls(
@@ -47,49 +54,59 @@ class KikuyuTranslator:
     @modal.enter()
     def load_model(self):
         import os, torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer
         from huggingface_hub import snapshot_download
 
         hf_token   = os.environ.get("HF_TOKEN")
-        model_path = f"{MODEL_DIR}/kikuyu-4b-v7-stable"
+        model_path = f"{MODEL_DIR}/kikuyu-4b-v7-unsloth"
 
         if not os.path.exists(f"{model_path}/model-00001-of-00002.safetensors"):
-            print(f"[Init] Downloading {MODEL_ID} to fresh volume...")
+            print(f"[Init] Downloading {MODEL_ID}...")
             snapshot_download(MODEL_ID, local_dir=model_path, token=hf_token)
             model_volume.commit()
-            print("[Init] Model cached.")
+            print("[Init] Cached to volume.")
 
-        print("[Init] Loading model...")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        print("[Init] Loading with Unsloth FastLanguageModel...")
+        from unsloth import FastLanguageModel
+
+        # Use FastLanguageModel — text-only, not vision
+        # This avoids the AutoProcessor error from the vision code path
+        self.model, self.tokenizer = FastLanguageModel.from_pretrained(
+            model_name=model_path,
+            max_seq_length=4096,
+            dtype=torch.bfloat16,
+            load_in_4bit=False,
+        )
+
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.model.config.pad_token_id = self.tokenizer.pad_token_id
         self.tokenizer.padding_side = "left"
 
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_path,
-            torch_dtype=torch.bfloat16,
-            device_map="auto",
-        )
-        self.model.config.pad_token_id = self.tokenizer.pad_token_id
-        self.model.eval()
+        # Switch to fast inference mode
+        FastLanguageModel.for_inference(self.model)
 
+        # Build terminator list
         self.terminators = []
-        for tok in ["<end_of_turn>", "<eos>"]:
-            try:
-                tid = self.tokenizer.convert_tokens_to_ids(tok)
-                if isinstance(tid, int) and tid >= 0:
-                    self.terminators.append(tid)
-            except Exception:
-                pass
-        if self.tokenizer.eos_token_id:
-            self.terminators.append(self.tokenizer.eos_token_id)
-        self.terminators = list(set(self.terminators))
-        print(f"[Init] ✓ KikuyuTranslateGemma-4B V7 ready | terminators={self.terminators}")
+        for tok in [
+            self.tokenizer.eos_token_id,
+            self.tokenizer.convert_tokens_to_ids("<end_of_turn>"),
+            self.tokenizer.convert_tokens_to_ids("<eos>"),
+        ]:
+            if (
+                isinstance(tok, int)
+                and tok >= 0
+                and tok != getattr(self.tokenizer, "unk_token_id", None)
+                and tok not in self.terminators
+            ):
+                self.terminators.append(tok)
+
+        print(f"[Init] ✓ Ready | terminators={self.terminators}")
 
     @modal.method()
     def translate(self, text: str, source_lang: str = "en") -> str:
         import torch
 
+        # TranslateGemma chat template with lang codes
         messages = [
             {
                 "role": "user",
@@ -104,14 +121,14 @@ class KikuyuTranslator:
             }
         ]
 
-        formatted_text = self.tokenizer.apply_chat_template(
+        formatted = self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
             add_generation_prompt=True,
         )
 
         inputs = self.tokenizer(
-            [formatted_text],
+            [formatted],
             return_tensors="pt",
             padding=True,
         )
@@ -138,7 +155,7 @@ class KikuyuTranslator:
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-web_app = FastAPI(title="Kikuyu TranslateGemma 4B V7 API")
+web_app = FastAPI(title="Kikuyu TranslateGemma 4B V7")
 
 
 class TranslateRequest(BaseModel):
@@ -154,7 +171,7 @@ def kikuyu_translate_app():
     @web_app.post("/translate")
     async def translate(req: TranslateRequest):
         if not req.text.strip():
-            return {"error": "No text provided"}, 400
+            return {"error": "No text"}, 400
         result = translator.translate.remote(req.text, req.source_lang)
         return {"translation": result, "model": MODEL_ID}
 
@@ -167,15 +184,15 @@ def kikuyu_translate_app():
 
 @app.local_entrypoint()
 def test():
-    translator = KikuyuTranslator()
-    for t in ["Hello, how are you?", "Start each day with a task completed."]:
-        result = translator.translate.remote(t)
-        print(f"EN: {t}\nKI: {result}\n")
+    t = KikuyuTranslator()
+    for text in ["Hello, how are you?", "Start each day with a task completed."]:
+        result = t.translate.remote(text)
+        print(f"EN: {text}\nKI: {result}\n")
 
 
 # ── Keep-alive every 4 minutes ────────────────────────────────────────────────
 @app.function(image=image, schedule=modal.Period(minutes=4))
 def keepalive():
-    translator = KikuyuTranslator()
-    result = translator.translate.remote("hello")
-    print(f"[Keepalive] translate → {result}")
+    t = KikuyuTranslator()
+    result = t.translate.remote("hello")
+    print(f"[Keepalive] → {result}")
