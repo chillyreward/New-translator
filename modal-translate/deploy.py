@@ -1,11 +1,10 @@
 """
-Kikuyu TranslateGemma-4B V7 on Modal — Unsloth inference
+Kikuyu TranslateGemma-4B V7 on Modal Serverless GPU
 Model: gateremark/kikuyu_translategemma_4b_v7_highrank_rslora
 BLEU: 21.93, chrF++: 42.87
 
-The model card recommends Unsloth for inference but it's a TEXT-ONLY model
-(no vision/processor). We use FastLanguageModel with load_in_4bit=False
-and access the underlying text tokenizer directly — NOT AutoProcessor.
+Uses standard HuggingFace transformers — stable, no build deps.
+Same model weights as the unsloth path, same output quality.
 
 Deploy:
     py -3.11 -m modal deploy deploy.py
@@ -15,27 +14,20 @@ import modal
 
 app = modal.App("kikuyu-translate")
 
-# Use Modal's official CUDA image — has compatible torch + CUDA pre-installed
 image = (
-    modal.Image.from_registry(
-        "nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04",
-        add_python="3.11",
-    )
+    modal.Image.debian_slim(python_version="3.11")
     .pip_install(
-        "torch==2.3.0",
-        "transformers==4.44.0",
+        "transformers>=4.44.0",
+        "torch>=2.3.0",
         "accelerate>=0.27.0",
-        "sentencepiece>=0.1.99",
-        "huggingface_hub>=0.20.0",
         "fastapi>=0.111.0",
+        "sentencepiece>=0.1.99",
+        "huggingface_hub>=0.23.0",
         "pydantic>=2.0.0",
-        "triton",
-        "unsloth",          # PyPI wheel — no build tools needed
-        "unsloth_zoo",
     )
 )
 
-model_volume = modal.Volume.from_name("kikuyu-gemma-unsloth", create_if_missing=True)
+model_volume = modal.Volume.from_name("kikuyu-gemma-v7-stable", create_if_missing=True)
 MODEL_DIR = "/model"
 MODEL_ID  = "gateremark/kikuyu_translategemma_4b_v7_highrank_rslora"
 
@@ -53,59 +45,49 @@ class KikuyuTranslator:
     @modal.enter()
     def load_model(self):
         import os, torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
         from huggingface_hub import snapshot_download
 
         hf_token   = os.environ.get("HF_TOKEN")
-        model_path = f"{MODEL_DIR}/kikuyu-4b-v7-unsloth"
+        model_path = f"{MODEL_DIR}/kikuyu-4b-v7-stable"
 
         if not os.path.exists(f"{model_path}/model-00001-of-00002.safetensors"):
             print(f"[Init] Downloading {MODEL_ID}...")
             snapshot_download(MODEL_ID, local_dir=model_path, token=hf_token)
             model_volume.commit()
-            print("[Init] Cached to volume.")
+            print("[Init] Cached.")
 
-        print("[Init] Loading with Unsloth FastLanguageModel...")
-        from unsloth import FastLanguageModel
-
-        # Use FastLanguageModel — text-only, not vision
-        # This avoids the AutoProcessor error from the vision code path
-        self.model, self.tokenizer = FastLanguageModel.from_pretrained(
-            model_name=model_path,
-            max_seq_length=4096,
-            dtype=torch.bfloat16,
-            load_in_4bit=False,
-        )
-
+        print("[Init] Loading model...")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.model.config.pad_token_id = self.tokenizer.pad_token_id
         self.tokenizer.padding_side = "left"
 
-        # Switch to fast inference mode
-        FastLanguageModel.for_inference(self.model)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
+        )
+        self.model.config.pad_token_id = self.tokenizer.pad_token_id
+        self.model.eval()
 
-        # Build terminator list
         self.terminators = []
-        for tok in [
-            self.tokenizer.eos_token_id,
-            self.tokenizer.convert_tokens_to_ids("<end_of_turn>"),
-            self.tokenizer.convert_tokens_to_ids("<eos>"),
-        ]:
-            if (
-                isinstance(tok, int)
-                and tok >= 0
-                and tok != getattr(self.tokenizer, "unk_token_id", None)
-                and tok not in self.terminators
-            ):
-                self.terminators.append(tok)
-
+        for tok in ["<end_of_turn>", "<eos>"]:
+            try:
+                tid = self.tokenizer.convert_tokens_to_ids(tok)
+                if isinstance(tid, int) and tid >= 0:
+                    self.terminators.append(tid)
+            except Exception:
+                pass
+        if self.tokenizer.eos_token_id:
+            self.terminators.append(self.tokenizer.eos_token_id)
+        self.terminators = list(set(self.terminators))
         print(f"[Init] ✓ Ready | terminators={self.terminators}")
 
     @modal.method()
     def translate(self, text: str, source_lang: str = "en") -> str:
         import torch
 
-        # TranslateGemma chat template with lang codes
         messages = [
             {
                 "role": "user",
@@ -126,11 +108,7 @@ class KikuyuTranslator:
             add_generation_prompt=True,
         )
 
-        inputs = self.tokenizer(
-            [formatted],
-            return_tensors="pt",
-            padding=True,
-        )
+        inputs = self.tokenizer([formatted], return_tensors="pt", padding=True)
         inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
         input_len = inputs["input_ids"].shape[1]
 
@@ -143,11 +121,10 @@ class KikuyuTranslator:
                 pad_token_id=self.tokenizer.pad_token_id,
             )
 
-        result = self.tokenizer.decode(
+        return self.tokenizer.decode(
             outputs[0][input_len:],
             skip_special_tokens=True,
-        )
-        return result.strip()
+        ).strip()
 
 
 # ── FastAPI endpoint ──────────────────────────────────────────────────────────
@@ -185,8 +162,7 @@ def kikuyu_translate_app():
 def test():
     t = KikuyuTranslator()
     for text in ["Hello, how are you?", "Start each day with a task completed."]:
-        result = t.translate.remote(text)
-        print(f"EN: {text}\nKI: {result}\n")
+        print(f"EN: {text}\nKI: {t.translate.remote(text)}\n")
 
 
 # ── Keep-alive every 4 minutes ────────────────────────────────────────────────
