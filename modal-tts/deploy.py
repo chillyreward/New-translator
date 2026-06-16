@@ -165,7 +165,7 @@ def kikuyu_tts_app():
 @app.local_entrypoint()
 def test():
     tts    = KikuyuTTS()
-    audio  = tts.synthesize.remote("Wĩ mwega? Nĩ ngatho muno.", speed=0.9)
+    audio  = tts.synthesize.remote("Wĩ mwega? Nĩ ngatho muno.", 0.9)
     with open("test_output.wav", "wb") as f:
         f.write(audio)
     print(f"✓ Saved test_output.wav ({len(audio)} bytes)")
@@ -175,5 +175,5 @@ def test():
 @app.function(image=image, schedule=modal.Period(minutes=4))
 def keepalive():
     tts   = KikuyuTTS()
-    audio = tts.synthesize.remote("Wĩ mwega", speed=0.9)
+    audio = tts.synthesize.remote("Wĩ mwega", 0.9)
     print(f"[Keepalive] TTS: {len(audio)} bytes")
