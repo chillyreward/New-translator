@@ -97,7 +97,7 @@ class KikuyuTTS:
         return [c for c in chunks if c.strip()] or [text]
 
     @modal.method()
-    def synthesize(self, text: str) -> bytes:
+    def synthesize(self, text: str, speed: float = 0.9) -> bytes:
         import io, numpy as np, soundfile as sf, unicodedata, re
 
         # Normalize text
@@ -105,6 +105,10 @@ class KikuyuTTS:
         if text and text[-1] not in '.!?,;:':
             text += '.'
         text = re.sub(r'  +', ' ', text)
+
+        # Apply speaking rate via VITS config (lower = slower, more natural)
+        original_rate = self.model.config.speaking_rate
+        self.model.config.speaking_rate = max(0.5, min(1.5, speed))
 
         chunks  = self._split_chunks(text)
         silence = np.zeros(int(self.sr * 0.18), dtype=np.float32)
@@ -115,6 +119,9 @@ class KikuyuTTS:
             parts.append(self._synthesize_chunk(chunk))
             if i < len(chunks) - 1:
                 parts.append(silence)
+
+        # Restore original rate
+        self.model.config.speaking_rate = original_rate
 
         full = np.concatenate(parts)
         buf  = io.BytesIO()
@@ -133,6 +140,7 @@ web_app = FastAPI(title="Kikuyu MMS TTS API")
 
 class TTSRequest(BaseModel):
     text: str
+    speed: float = 0.9   # speaking rate — lower = slower, 1.0 = default
 
 
 @app.function(image=image)
@@ -144,7 +152,7 @@ def kikuyu_tts_app():
     async def synthesize(req: TTSRequest):
         if not req.text.strip():
             return {"error": "No text"}, 400
-        audio = tts.synthesize.remote(req.text)
+        audio = tts.synthesize.remote(req.text, req.speed)
         return FastResponse(content=audio, media_type="audio/wav")
 
     @web_app.get("/health")
@@ -157,7 +165,7 @@ def kikuyu_tts_app():
 @app.local_entrypoint()
 def test():
     tts    = KikuyuTTS()
-    audio  = tts.synthesize.remote("Wĩ mwega? Nĩ ngatho muno.")
+    audio  = tts.synthesize.remote("Wĩ mwega? Nĩ ngatho muno.", speed=0.9)
     with open("test_output.wav", "wb") as f:
         f.write(audio)
     print(f"✓ Saved test_output.wav ({len(audio)} bytes)")
@@ -166,7 +174,6 @@ def test():
 # ── Keep-alive ping every 4 minutes ──────────────────────────────────────────
 @app.function(image=image, schedule=modal.Period(minutes=4))
 def keepalive():
-    """Ping the TTS endpoint to keep the container warm."""
     tts   = KikuyuTTS()
-    audio = tts.synthesize.remote("Wĩ mwega")
+    audio = tts.synthesize.remote("Wĩ mwega", speed=0.9)
     print(f"[Keepalive] TTS: {len(audio)} bytes")
