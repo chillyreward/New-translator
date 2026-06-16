@@ -29,7 +29,7 @@ image = (
     )
 )
 
-model_volume = modal.Volume.from_name("kikuyu-gemma-model", create_if_missing=True)
+model_volume = modal.Volume.from_name("kikuyu-gemma-v7-stable", create_if_missing=True)
 MODEL_DIR  = "/model"
 MODEL_ID   = "gateremark/kikuyu_translategemma_4b_v7_highrank_rslora"
 
@@ -51,10 +51,10 @@ class KikuyuTranslator:
         from huggingface_hub import snapshot_download
 
         hf_token   = os.environ.get("HF_TOKEN")
-        model_path = f"{MODEL_DIR}/kikuyu-4b-v7"
+        model_path = f"{MODEL_DIR}/kikuyu-4b-v7-stable"
 
         if not os.path.exists(f"{model_path}/model-00001-of-00002.safetensors"):
-            print(f"[Init] Downloading {MODEL_ID}...")
+            print(f"[Init] Downloading {MODEL_ID} to fresh volume...")
             snapshot_download(MODEL_ID, local_dir=model_path, token=hf_token)
             model_volume.commit()
             print("[Init] Model cached.")
