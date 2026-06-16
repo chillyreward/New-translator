@@ -41,7 +41,6 @@ export async function POST(request: Request) {
     const { text, voice, speed } = await request.json();
 
     const mmsUrl    = process.env.MMS_TTS_URL;
-    const coquiUrl  = process.env.COQUI_TTS_URL;
     const openaiKey = process.env.OPENAI_API_KEY;
 
     // MMS accepts 0.5–1.5; default 0.75 = natural pace for Kikuyu
@@ -75,29 +74,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. Chatterbox (local server, port 5003) — 24kHz, c-elo voice clone
-    // Runs on localhost so only try if server is actually up
-    if (coquiUrl) {
-      try {
-        console.log(`[Speak] Trying Chatterbox TTS (speed=${ttsSpeed})...`);
-        const response = await fetch(`${coquiUrl}/synthesize`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, speed: ttsSpeed, exaggeration: 0.3, cfg_weight: 0.5 }),
-          signal: AbortSignal.timeout(60000), // 60s — CPU synthesis can be slow
-        });
-        if (!response.ok) throw new Error(`Chatterbox error: ${response.status}`);
-        const audioBuffer = await response.arrayBuffer();
-        console.log('[Speak] Chatterbox TTS succeeded (24kHz, c-elo voice)');
-        return new NextResponse(audioBuffer, {
-          headers: { 'Content-Type': 'audio/wav' },
-        });
-      } catch (cbErr: any) {
-        console.warn('[Speak] Chatterbox failed, trying OpenAI:', cbErr.message);
-      }
-    }
-
-    // 3. OpenAI TTS — reliable fallback
+    // 2. OpenAI TTS — reliable fallback
     if (!openaiKey) {
       return NextResponse.json({ error: 'No TTS service available' }, { status: 500 });
     }

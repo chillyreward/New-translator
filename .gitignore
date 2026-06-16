@@ -47,6 +47,10 @@ next-env.d.ts
 coqui-server/venv/
 coqui-server/venv311/
 piper-server/venv/
+chatterbox-server/venv/
+chatterbox-server/venv311/
+mms-server/venv/
+mms-server/venv311/
 **/__pycache__/
 **/*.pyc
 **/*.pyo
