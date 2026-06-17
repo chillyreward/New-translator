@@ -49,11 +49,23 @@ coqui-server/venv311/
 piper-server/venv/
 chatterbox-server/venv/
 chatterbox-server/venv311/
+openvoice-server/venv/
+openvoice-server/venv311/
+rvc-server/venv/
+rvc-server/venv311/
 mms-server/venv/
 mms-server/venv311/
 **/__pycache__/
 **/*.pyc
 **/*.pyo
+
+# Large model files
+rvc-server/models/
+rvc-server/index/
+openvoice-server/checkpoints_v2/
+openvoice-server/checkpoints_v2.zip
+**/*.pth
+**/*.index
 
 # WAV cache (hidden, auto-generated)
 piper-server/.wav-cache/
