@@ -20,16 +20,19 @@ async function resampleAndNormalize(input: Buffer): Promise<Buffer> {
   const tmpOut = path.join(os.tmpdir(), `mms_out_${Date.now()}.wav`);
   try {
     fs.writeFileSync(tmpIn, input);
-    // aresample=48000 — upsample to 48kHz (matches c-elo reference)
-    // loudnorm — normalize to -18 LUFS integrated, -1 dBTP true peak (natural broadcast level)
+    // Pipeline that replicates natural human vocal characteristics:
+    // 1. asetrate=48000*0.95 — slight pitch-down trick (warms the voice, adds depth)
+    // 2. aresample=48000     — resample to true 48kHz after rate change
+    // 3. atempo=1.05         — compensate speed back up (net: warmer tone, same pace)
+    // 4. loudnorm            — normalize to -23 LUFS / -1 dBTP (calm, natural volume like c-elo)
     await execAsync(
-      `ffmpeg -i "${tmpIn}" -af "aresample=48000,loudnorm=I=-18:TP=-1:LRA=7" -acodec pcm_s16le -ar 48000 -ac 1 "${tmpOut}" -y`
+      `ffmpeg -i "${tmpIn}" -af "asetrate=48000*0.95,aresample=48000,atempo=1.05,loudnorm=I=-23:TP=-1:LRA=11" -acodec pcm_s16le -ar 48000 -ac 1 "${tmpOut}" -y`
     );
     const result = fs.readFileSync(tmpOut);
     return result;
   } catch (e: any) {
-    console.warn('[Speak] ffmpeg resample failed, returning raw audio:', e.message?.split('\n')[0]);
-    return input; // graceful fallback
+    console.warn('[Speak] ffmpeg post-process failed, returning raw audio:', e.message?.split('\n')[0]);
+    return input;
   } finally {
     try { fs.unlinkSync(tmpIn); } catch {}
     try { fs.unlinkSync(tmpOut); } catch {}
