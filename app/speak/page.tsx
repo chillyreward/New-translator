@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Sidebar } from "@/components/Sidebar";
@@ -12,16 +12,51 @@ import { Button } from "@/components/Button";
 import { cn } from "@/lib/utils";
 import {
   Play, Square, Download, Copy, CheckCircle2,
-  Loader2, Volume2, AlertCircle,
+  Loader2, Volume2, AlertCircle, Mic2,
 } from "lucide-react";
 
-// UI labels → actual synthesis speeds sent to MMS/OpenAI
-// MMS VITS speaking_rate: 0.6 = slow & clear, 0.75 = natural, 0.9 = normal, 1.1 = fast
+// MMS VITS speaking_rate: 0.6=slow, 0.75=natural, 0.9=fast, 1.1=faster
 const SPEEDS = [
   { value: 0.6,  label: "Slow"   },
   { value: 0.75, label: "Normal" },
   { value: 0.9,  label: "Fast"   },
   { value: 1.1,  label: "Faster" },
+];
+
+// Voice engines — each has a different character
+const ENGINES = [
+  {
+    id: "mms",
+    name: "MMS",
+    desc: "Best Kikuyu phonemes",
+    color: "violet",
+    badge: "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
+    active: "border-violet-500 bg-violet-50 dark:bg-violet-900/20",
+  },
+  {
+    id: "chatterbox",
+    name: "Chatterbox",
+    desc: "24kHz voice clone",
+    color: "emerald",
+    badge: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+    active: "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20",
+  },
+  {
+    id: "openvoice",
+    name: "OpenVoice v2",
+    desc: "Zero-shot voice clone",
+    color: "blue",
+    badge: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+    active: "border-blue-500 bg-blue-50 dark:bg-blue-900/20",
+  },
+  {
+    id: "rvc",
+    name: "RVC",
+    desc: "Speaker voice conversion",
+    color: "amber",
+    badge: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+    active: "border-amber-500 bg-amber-50 dark:bg-amber-900/20",
+  },
 ];
 
 type State = "idle" | "loading" | "playing" | "error";
@@ -38,6 +73,7 @@ function SpeakContent() {
   const searchParams = useSearchParams();
   const [text, setText]         = useState(searchParams.get("q") ?? "");
   const [speed, setSpeed]       = useState(0.75);
+  const [engine, setEngine]     = useState("mms");
   const [state, setState]       = useState<State>("idle");
   const [error, setError]       = useState<string | null>(null);
   const [copied, setCopied]     = useState(false);
@@ -56,17 +92,14 @@ function SpeakContent() {
   const handleSpeak = useCallback(async () => {
     if (!text.trim()) return;
     setError(null);
-
-    // Stop any current playback
     stopAudio();
     setState("loading");
 
     try {
-      // Always use the /api/speak endpoint (MMS → Coqui → OpenAI fallback chain)
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim(), speed }),
+        body: JSON.stringify({ text: text.trim(), speed, engine }),
       });
 
       if (!res.ok) {
@@ -76,15 +109,11 @@ function SpeakContent() {
 
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
-
-      // Clean up previous URL
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       setAudioUrl(url);
 
       const audio = new Audio(url);
-      // Speed is already baked into the synthesized audio — don't double-apply
-      audioRef.current   = audio;
-
+      audioRef.current = audio;
       audio.onended = () => setState("idle");
       audio.onerror = () => { setState("error"); setError("Audio playback failed."); };
 
@@ -94,13 +123,13 @@ function SpeakContent() {
       setError(err instanceof Error ? err.message : "TTS failed.");
       setState("error");
     }
-  }, [text, speed, audioUrl, stopAudio]);
+  }, [text, speed, engine, audioUrl, stopAudio]);
 
   const handleDownload = () => {
     if (!audioUrl) return;
     const a = document.createElement("a");
     a.href     = audioUrl;
-    a.download = `kikuyu-tts-${Date.now()}.wav`;
+    a.download = `kikuyu-${engine}-${Date.now()}.wav`;
     a.click();
   };
 
@@ -111,8 +140,9 @@ function SpeakContent() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const maxChars  = 5000;
   const charCount = text.length;
-  const maxChars  = 1000;
+  const activeEngine = ENGINES.find(e => e.id === engine)!;
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-slate-950 transition-colors overflow-hidden">
@@ -129,14 +159,45 @@ function SpeakContent() {
         <div className="flex-1 overflow-auto p-4 md:p-8 relative z-10 pb-24 md:pb-8">
           <div className="max-w-4xl mx-auto w-full">
 
-            {/* Page header */}
-            <div className="mb-8">
+            {/* Header */}
+            <div className="mb-6">
               <h1 className="text-2xl md:text-3xl font-bold font-serif text-slate-900 dark:text-white mb-1">
                 Text to Speech
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-sm">
-                Type Kikuyu text and hear it spoken aloud using AI voice models.
+                Kikuyu voice synthesis — switch between engines to compare quality.
               </p>
+            </div>
+
+            {/* Engine selector */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+              {ENGINES.map(eng => (
+                <button
+                  key={eng.id}
+                  onClick={() => setEngine(eng.id)}
+                  className={cn(
+                    "flex flex-col items-start gap-1 p-3 rounded-xl border-2 text-left transition-all",
+                    engine === eng.id
+                      ? eng.active
+                      : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-white dark:bg-slate-900"
+                  )}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <span className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                      eng.badge
+                    )}>
+                      {eng.name}
+                    </span>
+                    {engine === eng.id && (
+                      <CheckCircle2 size={12} className="ml-auto text-current opacity-60" />
+                    )}
+                  </div>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
+                    {eng.desc}
+                  </span>
+                </button>
+              ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -154,8 +215,8 @@ function SpeakContent() {
                       value={text}
                       onChange={e => setText(e.target.value.slice(0, maxChars))}
                       placeholder="Type or paste Kikuyu text here… e.g. Wĩ mwega?"
-                      rows={6}
-                      className="w-full resize-none bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 text-lg md:text-xl font-serif leading-relaxed"
+                      rows={8}
+                      className="w-full resize-none bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 text-base md:text-lg font-serif leading-relaxed"
                     />
                   </div>
                   <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-slate-800">
@@ -163,7 +224,7 @@ function SpeakContent() {
                       "text-[11px] font-medium",
                       charCount > maxChars * 0.9 ? "text-amber-500" : "text-slate-400 dark:text-slate-600"
                     )}>
-                      {charCount} / {maxChars}
+                      {charCount.toLocaleString()} / {maxChars.toLocaleString()}
                     </span>
                     <button
                       onClick={handleCopy}
@@ -183,7 +244,7 @@ function SpeakContent() {
                 {/* Speed selector */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3 block">
-                    Playback Speed
+                    Speaking Speed
                   </label>
                   <div className="flex gap-2">
                     {SPEEDS.map(s => (
@@ -243,10 +304,7 @@ function SpeakContent() {
                     onClick={handleDownload}
                     disabled={!audioUrl}
                     title="Download audio"
-                    className={cn(
-                      "h-12 px-4 gap-2",
-                      !audioUrl && "opacity-40 cursor-not-allowed"
-                    )}
+                    className={cn("h-12 px-4 gap-2", !audioUrl && "opacity-40 cursor-not-allowed")}
                   >
                     <Download size={16} />
                     <span className="hidden sm:inline">Download</span>
@@ -255,19 +313,18 @@ function SpeakContent() {
 
               </div>
 
-              {/* Right — orb visualizer */}
+              {/* Right — orb + status */}
               <div className="lg:col-span-2 flex flex-col items-center justify-center gap-6 py-8">
                 <div className="relative">
-                  {/* Glow intensifies when playing */}
                   <div className={cn(
                     "absolute inset-0 rounded-full bg-gradient-to-br from-violet-500/20 via-blue-500/10 to-pink-500/20 blur-3xl transition-all duration-700",
                     state === "playing" ? "scale-150 opacity-100" : "scale-110 opacity-50",
                     state === "loading" && "animate-pulse scale-125"
                   )} />
-                  <VoiceOrb size={360} />
+                  <VoiceOrb size={300} />
                 </div>
 
-                {/* Status label */}
+                {/* Status */}
                 <div className="text-center">
                   <div className={cn(
                     "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
@@ -277,14 +334,13 @@ function SpeakContent() {
                       : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                   )}>
                     {state === "playing" && <><Volume2 size={14} className="animate-pulse" /> Speaking…</>}
-                    {state === "loading" && <><Loader2 size={14} className="animate-spin" /> Generating audio…</>}
+                    {state === "loading" && <><Loader2 size={14} className="animate-spin" /> Generating…</>}
                     {state === "error"   && <><AlertCircle size={14} /> Error</>}
-                    {state === "idle"    && <><Volume2 size={14} /> Ready</>}
+                    {state === "idle"    && <><Mic2 size={14} /> Ready</>}
                   </div>
 
-                  {/* Active voice badge */}
                   <p className="text-xs text-slate-400 dark:text-slate-600 mt-2">
-                    MMS Kikuyu · {SPEEDS.find(s => s.value === speed)?.label ?? speed + '×'} speed
+                    {activeEngine.name} · {SPEEDS.find(s => s.value === speed)?.label} speed
                   </p>
                 </div>
               </div>

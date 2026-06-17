@@ -8,30 +8,26 @@ import path from 'path';
 
 const execAsync = promisify(exec);
 
-export const maxDuration = 60;
+export const maxDuration = 300; // 5 min — long passages need more time
+
+// Path to the c-elo reference audio (30s clip from YouTube, 24kHz mono)
+const REFERENCE_WAV = path.join(process.cwd(), 'chatterbox-server', 'celo_reference.wav');
 
 /**
- * Resample MMS 16kHz output → 48kHz and normalize volume to ~-18dB peak.
- * This closes the quality gap vs natural speech recordings.
- * Falls back to raw buffer if ffmpeg isn't available.
+ * Resample any WAV to 48kHz and normalize volume to broadcast level.
+ * MMS outputs 16kHz — this brings it up to c-elo quality range.
  */
 async function resampleAndNormalize(input: Buffer): Promise<Buffer> {
-  const tmpIn  = path.join(os.tmpdir(), `mms_in_${Date.now()}.wav`);
-  const tmpOut = path.join(os.tmpdir(), `mms_out_${Date.now()}.wav`);
+  const tmpIn  = path.join(os.tmpdir(), `tts_in_${Date.now()}.wav`);
+  const tmpOut = path.join(os.tmpdir(), `tts_out_${Date.now()}.wav`);
   try {
     fs.writeFileSync(tmpIn, input);
-    // Pipeline that replicates natural human vocal characteristics:
-    // 1. asetrate=48000*0.95 — slight pitch-down trick (warms the voice, adds depth)
-    // 2. aresample=48000     — resample to true 48kHz after rate change
-    // 3. atempo=1.05         — compensate speed back up (net: warmer tone, same pace)
-    // 4. loudnorm            — normalize to -23 LUFS / -1 dBTP (calm, natural volume like c-elo)
     await execAsync(
-      `ffmpeg -i "${tmpIn}" -af "asetrate=48000*0.95,aresample=48000,atempo=1.05,loudnorm=I=-23:TP=-1:LRA=11" -acodec pcm_s16le -ar 48000 -ac 1 "${tmpOut}" -y`
+      `ffmpeg -i "${tmpIn}" -af "aresample=48000,loudnorm=I=-18:TP=-1:LRA=7" -acodec pcm_s16le -ar 48000 -ac 1 "${tmpOut}" -y`
     );
-    const result = fs.readFileSync(tmpOut);
-    return result;
+    return fs.readFileSync(tmpOut);
   } catch (e: any) {
-    console.warn('[Speak] ffmpeg post-process failed, returning raw audio:', e.message?.split('\n')[0]);
+    console.warn('[Speak] ffmpeg normalize failed:', e.message?.split('\n')[0]);
     return input;
   } finally {
     try { fs.unlinkSync(tmpIn); } catch {}
@@ -39,55 +35,195 @@ async function resampleAndNormalize(input: Buffer): Promise<Buffer> {
   }
 }
 
+function bufferToArrayBuffer(buf: Buffer): ArrayBuffer {
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+}
+
+// ── Engine 1: MMS (Modal GPU) ─────────────────────────────────────────────────
+async function synthesizeMMS(text: string, speed: number): Promise<Buffer> {
+  const mmsUrl = process.env.MMS_TTS_URL;
+  if (!mmsUrl) throw new Error('MMS_TTS_URL not configured');
+
+  const res = await fetch(`${mmsUrl}/synthesize`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, speed }),
+    signal: AbortSignal.timeout(120000),
+  });
+  if (!res.ok) throw new Error(`MMS error: ${res.status}`);
+  const raw = Buffer.from(await res.arrayBuffer());
+  // Upsample 16kHz → 48kHz + normalize
+  return resampleAndNormalize(raw);
+}
+
+// ── Engine 2: Chatterbox (local, port 5003) ───────────────────────────────────
+async function synthesizeChatterbox(text: string, speed: number): Promise<Buffer> {
+  const url = process.env.COQUI_TTS_URL || 'http://localhost:5003';
+
+  const res = await fetch(`${url}/synthesize`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, speed, exaggeration: 0.3, cfg_weight: 0.5 }),
+    signal: AbortSignal.timeout(120000),
+  });
+  if (!res.ok) throw new Error(`Chatterbox error: ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+// ── Engine 3: OpenVoice v2 (local, port 5004) ─────────────────────────────────
+// Two-stage: MMS for phonemes → OpenVoice for voice conversion using celo_reference.wav
+async function synthesizeOpenVoice(text: string, speed: number): Promise<Buffer> {
+  const openvoiceUrl = process.env.OPENVOICE_URL || 'http://localhost:5004';
+
+  // Stage 1 — get MMS audio for correct Kikuyu phonemes
+  let sourceAudio: Buffer;
+  try {
+    const mmsUrl = process.env.MMS_TTS_URL;
+    if (mmsUrl) {
+      const mmsRes = await fetch(`${mmsUrl}/synthesize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, speed }),
+        signal: AbortSignal.timeout(60000),
+      });
+      sourceAudio = mmsRes.ok ? Buffer.from(await mmsRes.arrayBuffer()) : Buffer.alloc(0);
+    } else {
+      sourceAudio = Buffer.alloc(0);
+    }
+  } catch {
+    sourceAudio = Buffer.alloc(0);
+  }
+
+  // Stage 2 — OpenVoice converts voice to c-elo
+  const formData = new FormData();
+  formData.append('text', text);
+  formData.append('speed', speed.toString());
+  if (sourceAudio.length > 0) {
+    formData.append('source_audio', new Blob([sourceAudio], { type: 'audio/wav' }), 'source.wav');
+  }
+  if (fs.existsSync(REFERENCE_WAV)) {
+    const refBuffer = fs.readFileSync(REFERENCE_WAV);
+    formData.append('reference_audio', new Blob([refBuffer], { type: 'audio/wav' }), 'reference.wav');
+  }
+
+  const res = await fetch(`${openvoiceUrl}/convert`, {
+    method: 'POST',
+    body: formData,
+    signal: AbortSignal.timeout(120000),
+  });
+  if (!res.ok) throw new Error(`OpenVoice error: ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+// ── Engine 4: RVC (local, port 5005) ──────────────────────────────────────────
+// Two-stage: MMS for phonemes → RVC for voice conversion using pretrained model
+async function synthesizeRVC(text: string, speed: number): Promise<Buffer> {
+  const rvcUrl = process.env.RVC_URL || 'http://localhost:5005';
+
+  // Stage 1 — MMS audio
+  let sourceAudio: Buffer = Buffer.alloc(0);
+  try {
+    const mmsUrl = process.env.MMS_TTS_URL;
+    if (mmsUrl) {
+      const mmsRes = await fetch(`${mmsUrl}/synthesize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, speed }),
+        signal: AbortSignal.timeout(60000),
+      });
+      if (mmsRes.ok) sourceAudio = Buffer.from(await mmsRes.arrayBuffer());
+    }
+  } catch {}
+
+  // Stage 2 — RVC voice conversion
+  const formData = new FormData();
+  formData.append('pitch_shift', '0');           // 0 semitones = same pitch
+  formData.append('f0_method', 'rmvpe');         // best pitch extraction method
+  formData.append('index_rate', '0.75');         // voice similarity to training data
+  if (sourceAudio.length > 0) {
+    formData.append('audio', new Blob([sourceAudio], { type: 'audio/wav' }), 'input.wav');
+  }
+
+  const res = await fetch(`${rvcUrl}/convert`, {
+    method: 'POST',
+    body: formData,
+    signal: AbortSignal.timeout(120000),
+  });
+  if (!res.ok) throw new Error(`RVC error: ${res.status}`);
+  const converted = Buffer.from(await res.arrayBuffer());
+  return resampleAndNormalize(converted);
+}
+
+// ── Main handler ──────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
-    const { text, voice, speed } = await request.json();
+    const { text, voice, speed, engine = 'mms' } = await request.json();
 
-    const mmsUrl    = process.env.MMS_TTS_URL;
+    if (!text?.trim()) {
+      return NextResponse.json({ error: 'Text is required' }, { status: 400 });
+    }
+
+    const ttsSpeed  = typeof speed === 'number' ? Math.max(0.5, Math.min(1.5, speed)) : 0.75;
     const openaiKey = process.env.OPENAI_API_KEY;
 
-    // MMS accepts 0.5–1.5; default 0.75 = natural pace for Kikuyu
-    const ttsSpeed = typeof speed === 'number' ? Math.max(0.5, Math.min(1.5, speed)) : 0.75;
+    console.log(`[Speak] Engine: ${engine} | Speed: ${ttsSpeed} | Length: ${text.length} chars`);
 
-    // 1. Modal MMS-TTS (GPU) — best native Kikuyu pronunciation
-    if (mmsUrl) {
-      try {
-        console.log(`[Speak] Trying Modal MMS TTS (speed=${ttsSpeed})...`);
-        const response = await fetch(`${mmsUrl}/synthesize`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, speed: ttsSpeed }),
-          signal: AbortSignal.timeout(45000),
-        });
-        if (!response.ok) throw new Error(`MMS server error: ${response.status}`);
-        const rawBuffer = await response.arrayBuffer();
+    // Route to selected engine
+    try {
+      let audioBuffer: Buffer;
 
-        // MMS outputs 16kHz mono — upsample to 48kHz and normalize volume
-        // so it sounds closer to natural speech (c-elo reference: 48kHz, -20dB peak)
-        const normalized = await resampleAndNormalize(Buffer.from(rawBuffer));
-        console.log('[Speak] Modal MMS TTS succeeded');
-        // Convert Node Buffer → plain ArrayBuffer for NextResponse
-        const ab = normalized.buffer as ArrayBuffer;
-        const slice = ab.slice(normalized.byteOffset, normalized.byteOffset + normalized.byteLength);
-        return new NextResponse(slice, {
-          headers: { 'Content-Type': 'audio/wav' },
-        });
-      } catch (mmsErr: any) {
-        console.warn('[Speak] Modal MMS TTS failed, trying OpenAI:', mmsErr.message);
+      switch (engine) {
+        case 'chatterbox':
+          audioBuffer = await synthesizeChatterbox(text, ttsSpeed);
+          break;
+        case 'openvoice':
+          audioBuffer = await synthesizeOpenVoice(text, ttsSpeed);
+          break;
+        case 'rvc':
+          audioBuffer = await synthesizeRVC(text, ttsSpeed);
+          break;
+        case 'mms':
+        default:
+          audioBuffer = await synthesizeMMS(text, ttsSpeed);
+          break;
       }
-    }
 
-    // 2. OpenAI TTS — reliable fallback
-    if (!openaiKey) {
-      return NextResponse.json({ error: 'No TTS service available' }, { status: 500 });
+      console.log(`[Speak] ${engine} succeeded — ${audioBuffer.length} bytes`);
+      return new NextResponse(bufferToArrayBuffer(audioBuffer), {
+        headers: { 'Content-Type': 'audio/wav' },
+      });
+
+    } catch (engineErr: any) {
+      console.warn(`[Speak] ${engine} failed: ${engineErr.message?.split('\n')[0]}`);
+
+      // Auto-fallback chain: any engine failure → try MMS → OpenAI
+      if (engine !== 'mms') {
+        try {
+          console.log('[Speak] Falling back to MMS...');
+          const audioBuffer = await synthesizeMMS(text, ttsSpeed);
+          return new NextResponse(bufferToArrayBuffer(audioBuffer), {
+            headers: { 'Content-Type': 'audio/wav', 'X-Fallback': 'mms' },
+          });
+        } catch (mmsErr: any) {
+          console.warn('[Speak] MMS fallback failed:', mmsErr.message?.split('\n')[0]);
+        }
+      }
+
+      // Last resort — OpenAI
+      if (openaiKey) {
+        console.log('[Speak] Falling back to OpenAI TTS...');
+        const openaiSpeed = Math.max(0.25, Math.min(4.0, ttsSpeed));
+        const audioBuffer = await synthesizeWithOpenAI(text, openaiKey, voice ?? 'onyx', openaiSpeed);
+        return new NextResponse(audioBuffer, {
+          headers: { 'Content-Type': 'audio/mpeg', 'X-Fallback': 'openai' },
+        });
+      }
+
+      return NextResponse.json(
+        { error: `${engine} failed: ${engineErr.message}` },
+        { status: 500 }
+      );
     }
-    console.log('[Speak] Falling back to OpenAI TTS...');
-    // Map our 0.5–1.5 speed range to OpenAI's 0.25–4.0 range
-    const openaiSpeed = Math.max(0.25, Math.min(4.0, ttsSpeed));
-    const audioBuffer = await synthesizeWithOpenAI(text, openaiKey, voice ?? 'onyx', openaiSpeed);
-    return new NextResponse(audioBuffer, {
-      headers: { 'Content-Type': 'audio/mpeg' },
-    });
 
   } catch (error: any) {
     console.error('[Speak]', error.message);
