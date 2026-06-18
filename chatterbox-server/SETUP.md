@@ -45,12 +45,53 @@ Should return:
 }
 ```
 
-## Quality Settings
+## API Endpoints
 
-In `/synthesize` POST body:
+### `POST /synthesize`
+Generate speech from text using the c-elo reference voice.
+
+Request body (JSON):
+- `text`: string — text to synthesize
 - `speed`: 0.6=slow, 0.75=normal, 0.9=fast (default: 0.75)
 - `exaggeration`: 0=neutral, 0.3=slight emotion, 1.0=very expressive (default: 0.3)
 - `cfg_weight`: 0.5=balanced, 1.0=strict voice clone (default: 0.5)
+- `use_cache`: boolean — skip synthesis if cached WAV exists (default: true)
+
+Returns: `audio/wav` — 24kHz PCM_16 WAV
+
+### `GET /health`
+Returns server status, model info, device, and cached phrase count.
+
+### `DELETE /cache`
+Clears all cached synthesized WAV files from `public/audio/cache/`.
+
+---
+
+### `POST /synthesize-with-reference`
+Synthesize text using a custom reference audio for voice cloning. Falls back to `celo_reference.wav` if no reference is uploaded.
+
+Designed for the **MMS→Chatterbox two-stage pipeline**: MMS generates phoneme-correct Kikuyu audio, then this endpoint re-generates the same text in the target speaker's voice.
+
+Request: `multipart/form-data`
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `text` | string | **required** | Text to synthesize |
+| `reference_audio` | file (WAV) | optional | Override voice reference; falls back to `celo_reference.wav` |
+| `speed` | float | `0.75` | Speaking pace (0.5–1.5) |
+| `exaggeration` | float | `0.3` | Emotion expressiveness (0.0–1.0) |
+| `cfg_weight` | float | `0.5` | Voice similarity to reference (0.0–1.0) |
+
+Returns: `audio/wav` — 24 kHz PCM_16 WAV
+
+Cache is keyed on `(text, reference basename, speed, exaggeration)`.
+
+---
+
+### `POST /convert`
+> **Note:** This endpoint always returns HTTP 400. Chatterbox is a generative TTS model and cannot perform direct voice conversion (pitch/timbre transplant). Use `POST /synthesize` or `POST /synthesize-with-reference` instead.
+
+The endpoint exists to document the intended MMS→Chatterbox pipeline and provides a clear error message guiding callers to the correct endpoint.
 
 ## TTS Priority Chain
 

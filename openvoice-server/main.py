@@ -1,206 +1,197 @@
 """
-OpenVoice v2 Server — Zero-shot voice conversion
-Uses c-elo reference audio to convert any speech to c-elo's voice.
+OpenVoice v2 Server — Voice Conversion Only
+Converts MMS TTS audio (with correct Kikuyu phonemes) to c-elo's voice.
 
-Two modes:
-  1. Text → TTS (built-in MeloTTS) → voice converted to c-elo
-  2. Audio → voice converted to c-elo (pass source_audio in form data)
+No MeloTTS / no text synthesis here — the Next.js route sends MMS audio
+as source_audio, so this server only needs to do speaker conversion.
+
+Pipeline:
+  Next.js → MMS (Modal GPU, Kikuyu phonemes) → OpenVoice v2 (c-elo voice)
 
 Setup:
     cd openvoice-server
-    venv311\\Scripts\\activate
-    pip install -r requirements.txt
-    python main.py
+    setup.bat          # first time only
+    start.bat          # every time
 
 Server: http://localhost:5004
 """
 
-import os, io, sys, hashlib
-import numpy as np
-import soundfile as sf
+import os, hashlib, tempfile
 import torch
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response
-from pydantic import BaseModel
 
-app = FastAPI(title="OpenVoice v2 — Kikuyu Voice Server")
+app = FastAPI(title="OpenVoice v2 — Voice Conversion Server")
 
 CACHE_DIR = os.getenv("CACHE_DIR", "../public/audio/cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-REFERENCE_WAV = os.path.join(os.path.dirname(__file__), "..", "chatterbox-server", "celo_reference.wav")
+# Reference audio — c-elo's voice (24kHz mono WAV)
+REFERENCE_WAV = os.path.join(
+    os.path.dirname(__file__), "..", "chatterbox-server", "celo_reference.wav"
+)
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-print(f"[OpenVoice] Loading on {DEVICE}...")
-
 # ── Load OpenVoice v2 ─────────────────────────────────────────────────────────
+print(f"[OpenVoice] Loading tone color converter on {DEVICE}...")
+
 from openvoice import se_extractor
 from openvoice.api import ToneColorConverter
 
-CKPT_DIR = os.path.join(os.path.dirname(__file__), "checkpoints_v2", "converter")
+CKPT_DIR    = os.path.join(os.path.dirname(__file__), "checkpoints_v2", "converter")
 CONFIG_PATH = os.path.join(CKPT_DIR, "config.json")
 CKPT_PATH   = os.path.join(CKPT_DIR, "checkpoint.pth")
 
-# Auto-download if not present
+# Auto-download checkpoints from Hugging Face if not present
+# (The original MyShell S3 URL returns 403; official HF repo is the mirror)
 if not os.path.exists(CONFIG_PATH):
-    print("[OpenVoice] Downloading checkpoints...")
-    import urllib.request, zipfile
-    url = "https://myshell-public-repo-hosting.s3.amazonaws.com/openvoice/checkpoints_v2_0417.zip"
-    zip_path = os.path.join(os.path.dirname(__file__), "checkpoints_v2.zip")
-    urllib.request.urlretrieve(url, zip_path, reporthook=lambda b, bs, t: print(f"  {b*bs/1024/1024:.1f}MB / {t/1024/1024:.1f}MB", end="\r"))
-    with zipfile.ZipFile(zip_path, "r") as z:
-        z.extractall(os.path.dirname(__file__))
-    os.remove(zip_path)
-    print("\n[OpenVoice] Checkpoints downloaded.")
+    print("[OpenVoice] Downloading v2 checkpoints from Hugging Face...")
+    import urllib.request
+    os.makedirs(CKPT_DIR, exist_ok=True)
+
+    HF_BASE = "https://huggingface.co/myshell-ai/OpenVoiceV2/resolve/main/converter"
+    files = {
+        "config.json":    f"{HF_BASE}/config.json",
+        "checkpoint.pth": f"{HF_BASE}/checkpoint.pth",
+    }
+
+    for fname, url in files.items():
+        dest = os.path.join(CKPT_DIR, fname)
+        print(f"[OpenVoice]   {fname} ...", end=" ", flush=True)
+        urllib.request.urlretrieve(url, dest)
+        size_mb = os.path.getsize(dest) / 1024 / 1024
+        print(f"{size_mb:.1f} MB")
+
+    print("[OpenVoice] Checkpoints downloaded.")
 
 tone_color_converter = ToneColorConverter(CONFIG_PATH, device=DEVICE)
 tone_color_converter.load_ckpt(CKPT_PATH)
 
-# ── MeloTTS for text synthesis (base voice before conversion) ─────────────────
-from melo.api import TTS as MeloTTS
+# Extract target speaker embedding from c-elo reference once at startup
+if not os.path.exists(REFERENCE_WAV):
+    raise RuntimeError(
+        f"Reference WAV not found: {REFERENCE_WAV}\n"
+        "Run: ffmpeg -i <source> -ar 24000 -ac 1 chatterbox-server/celo_reference.wav"
+    )
 
-base_tts = MeloTTS(language="EN", device=DEVICE)
-speaker_ids = base_tts.hps.data.spk2id
-
-# ── Extract reference speaker embedding once ──────────────────────────────────
 print(f"[OpenVoice] Extracting speaker embedding from: {REFERENCE_WAV}")
-target_se, _ = se_extractor.get_se(REFERENCE_WAV, tone_color_converter, vad=True)
+# Bypass se_extractor.get_se entirely — it calls faster-whisper with device="cuda"
+# even on CPU-only machines. We export the reference as a single temp WAV segment
+# and call extract_se directly, which avoids the Whisper segmentation step.
+with tempfile.TemporaryDirectory() as _tmpdir:
+    import shutil
+    _ref_copy = os.path.join(_tmpdir, "ref.wav")
+    shutil.copy2(REFERENCE_WAV, _ref_copy)
+    _se_save = os.path.join(_tmpdir, "se.pth")
+    target_se = tone_color_converter.extract_se([_ref_copy], se_save_path=_se_save)
 print(f"[OpenVoice] ✓ Ready | device={DEVICE}")
 
 
-def get_cache_path(text: str, speed: float) -> str:
-    key = hashlib.md5(f"ov2:{text}:{speed}".encode()).hexdigest()
-    return os.path.join(CACHE_DIR, f"openvoice_{key}.wav")
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def get_cache_path(audio_hash: str) -> str:
+    return os.path.join(CACHE_DIR, f"openvoice_{audio_hash}.wav")
 
 
-def synthesize_and_convert(text: str, speed: float = 0.75) -> bytes:
-    cache_path = get_cache_path(text, speed)
+def convert_to_celo(source_wav_bytes: bytes) -> bytes:
+    """Convert any WAV audio to c-elo's voice using OpenVoice v2."""
+    audio_hash = hashlib.md5(source_wav_bytes).hexdigest()[:16]
+    cache_path = get_cache_path(audio_hash)
+
     if os.path.exists(cache_path):
-        print(f"[Cache HIT] {text[:40]}")
+        print(f"[Cache HIT] {audio_hash}")
         with open(cache_path, "rb") as f:
             return f.read()
 
-    # Step 1: MeloTTS base synthesis
-    tmp_base = os.path.join(os.path.dirname(__file__), f"_tmp_base_{os.getpid()}.wav")
-    speaker_key = "EN-Default" if "EN-Default" in speaker_ids else list(speaker_ids.keys())[0]
-    base_tts.tts_to_file(
-        text,
-        speaker_ids[speaker_key],
-        tmp_base,
-        speed=speed,
-    )
+    pid = os.getpid()
+    tmp_src = os.path.join(os.path.dirname(__file__), f"_src_{pid}.wav")
+    tmp_out = os.path.join(os.path.dirname(__file__), f"_out_{pid}.wav")
 
-    # Step 2: Extract source speaker embedding
-    source_se, _ = se_extractor.get_se(tmp_base, tone_color_converter, vad=True)
+    try:
+        with open(tmp_src, "wb") as f:
+            f.write(source_wav_bytes)
 
-    # Step 3: Convert to c-elo's voice
-    tmp_out = os.path.join(os.path.dirname(__file__), f"_tmp_out_{os.getpid()}.wav")
-    tone_color_converter.convert(
-        audio_src_path=tmp_base,
-        src_se=source_se,
-        tgt_se=target_se,
-        output_path=tmp_out,
-        message="@OpenVoice",
-    )
+        # Extract source speaker embedding directly (bypass se_extractor to avoid
+        # faster-whisper hardcoding device="cuda" on CPU-only machines)
+        with tempfile.TemporaryDirectory() as _se_tmp:
+            _se_save = os.path.join(_se_tmp, "se.pth")
+            source_se = tone_color_converter.extract_se([tmp_src], se_save_path=_se_save)
 
-    with open(tmp_out, "rb") as f:
-        audio_bytes = f.read()
+        # Convert to c-elo's voice
+        tone_color_converter.convert(
+            audio_src_path=tmp_src,
+            src_se=source_se,
+            tgt_se=target_se,
+            output_path=tmp_out,
+            message="@OpenVoice",
+        )
 
-    # Cache and clean up
-    with open(cache_path, "wb") as f:
-        f.write(audio_bytes)
+        with open(tmp_out, "rb") as f:
+            result = f.read()
 
-    for p in [tmp_base, tmp_out]:
-        try: os.remove(p)
-        except: pass
+        # Cache result
+        with open(cache_path, "wb") as f:
+            f.write(result)
 
-    return audio_bytes
+        return result
 
-
-def convert_audio_to_celo(source_wav_bytes: bytes) -> bytes:
-    """Convert uploaded audio to c-elo's voice using OpenVoice."""
-    tmp_src = os.path.join(os.path.dirname(__file__), f"_tmp_src_{os.getpid()}.wav")
-    tmp_out = os.path.join(os.path.dirname(__file__), f"_tmp_out_{os.getpid()}.wav")
-
-    with open(tmp_src, "wb") as f:
-        f.write(source_wav_bytes)
-
-    source_se, _ = se_extractor.get_se(tmp_src, tone_color_converter, vad=True)
-    tone_color_converter.convert(
-        audio_src_path=tmp_src,
-        src_se=source_se,
-        tgt_se=target_se,
-        output_path=tmp_out,
-        message="@OpenVoice",
-    )
-
-    with open(tmp_out, "rb") as f:
-        audio_bytes = f.read()
-
-    for p in [tmp_src, tmp_out]:
-        try: os.remove(p)
-        except: pass
-
-    return audio_bytes
+    finally:
+        for p in [tmp_src, tmp_out]:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-class SynthRequest(BaseModel):
-    text: str
-    speed: float = 0.75
-
-
-@app.post("/synthesize")
-async def synthesize(req: SynthRequest):
-    """Text → MeloTTS → OpenVoice v2 (c-elo voice)"""
-    if not req.text.strip():
-        raise HTTPException(400, "No text")
-    try:
-        audio = synthesize_and_convert(req.text, max(0.5, min(1.5, req.speed)))
-        return Response(content=audio, media_type="audio/wav")
-    except Exception as e:
-        raise HTTPException(500, str(e))
-
-
 @app.post("/convert")
 async def convert(
+    source_audio: UploadFile = File(...),
+    # text and speed accepted but ignored — kept for API compatibility
     text: str = Form(""),
     speed: float = Form(0.75),
-    source_audio: UploadFile = File(None),
     reference_audio: UploadFile = File(None),
 ):
-    """Audio → OpenVoice v2 voice conversion (c-elo voice)"""
+    """
+    Convert uploaded WAV audio to c-elo's voice.
+    source_audio — WAV bytes from MMS (or any other TTS engine)
+    """
     try:
-        if source_audio:
-            # Convert provided audio to c-elo voice
-            src_bytes = await source_audio.read()
-            audio = convert_audio_to_celo(src_bytes)
-        elif text.strip():
-            # Fall back to text synthesis
-            audio = synthesize_and_convert(text, max(0.5, min(1.5, speed)))
-        else:
-            raise HTTPException(400, "Provide source_audio or text")
+        src_bytes = await source_audio.read()
+        if not src_bytes:
+            raise HTTPException(400, "source_audio is empty")
+
+        audio = convert_to_celo(src_bytes)
         return Response(content=audio, media_type="audio/wav")
+
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[OpenVoice] Error: {e}")
         raise HTTPException(500, str(e))
 
 
 @app.get("/health")
 async def health():
+    cache_count = len([f for f in os.listdir(CACHE_DIR) if f.startswith("openvoice_")])
     return {
         "status": "ok",
         "engine": "openvoice-v2",
+        "mode": "voice-conversion-only",  # no MeloTTS
         "device": DEVICE,
         "reference": REFERENCE_WAV,
+        "cached_phrases": cache_count,
     }
 
 
 @app.delete("/cache")
 async def clear_cache():
-    cleared = sum(1 for f in os.listdir(CACHE_DIR) if f.startswith("openvoice_") and os.remove(os.path.join(CACHE_DIR, f)) is None)
+    cleared = 0
+    for f in os.listdir(CACHE_DIR):
+        if f.startswith("openvoice_") and f.endswith(".wav"):
+            os.remove(os.path.join(CACHE_DIR, f))
+            cleared += 1
     return {"cleared": cleared}
 
 

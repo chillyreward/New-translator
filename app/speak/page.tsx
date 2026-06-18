@@ -34,14 +34,6 @@ const ENGINES = [
     active: "border-violet-500 bg-violet-50 dark:bg-violet-900/20",
   },
   {
-    id: "chatterbox",
-    name: "Chatterbox",
-    desc: "24kHz voice clone",
-    color: "emerald",
-    badge: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-    active: "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20",
-  },
-  {
     id: "openvoice",
     name: "OpenVoice v2",
     desc: "Zero-shot voice clone",
@@ -170,7 +162,7 @@ function SpeakContent() {
             </div>
 
             {/* Engine selector */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+            <div className="grid grid-cols-3 gap-2 mb-6">
               {ENGINES.map(eng => (
                 <button
                   key={eng.id}

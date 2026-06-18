@@ -10,9 +10,6 @@ const execAsync = promisify(exec);
 
 export const maxDuration = 300; // 5 min — long passages need more time
 
-// Path to the c-elo reference audio (30s clip from YouTube, 24kHz mono)
-const REFERENCE_WAV = path.join(process.cwd(), 'chatterbox-server', 'celo_reference.wav');
-
 /**
  * Resample any WAV to 48kHz and normalize volume to broadcast level.
  * MMS outputs 16kHz — this brings it up to c-elo quality range.
@@ -56,21 +53,7 @@ async function synthesizeMMS(text: string, speed: number): Promise<Buffer> {
   return resampleAndNormalize(raw);
 }
 
-// ── Engine 2: Chatterbox (local, port 5003) ───────────────────────────────────
-async function synthesizeChatterbox(text: string, speed: number): Promise<Buffer> {
-  const url = process.env.COQUI_TTS_URL || 'http://localhost:5003';
-
-  const res = await fetch(`${url}/synthesize`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, speed, exaggeration: 0.3, cfg_weight: 0.5 }),
-    signal: AbortSignal.timeout(120000),
-  });
-  if (!res.ok) throw new Error(`Chatterbox error: ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
-}
-
-// ── Engine 3: OpenVoice v2 (local, port 5004) ─────────────────────────────────
+// ── Engine 2: OpenVoice v2 (local, port 5004) ─────────────────────────────────
 // Two-stage: MMS for phonemes → OpenVoice for voice conversion using celo_reference.wav
 async function synthesizeOpenVoice(text: string, speed: number): Promise<Buffer> {
   const openvoiceUrl = process.env.OPENVOICE_URL || 'http://localhost:5004';
@@ -95,16 +78,16 @@ async function synthesizeOpenVoice(text: string, speed: number): Promise<Buffer>
   }
 
   // Stage 2 — OpenVoice converts voice to c-elo
+  if (sourceAudio.length === 0) {
+    throw new Error('MMS returned no audio — cannot run OpenVoice conversion');
+  }
+
+  // Stage 2 — send MMS audio to OpenVoice for voice conversion to c-elo
+  // The server already has the target speaker embedding loaded at startup.
   const formData = new FormData();
   formData.append('text', text);
   formData.append('speed', speed.toString());
-  if (sourceAudio.length > 0) {
-    formData.append('source_audio', new Blob([sourceAudio], { type: 'audio/wav' }), 'source.wav');
-  }
-  if (fs.existsSync(REFERENCE_WAV)) {
-    const refBuffer = fs.readFileSync(REFERENCE_WAV);
-    formData.append('reference_audio', new Blob([refBuffer], { type: 'audio/wav' }), 'reference.wav');
-  }
+  formData.append('source_audio', new Blob([sourceAudio], { type: 'audio/wav' }), 'source.wav');
 
   const res = await fetch(`${openvoiceUrl}/convert`, {
     method: 'POST',
@@ -173,9 +156,6 @@ export async function POST(request: Request) {
       let audioBuffer: Buffer;
 
       switch (engine) {
-        case 'chatterbox':
-          audioBuffer = await synthesizeChatterbox(text, ttsSpeed);
-          break;
         case 'openvoice':
           audioBuffer = await synthesizeOpenVoice(text, ttsSpeed);
           break;

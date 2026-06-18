@@ -26,12 +26,19 @@ The main UI is built around `components/TranslationCard.tsx` — a two-panel car
 Dedicated text-to-speech page. Accepts an optional `?q=<encoded text>` query parameter to pre-fill the input from the translation card or sidebar.
 
 **Features:**
-- Textarea input for Kikuyu text (max 1,000 characters)
-- **Playback speed selector**: Slow · Normal · Fast · Faster — maps to MMS VITS `speaking_rate` values (0.6 · 0.75 · 0.9 · 1.1). The selected speed is sent to `/api/speak` in the request body and also applied to the browser's `audio.playbackRate`
-- Play / Stop controls with a VoiceOrb visualizer that animates during loading and playback
-- Download button saves the synthesized audio as a `.wav` file
+- Textarea input for Kikuyu text (max 5,000 characters)
+- **Voice engine selector**: Choose between three synthesis engines before generating audio:
+  | Engine | Description |
+  |--------|-------------|
+  | **MMS** | Meta MMS VITS — best native Kikuyu phonemes (default) |
+  | **OpenVoice v2** | Two-stage: MMS phonemes → OpenVoice v2 voice conversion |
+  | **RVC** | Two-stage: MMS phonemes → RVC speaker voice conversion |
+  The selected engine ID is sent to `/api/speak` in the request body as `engine`. The `chatterbox` and `chatterbox-mms` engine IDs have been removed from the route.
+- **Playback speed selector**: Slow · Normal · Fast · Faster — maps to MMS VITS `speaking_rate` values (0.6 · 0.75 · 0.9 · 1.1). The selected speed is sent to `/api/speak` in the request body and also applied at the browser level.
+- Play / Stop controls with an animated VoiceOrb visualizer that scales and pulses during loading and playback
+- Download button saves the synthesized audio as a `.wav` file (filename includes engine name and timestamp)
 - Copy button copies the input text to clipboard
-- TTS pipeline: MMS Kikuyu → OpenAI (same fallback chain as `/api/speak`)
+- TTS pipeline: the `engine` field is forwarded to `/api/speak`; the server-side fallback chain remains MMS Kikuyu → OpenAI TTS
 
 ### 🎙️ Multiple Input Methods
 - **Text Input**: Type or paste text directly (up to 5000 characters)
@@ -88,7 +95,7 @@ Route timeout: **800 seconds** (13 minutes) to accommodate long videos.
    - **Modal MMS TTS** (`MMS_TTS_URL`): sent with `speed: 0.85`, retried up to **3 times** (2 s between retries) before raising an error. If MMS is configured, OpenAI TTS is not used as a fallback — consistent speaker identity is preserved.
    - **OpenAI TTS** (`onyx` voice, `speed: 0.78`): used only when `MMS_TTS_URL` is not set.
 
-> **Note on `/api/speak` fallback chain:** The TTS pipeline is **Modal MMS → OpenAI TTS**. Chatterbox/Coqui has been removed from the route. `COQUI_TTS_URL` is no longer used by `/api/speak`.
+> **Note on `/api/speak` fallback chain:** The TTS pipeline is **Modal MMS → OpenAI TTS**. Chatterbox and Chatterbox-MMS have been removed from the route — `synthesizeChatterbox` and `synthesizeChatterboxMMS` no longer exist in `/api/speak`. The engines are now: Engine 1 — MMS, Engine 2 — OpenVoice v2, Engine 3 — RVC. `COQUI_TTS_URL` is no longer used by `/api/speak`.
    
    After synthesis, each segment WAV is re-encoded to 24 kHz 16-bit mono PCM using ffmpeg. If the synthesized audio duration differs from the source segment slot, an `atempo` filter stretches/compresses it to fit (clamped between 0.5× and 1.2× for naturalness).
 6. Mix dubbed segments into a full-length audio track in pure Node.js — each segment's 16-bit PCM is copied into a silent buffer at the correct timestamp offset, then a WAV header is written. A 20 ms linear fade-in and fade-out is applied to each segment before mixing to smooth hard cuts at segment boundaries. This avoids ffmpeg command-line length limits.
@@ -296,7 +303,11 @@ MMS_TTS_URL=https://<your-workspace>--kikuyu-tts-app.modal.run
 
 **`/api/speak` client-side timeout:** The Next.js route waits up to **45 seconds** for a response from `MMS_TTS_URL` (increased from 30s to accommodate Modal cold starts). If MMS is unreachable or returns an error, the route falls through to OpenAI TTS.
 
-**MMS audio post-processing:** MMS outputs 16 kHz mono WAV. After receiving the raw buffer, the route runs `resampleAndNormalize()` to upsample to 48 kHz and normalize volume to a –20 dB peak reference (matching a natural speech loudness target). The processed WAV is returned to the client instead of the raw 16 kHz output, improving perceived audio quality.
+**MMS audio post-processing:** MMS outputs 16 kHz mono WAV. After receiving the raw buffer, the route runs `resampleAndNormalize()` which applies a two-step ffmpeg pipeline:
+1. `aresample=48000` — upsample to 48 kHz (matches the c-elo reference quality level)
+2. `loudnorm=I=-18:TP=-1:LRA=7` — normalize to –18 LUFS integrated / –1 dBTP true peak (natural broadcast level)
+
+The processed WAV is returned to the client instead of the raw 16 kHz output. If ffmpeg is unavailable, the raw buffer is returned as a graceful fallback.
 
 **Local test (without deploying):**
 ```bash
@@ -355,7 +366,140 @@ ffmpeg -i <source_audio> -ar 24000 -ac 1 chatterbox-server/celo_reference.wav
 
 **`DELETE /cache`** — removes all `chatterbox_*.wav` entries from the cache directory.
 
+**`POST /synthesize-with-reference`** — synthesize text using a custom reference audio for voice cloning. Falls back to `celo_reference.wav` if no reference is provided. Designed for the MMS→Chatterbox two-stage pipeline where callers supply the original Kikuyu text and optionally override the speaker reference.
+
+Request: `multipart/form-data`
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `text` | string | required | Text to synthesize |
+| `reference_audio` | file (WAV) | optional | Override voice reference; falls back to `celo_reference.wav` |
+| `speed` | float | `0.75` | Speaking pace (0.5–1.5) |
+| `exaggeration` | float | `0.3` | Emotion expressiveness (0.0–1.0) |
+| `cfg_weight` | float | `0.5` | Voice similarity to reference (0.0–1.0) |
+
+Response: Raw `audio/wav` bytes at 24 kHz. Cache keyed on `(text, reference basename, speed, exaggeration)`.
+
+**`POST /convert`** — always returns HTTP 400 with an explanatory message. Chatterbox is a generative TTS model and cannot perform direct voice conversion. Callers should use `/synthesize` or `/synthesize-with-reference` instead.
+
 See `mms-server/` for the Meta MMS-TTS local server setup instructions.
+
+---
+
+**RVC Voice Conversion** (`rvc-server/`) — Retrieval-based Voice Conversion at `localhost:5005`.
+
+Converts MMS TTS audio into a target speaker voice using a trained (or pretrained placeholder) RVC model. The pipeline is two-stage: MMS generates correct Kikuyu phonemes, then RVC applies the voice identity of the target speaker.
+
+**Setup:**
+```bash
+cd rvc-server
+py -3.11 -m venv venv311
+venv311\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
+
+**Model modes:**
+
+| Mode | Description |
+|------|-------------|
+| Pretrained placeholder | Downloads `Aria_En_v2.pth` automatically on first run — usable immediately |
+| Custom trained model | Train on `celo_reference.wav` via Colab, then set `RVC_MODEL_PATH` env var |
+
+**Environment variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RVC_MODEL_PATH` | `rvc-server/models/celo_voice.pth` | Path to `.pth` model file |
+| `RVC_INDEX_PATH` | `rvc-server/index/celo_voice.index` | Path to `.index` file (optional) |
+| `CACHE_DIR` | `../public/audio/cache` | Output cache directory |
+
+**`POST /convert` — multipart/form-data fields:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `audio` | file | required | Input WAV audio to convert |
+| `pitch_shift` | int | `0` | Semitone shift (0 = same pitch) |
+| `index_rate` | float | `0.75` | Voice similarity to training data (0–1) |
+| `f0_method` | string | `rmvpe` | Pitch extraction method (`rmvpe` recommended) |
+
+**Response:** Raw `audio/wav` bytes at 48 kHz mono (resampled from RVC's native 40 kHz output).
+
+**Features:**
+- Output is resampled to 48 kHz and loudness-normalized to –18 LUFS / –1 dBTP via ffmpeg
+- Cache keyed on MD5 of input audio + pitch shift — repeated requests served instantly
+- Passthrough mode: if no model is loaded, input audio is returned unchanged
+- Hot-reload endpoint `POST /load_model` — swap the model without restarting the server
+- `DELETE /cache` — clears all `rvc_*.wav` entries from the cache directory
+
+**`GET /health` response fields:** `status`, `engine` (`rvc`), `model_loaded`, `model_path`, `device`, `mode` (`voice-conversion` or `passthrough`)
+
+**`POST /load_model` form fields:** `model_path` (required), `index_path` (optional) — hot-reload a new `.pth` model at runtime.
+
+> **Note:** The `/api/speak` route targets the RVC server when `engine: "rvc"` is passed. The route calls `synthesizeMMS` first for Kikuyu phonemes, then sends that audio to `POST /convert` on `RVC_URL` (default `http://localhost:5005`). If conversion fails, the route falls back to MMS then OpenAI TTS.
+
+---
+
+**OpenVoice v2** (`openvoice-server/`) — Voice conversion only at `localhost:5004`.
+
+This server does **not** include MeloTTS or any text synthesis. It converts pre-synthesized audio (from MMS) to the c-elo speaker identity using OpenVoice v2's tone color converter. The pipeline is:
+
+```
+Next.js → MMS (Modal GPU, Kikuyu phonemes) → OpenVoice v2 (c-elo voice) → WAV
+```
+
+**Setup:**
+```bat
+cd openvoice-server
+setup.bat          # first time only — creates venv, installs deps
+start.bat          # every subsequent run
+```
+
+Checkpoints (`checkpoints_v2/converter/config.json` + `checkpoint.pth`) are downloaded automatically on first run (~500 MB) from the official Hugging Face repo [`myshell-ai/OpenVoiceV2`](https://huggingface.co/myshell-ai/OpenVoiceV2). The previous S3 URL (`myshell-public-repo-hosting.s3.amazonaws.com`) returned 403 and is no longer used.
+
+**Reference voice:** The server reads `chatterbox-server/celo_reference.wav` (24 kHz mono WAV) to extract the target speaker embedding at startup. The same reference used by Chatterbox is reused — no extra file needed. The server will refuse to start if this file is missing; convert any audio with:
+```bash
+ffmpeg -i <source_audio> -ar 24000 -ac 1 chatterbox-server/celo_reference.wav
+```
+
+**Environment variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CACHE_DIR` | `../public/audio/cache` | Output cache directory |
+| `OPENVOICE_URL` | `http://localhost:5004` | Used by `/api/speak` to reach this server |
+
+**Endpoints:**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/convert` | WAV audio → OpenVoice v2 (c-elo voice) |
+| `GET` | `/health` | Server status, engine, mode, device, reference path, cache count |
+| `DELETE` | `/cache` | Clear all `openvoice_*.wav` cache entries |
+
+> **Removed:** `POST /synthesize` (MeloTTS text synthesis) has been removed. The server no longer accepts text input or has any text-to-speech capability. Pass `source_audio` directly.
+
+**`POST /convert` — multipart/form-data fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `source_audio` | file (WAV) | **required** | WAV audio to convert (e.g. MMS output) |
+| `text` | string | ignored | Accepted for API compatibility but unused |
+| `speed` | float | ignored | Accepted for API compatibility but unused |
+| `reference_audio` | file | ignored | Accepted for API compatibility but unused |
+
+**Response:** Raw `audio/wav` bytes.
+
+**Features:**
+- Speaker embedding is extracted from the reference WAV once at startup and reused for all requests
+- Cache keyed on MD5 of `source_audio` bytes — repeated audio is served from disk instantly
+- `DELETE /cache` removes only `openvoice_*.wav` files, leaving other engines' cache intact
+
+**`GET /health` response fields:** `status`, `engine` (`openvoice-v2`), `mode` (`voice-conversion-only`), `device`, `reference`, `cached_phrases`
+
+> **Note:** The `/api/speak` route calls `synthesizeMMS` first for Kikuyu phonemes, then sends that audio to `POST /convert` on `OPENVOICE_URL` (default `http://localhost:5004`). MMS must succeed and return non-empty audio — if it does not, the engine throws immediately and the outer fallback chain takes over (MMS direct → OpenAI TTS). The `reference_audio` field is no longer sent to `/convert`; the server uses the speaker embedding it loaded at startup from `celo_reference.wav`.
+
+---
 
 ### 4. Install yt-dlp (for YouTube feature)
 
@@ -382,6 +526,10 @@ Open [http://localhost:3000](http://localhost:3000).
 | `MMS_TTS_URL` | Optional | Modal deploy URL (see Kikuyu MMS TTS setup above) |
 | `YT_DLP_PATH` | Optional | Absolute path to `yt-dlp` executable — overrides auto-detection in the `/dub` route |
 | `FFMPEG_PATH` | Optional | Absolute path to `ffmpeg` executable — overrides PATH lookup in the `/dub` route |
+| `RVC_URL` | Optional | Base URL for the RVC voice conversion server (default: `http://localhost:5005`) |
+| `RVC_MODEL_PATH` | Optional | Absolute path to a trained `.pth` RVC model — overrides the default placeholder |
+| `RVC_INDEX_PATH` | Optional | Absolute path to the `.index` file for the RVC model (improves voice similarity) |
+| `OPENVOICE_URL` | Optional | Base URL for the OpenVoice v2 server (default: `http://localhost:5004`) |
 
 ---
 
@@ -587,7 +735,8 @@ python generate_docx.py
 │   └── deploy.py                #   Deploy: py -3.11 -m modal deploy modal-tts/deploy.py
 ├── piper-server/                # Piper TTS server (localhost:5002)
 ├── chatterbox-server/           # Chatterbox TTS server — ResembleAI voice cloning (localhost:5003)
-├── mms-server/                  # Meta MMS-TTS server (localhost:5004)
+├── openvoice-server/            # OpenVoice v2 server — zero-shot voice conversion (localhost:5004)
+├── rvc-server/                  # RVC voice conversion server (localhost:5005)
 ├── lib/
 │   ├── dictionary.ts            # Phrase dictionary + pre-recorded audio map
 │   ├── kikuyu-dictionary.ts     # Structured Kikuyu dictionary with phonetics

@@ -1,11 +1,22 @@
-rvc-python
-torch>=2.0.0
-torchaudio>=2.0.0
+# Install via: venv311\Scripts\python.exe do_install.py
+# (do NOT run pip install -r requirements.txt directly — fairseq needs special handling)
+#
+# Listed here for reference only:
+torch==2.6.0
+torchaudio==2.6.0
 fastapi==0.111.0
-uvicorn==0.30.1
+uvicorn[standard]==0.30.1
 soundfile==0.12.1
-numpy>=1.24.0
+numpy>=1.24.0,<2.0
 pydantic>=2.0.0
-praat-parselmouth>=0.4.3
-pyworld>=0.3.4
-faiss-cpu>=1.7.4
+python-multipart
+fairseq-fixed          # pre-built fork, satisfies fairseq dep on Windows/Py3.11
+praat-parselmouth
+pyworld
+faiss-cpu
+ffmpeg-python
+librosa
+scipy
+tqdm
+numba
+rvc-python             # installed with --no-deps (fairseq already provided above)

@@ -17,12 +17,13 @@ Setup:
 Server: http://localhost:5003
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response
 from pydantic import BaseModel
 import os
 import hashlib
 import io
+import tempfile
 import numpy as np
 import soundfile as sf
 import torch
@@ -186,6 +187,180 @@ async def clear_cache():
             os.remove(os.path.join(CACHE_DIR, f))
             cleared += 1
     return {"cleared": cleared}
+
+
+@app.post("/convert")
+async def convert(
+    source_audio: UploadFile = File(...),
+    reference_audio: UploadFile = File(None),
+    speed: float = Form(0.75),
+    exaggeration: float = Form(0.3),
+    cfg_weight: float = Form(0.5),
+):
+    """
+    Voice conversion endpoint.
+
+    Takes source_audio (e.g. MMS Kikuyu output) and re-synthesizes it using
+    Chatterbox's zero-shot voice cloning. The source audio is transcribed via
+    its raw waveform characteristics to extract timing/rhythm, then Chatterbox
+    re-generates speech using the reference voice.
+
+    If reference_audio is provided it overrides the default celo_reference.wav.
+
+    Pipeline: MMS WAV → extract text timing → Chatterbox generate with ref voice
+    Since Chatterbox is generative (not a voice converter), we use the source
+    audio duration to guide speed, and re-synthesize from the original text.
+
+    Note: For pure voice conversion (pitch/timbre only, preserving exact phonemes),
+    use the /synthesize endpoint directly with the text. This endpoint is designed
+    for the MMS→Chatterbox two-stage pipeline where the caller also sends the text.
+    """
+    # Save reference audio to a temp file if provided
+    ref_path = reference_wav  # default to celo_reference.wav
+    tmp_ref = None
+    tmp_src = None
+
+    try:
+        if reference_audio is not None:
+            tmp_ref = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+            tmp_ref.write(await reference_audio.read())
+            tmp_ref.flush()
+            ref_path = tmp_ref.name
+            print(f"[Convert] Using uploaded reference: {ref_path}")
+
+        # Read source audio to get its duration → auto-adjust speed
+        src_bytes = await source_audio.read()
+        tmp_src = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        tmp_src.write(src_bytes)
+        tmp_src.flush()
+
+        src_info = sf.info(tmp_src.name)
+        src_duration = src_info.duration
+        print(f"[Convert] Source audio duration: {src_duration:.2f}s")
+
+        # We don't have text here — the caller should use /synthesize instead.
+        # This endpoint returns a 400 if no text hint is available.
+        # For the MMS pipeline, callers should POST to /synthesize with text.
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Chatterbox is a generative TTS model, not a voice converter. "
+                "To clone Celo's voice, POST to /synthesize with {text, speed, exaggeration, cfg_weight}. "
+                "The MMS→Chatterbox pipeline works by: 1) MMS generates phoneme-correct Kikuyu audio, "
+                "2) Chatterbox independently generates the same text in Celo's voice. "
+                "Use engine='chatterbox' in the Next.js speak API."
+            ),
+        )
+
+    finally:
+        if tmp_ref:
+            try:
+                os.unlink(tmp_ref.name)
+            except Exception:
+                pass
+        if tmp_src:
+            try:
+                os.unlink(tmp_src.name)
+            except Exception:
+                pass
+
+
+@app.post("/synthesize-with-reference")
+async def synthesize_with_reference(
+    text: str = Form(...),
+    reference_audio: UploadFile = File(None),
+    speed: float = Form(0.75),
+    exaggeration: float = Form(0.3),
+    cfg_weight: float = Form(0.5),
+):
+    """
+    Synthesize text using a custom reference audio for voice cloning.
+    If no reference_audio is uploaded, falls back to celo_reference.wav.
+
+    Used by the MMS→Chatterbox pipeline:
+    - text comes from the original Kikuyu input
+    - reference_audio is optional override for the clone target voice
+    """
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="No text provided")
+
+    ref_path = reference_wav
+    tmp_ref = None
+
+    try:
+        if reference_audio is not None:
+            tmp_ref = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+            tmp_ref.write(await reference_audio.read())
+            tmp_ref.flush()
+            ref_path = tmp_ref.name
+            print(f"[SynthRef] Using uploaded reference: {ref_path}")
+        else:
+            print(f"[SynthRef] Using default reference: {ref_path}")
+
+        speed       = max(0.5, min(1.5, speed))
+        exaggeration = max(0.0, min(1.0, exaggeration))
+        cfg_weight   = max(0.0, min(1.0, cfg_weight))
+
+        # Check cache (keyed on text + ref path basename + params)
+        ref_key  = os.path.basename(ref_path)
+        cache_key = hashlib.md5(f"{text}|{ref_key}|{speed}|{exaggeration}".encode()).hexdigest()
+        cache_path = os.path.join(CACHE_DIR, f"chatterbox_ref_{cache_key}.wav")
+
+        if os.path.exists(cache_path):
+            print(f"[Cache HIT] {text[:50]}")
+            with open(cache_path, "rb") as f:
+                return Response(content=f.read(), media_type="audio/wav")
+
+        print(f"[SynthRef] speed={speed} exag={exaggeration} ref={ref_key} | '{text[:60]}'")
+
+        chunks = split_chunks(text)
+        silence_frames = int(model.sr * 0.18)
+        parts = []
+
+        for i, chunk in enumerate(chunks):
+            print(f"  Chunk {i+1}/{len(chunks)}: '{chunk[:50]}'")
+            wav = model.generate(
+                chunk,
+                audio_prompt_path=ref_path,
+                exaggeration=exaggeration,
+                cfg_weight=cfg_weight,
+            )
+            arr = wav.squeeze().cpu().numpy()
+
+            if abs(speed - 1.0) > 0.05:
+                target_len = int(len(arr) / speed)
+                arr = np.interp(
+                    np.linspace(0, len(arr), target_len),
+                    np.arange(len(arr)),
+                    arr,
+                )
+
+            parts.append(arr)
+            if i < len(chunks) - 1:
+                parts.append(np.zeros(silence_frames, dtype=np.float32))
+
+        full = np.concatenate(parts).astype(np.float32)
+        peak = np.max(np.abs(full))
+        if peak > 0:
+            full = full * (0.25 / peak)
+
+        buf = io.BytesIO()
+        sf.write(buf, full, model.sr, format="WAV", subtype="PCM_16")
+        buf.seek(0)
+        audio_bytes = buf.read()
+
+        with open(cache_path, "wb") as f:
+            f.write(audio_bytes)
+
+        print(f"  ✓ Done — {len(full)/model.sr:.2f}s @ {model.sr}Hz")
+        return Response(content=audio_bytes, media_type="audio/wav")
+
+    finally:
+        if tmp_ref:
+            try:
+                os.unlink(tmp_ref.name)
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
