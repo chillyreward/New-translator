@@ -27,7 +27,7 @@ const SPEEDS = [
 const ENGINES = [
   {
     id: "mms",
-    name: "MMS",
+    name: "M",
     desc: "Best Kikuyu phonemes",
     color: "violet",
     badge: "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
@@ -35,7 +35,7 @@ const ENGINES = [
   },
   {
     id: "openvoice",
-    name: "OpenVoice v2",
+    name: "O",
     desc: "Zero-shot voice clone",
     color: "blue",
     badge: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
@@ -43,7 +43,7 @@ const ENGINES = [
   },
   {
     id: "rvc",
-    name: "RVC",
+    name: "R",
     desc: "Speaker voice conversion",
     color: "amber",
     badge: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
@@ -70,6 +70,7 @@ function SpeakContent() {
   const [error, setError]       = useState<string | null>(null);
   const [copied, setCopied]     = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioMime, setAudioMime] = useState<string>("audio/wav");
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -100,9 +101,11 @@ function SpeakContent() {
       }
 
       const blob = await res.blob();
+      const mime = res.headers.get("Content-Type")?.split(";")[0] ?? "audio/wav";
       const url  = URL.createObjectURL(blob);
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       setAudioUrl(url);
+      setAudioMime(mime);
 
       const audio = new Audio(url);
       audioRef.current = audio;
@@ -119,9 +122,10 @@ function SpeakContent() {
 
   const handleDownload = () => {
     if (!audioUrl) return;
+    const ext = audioMime === "audio/mpeg" ? "mp3" : "wav";
     const a = document.createElement("a");
     a.href     = audioUrl;
-    a.download = `kikuyu-${engine}-${Date.now()}.wav`;
+    a.download = `kikuyu-${engine}-${Date.now()}.${ext}`;
     a.click();
   };
 

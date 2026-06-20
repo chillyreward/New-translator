@@ -28,11 +28,11 @@ Dedicated text-to-speech page. Accepts an optional `?q=<encoded text>` query par
 **Features:**
 - Textarea input for Kikuyu text (max 5,000 characters)
 - **Voice engine selector**: Choose between three synthesis engines before generating audio:
-  | Engine | Description |
-  |--------|-------------|
-  | **MMS** | Meta MMS VITS — best native Kikuyu phonemes (default) |
-  | **OpenVoice v2** | Two-stage: MMS phonemes → OpenVoice v2 voice conversion |
-  | **RVC** | Two-stage: MMS phonemes → RVC speaker voice conversion |
+  | Button Label | Engine ID | Description |
+  |--------------|-----------|-------------|
+  | **M** | `mms` | Meta MMS VITS — best native Kikuyu phonemes (default) |
+  | **O** | `openvoice` | Two-stage: MMS phonemes → OpenVoice v2 voice conversion |
+  | **R** | `rvc` | Two-stage: MMS phonemes → RVC speaker voice conversion |
   The selected engine ID is sent to `/api/speak` in the request body as `engine`. The `chatterbox` and `chatterbox-mms` engine IDs have been removed from the route.
 - **Playback speed selector**: Slow · Normal · Fast · Faster — maps to MMS VITS `speaking_rate` values (0.6 · 0.75 · 0.9 · 1.1). The selected speed is sent to `/api/speak` in the request body and also applied at the browser level.
 - Play / Stop controls with an animated VoiceOrb visualizer that scales and pulses during loading and playback
@@ -404,7 +404,7 @@ python main.py
 | Mode | Description |
 |------|-------------|
 | Pretrained placeholder | Downloads `Aria_En_v2.pth` automatically on first run — usable immediately |
-| Custom trained model | Train on `celo_reference.wav` via Colab, then set `RVC_MODEL_PATH` env var |
+| Custom trained model | Train on `celo-sliced/` chunks via `dataset/train_rvc_colab.ipynb` (Colab T4/A100), then set `RVC_MODEL_PATH` env var |
 
 **Environment variables:**
 
@@ -498,6 +498,96 @@ ffmpeg -i <source_audio> -ar 24000 -ac 1 chatterbox-server/celo_reference.wav
 **`GET /health` response fields:** `status`, `engine` (`openvoice-v2`), `mode` (`voice-conversion-only`), `device`, `reference`, `cached_phrases`
 
 > **Note:** The `/api/speak` route calls `synthesizeMMS` first for Kikuyu phonemes, then sends that audio to `POST /convert` on `OPENVOICE_URL` (default `http://localhost:5004`). MMS must succeed and return non-empty audio — if it does not, the engine throws immediately and the outer fallback chain takes over (MMS direct → OpenAI TTS). The `reference_audio` field is no longer sent to `/convert`; the server uses the speaker embedding it loaded at startup from `celo_reference.wav`.
+
+---
+
+### Training the RVC Voice Model (`dataset/train_rvc_colab.ipynb`)
+
+`dataset/train_rvc_colab.ipynb` is a Google Colab notebook that trains an RVC (Retrieval-based Voice Conversion) model from the `celo-sliced/` WAV chunks produced by `slice_audio.py`. The output is a `.pth` model file and a `.index` file that you drop into `rvc-server/` to enable the `rvc` engine in the speak pipeline.
+
+**Runtime:** Runtime → Change runtime type → **T4 GPU** (free tier) or A100 (Colab Pro)
+
+**Your chunks are 40 kHz mono** — the notebook uses the 40k pretrain weights throughout.
+
+**Steps:**
+
+| Step | What happens |
+|---|---|
+| 1 | Mount Google Drive |
+| 2 | Check GPU + verify chunks are present |
+| 3 | Clone the RVC repo and install dependencies (see note below) |
+| 4 | Download 40k pretrained weights from HuggingFace (`lj1995/VoiceConversionWebUI`) |
+| 5 | Copy your `celo-sliced/` chunks into the RVC dataset folder |
+| 6 | Extract features (pitch + HuBERT embeddings) |
+| 7 | Write training filelist (`filelist.txt`) |
+| 8 | Train the voice model |
+| 9 | Build the FAISS index |
+| 10 | Quick inference test — listen to the result |
+| 11 | Save final `.pth` + `.index` to Google Drive and optionally download to browser |
+| 12 | Copy files to `rvc-server/models/` and update `main.py` paths |
+
+**Step 3 — Dependency installation details**
+
+`requirements.txt` is skipped entirely. Each dependency is installed explicitly to avoid two long-standing Colab problems:
+
+- **fairseq PyPI build conflict** — the official `fairseq` package fails to build from source on modern pip. Instead, a pre-built no-extension wheel (`One-sixth/fairseq v0.12.2`) is installed with `--no-deps`. This satisfies `import fairseq` without any C compilation.
+- **HuBERT weight download** — `hubert_base.pt` is downloaded directly from `lj1995/VoiceConversionWebUI` on HuggingFace (Step 4) rather than relying on fairseq's built-in downloader.
+
+Install order:
+1. `librosa`, `soundfile`, `praat-parselmouth`, `pyworld`, `av`, `torchcrepe` — audio/signal processing (`av` replaces `ffmpeg-python`)
+2. `faiss-gpu` — pre-built CUDA wheel (no source build)
+3. `tensorboard`, `tqdm`, `scipy`, `scikit-learn`, `Cython` — remaining RVC deps
+4. fairseq no-extension wheel — satisfies `import fairseq` for HuBERT feature extraction
+
+After installation, the cell verifies `torch`, `fairseq`, `faiss`, `librosa`, `soundfile`, `av`, `parselmouth`, and `pyworld`. Any import failure is printed with its error.
+
+> **Runtime:** ~3 minutes on first run.
+
+**Step 11 — Save to Drive**
+
+The notebook copies the best model weight and `.index` to `My Drive/rvc-celo/output/` so they survive the Colab session. It searches for the final weight in this order:
+1. `weights/<EXP_NAME>.pth` (RVC post-training export)
+2. Last checkpoint in `logs/<EXP_NAME>/G_*.pth` (most recent generator checkpoint)
+
+An optional second cell calls `google.colab.files.download()` to push both files directly to your browser's Downloads folder.
+
+**Step 12 — Use on your machine**
+
+After downloading, place the files in your `rvc-server/` directory:
+
+```
+rvc-server/
+  models/
+    celo.pth
+    celo.index          ← rename from added_IVF*.index
+```
+
+Update `rvc-server/main.py` to point to the new files:
+
+```python
+MODEL_PATH = 'models/celo.pth'
+INDEX_PATH = 'models/celo.index'
+```
+
+Restart the server — Engine R will now use the trained c-elo voice.
+
+**Inference parameter tuning**
+
+If the converted output sounds off, adjust these parameters when calling the RVC server:
+
+| Param | Default | Effect |
+|---|---|---|
+| `index_rate` | 0.75 | Higher = more like training voice, but can sound grainy |
+| `f0up_key` | 0 | Pitch shift in semitones (0 = no shift) |
+| `protect` | 0.33 | Protects consonants from voice conversion |
+| `filter_radius` | 3 | Median filter on F0 — reduces pitch noise |
+
+**After training:**
+1. Place the `.pth` file at `rvc-server/models/celo.pth` (or set `RVC_MODEL_PATH`)
+2. Place the `.index` file at `rvc-server/models/celo.index` (or set `RVC_INDEX_PATH`)
+3. Restart `rvc-server/` — the `rvc` engine will now use your trained voice
+
+> **Note:** The previous version of this notebook fine-tuned `facebook/mms-tts-kik` for TTS (pseudo-label → HuggingFace Hub workflow). That approach has been replaced by the RVC training workflow above. The MMS TTS model (`modal-tts/`) is unchanged and remains the primary synthesis engine.
 
 ---
 
@@ -736,6 +826,10 @@ python generate_docx.py
 ├── piper-server/                # Piper TTS server (localhost:5002)
 ├── chatterbox-server/           # Chatterbox TTS server — ResembleAI voice cloning (localhost:5003)
 ├── openvoice-server/            # OpenVoice v2 server — zero-shot voice conversion (localhost:5004)
+├── dataset/                     # Voice data preparation scripts for TTS/RVC fine-tuning
+│   ├── download_datasets.py     #   Download WAXAL & evie-8 Kikuyu datasets from HuggingFace
+│   ├── slice_audio.py           #   Slice raw speaker WAVs → 40kHz mono chunks for RVC training
+│   └── train_rvc_colab.ipynb    #   Colab notebook: train RVC voice model from celo-sliced chunks
 ├── rvc-server/                  # RVC voice conversion server (localhost:5005)
 ├── lib/
 │   ├── dictionary.ts            # Phrase dictionary + pre-recorded audio map
