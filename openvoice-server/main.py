@@ -35,7 +35,10 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # ── Load OpenVoice v2 ─────────────────────────────────────────────────────────
 print(f"[OpenVoice] Loading tone color converter on {DEVICE}...")
 
-from openvoice import se_extractor
+try:
+    from openvoice import se_extractor  # not used directly but some OpenVoice internals reference it
+except Exception:
+    pass  # librosa version mismatch — se_extractor not needed (we call extract_se directly)
 from openvoice.api import ToneColorConverter
 
 CKPT_DIR    = os.path.join(os.path.dirname(__file__), "checkpoints_v2", "converter")

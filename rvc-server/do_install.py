@@ -32,30 +32,25 @@ steps = [
 
     # Step 3 — web server + audio I/O
     (pip + ["fastapi==0.111.0", "uvicorn[standard]==0.30.1",
-            "soundfile==0.12.1", "numpy>=1.24.0,<2.0",
+            "soundfile==0.12.1", "numpy>=2.1.0",
             "pydantic>=2.0.0", "python-multipart"],
      "Installing FastAPI / audio libs"),
 
-    # Step 4 — fairseq-fixed: pre-built wheel, supports Py3.11, no source build
-    (pip + ["fairseq-fixed"],
-     "Installing fairseq-fixed (pre-built, no source compile)"),
-
-    # Step 5 — pitch extraction
+    # Step 4 — pitch extraction (no fairseq needed for inference)
     (pip + ["praat-parselmouth", "pyworld", "faiss-cpu"],
      "Installing pitch extraction libs"),
 
-    # Step 6 — rvc-python with --no-deps so pip won't try to rebuild fairseq
-    (pip + ["rvc-python", "--no-deps"],
-     "Installing rvc-python (--no-deps, fairseq already satisfied)"),
+    # Step 5 — rvc-python
+    (pip + ["rvc-python"],
+     "Installing rvc-python"),
 
-    # Step 7 — remaining rvc-python runtime deps that aren't fairseq
+    # Step 6 — remaining runtime deps
     (pip + ["ffmpeg-python", "librosa", "scipy", "tqdm", "numba"],
-     "Installing remaining rvc-python runtime deps"),
+     "Installing remaining runtime deps"),
 
-    # Step 8 — deps that rvc-python skipped due to --no-deps
-    # omegaconf 2.0.6 has invalid metadata rejected by pip>=24.1; use 2.3.0
+    # Step 7 — extra deps
     (pip + ["av", "loguru", "torchcrepe", "omegaconf==2.3.0"],
-     "Installing rvc-python missing deps (av, loguru, torchcrepe, omegaconf)"),
+     "Installing extra deps (av, loguru, torchcrepe, omegaconf)"),
 ]
 
 for cmd, label in steps:

@@ -55,28 +55,57 @@ def download_pretrained_model() -> bool:
     return True
 
 
-# ── Load rvc-python ───────────────────────────────────────────────────────────
+# ── Load RVC (tries infer-rvc-python first, then rvc-python) ─────────────────
 MODEL_LOADED = False
 rvc_pipeline = None
 
 try:
-    from rvc_python.infer import RVCInference
-    rvc_pipeline = RVCInference(device=DEVICE)
+    # Try infer-rvc-python (no fairseq dependency)
+    from infer_rvc_python import BaseLoader
+    rvc_pipeline = BaseLoader(only_cpu=DEVICE == "cpu")
 
     if not os.path.exists(MODEL_PATH):
         download_pretrained_model()
 
     if os.path.exists(MODEL_PATH):
         index = INDEX_PATH if os.path.exists(INDEX_PATH) else ""
-        rvc_pipeline.load_model(MODEL_PATH, index)
-        print(f"[RVC] ✓ Loaded: {os.path.basename(MODEL_PATH)} on {DEVICE}")
+        rvc_pipeline.apply_conf(
+            tag="celo",
+            file_model=MODEL_PATH,
+            pitch_algo="rmvpe",
+            pitch_lvl=0,
+            file_index=index,
+            index_influence=0.75,
+            respiration_median_filtering=3,
+            envelope_ratio=0.25,
+            consonant_breath_protection=0.33,
+            resample_sr=48000,
+        )
+        print(f"[RVC] ✓ Loaded via infer-rvc-python: {os.path.basename(MODEL_PATH)} on {DEVICE}")
         MODEL_LOADED = True
     else:
         print("[RVC] No model — running in passthrough mode")
 
 except ImportError:
-    print("[RVC] rvc-python not installed — running in passthrough mode")
-    print("[RVC] Install with: venv311\\Scripts\\python.exe do_install.py")
+    # Fall back to rvc-python
+    try:
+        from rvc_python.infer import RVCInference
+        rvc_pipeline = RVCInference(device=DEVICE)
+
+        if not os.path.exists(MODEL_PATH):
+            download_pretrained_model()
+
+        if os.path.exists(MODEL_PATH):
+            index = INDEX_PATH if os.path.exists(INDEX_PATH) else ""
+            rvc_pipeline.load_model(MODEL_PATH, index)
+            print(f"[RVC] ✓ Loaded via rvc-python: {os.path.basename(MODEL_PATH)} on {DEVICE}")
+            MODEL_LOADED = True
+        else:
+            print("[RVC] No model — running in passthrough mode")
+
+    except ImportError:
+        print("[RVC] No RVC library found — running in passthrough mode")
+        print("[RVC] Install: venv311\\Scripts\\python.exe -m pip install infer-rvc-python")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -98,17 +127,28 @@ def convert_audio(audio_bytes: bytes, pitch_shift: int = 0, index_rate: float = 
         f.write(audio_bytes)
 
     try:
-        rvc_pipeline.infer(
-            input_path=tmp_in,
-            output_path=tmp_out,
-            f0_up_key=pitch_shift,
-            f0_method="rmvpe",
-            index_rate=index_rate,
-            protect=0.33,
-            filter_radius=3,
-            resample_sr=48000,
-            rms_mix_rate=0.25,
-        )
+        # infer-rvc-python API
+        if hasattr(rvc_pipeline, "apply_conf"):
+            result_path = rvc_pipeline.infer(
+                tag="celo",
+                source=tmp_in,
+                output_path=tmp_out,
+                pitch_change=pitch_shift,
+            )
+            tmp_out = result_path if result_path else tmp_out
+        else:
+            # rvc-python API
+            rvc_pipeline.infer(
+                input_path=tmp_in,
+                output_path=tmp_out,
+                f0_up_key=pitch_shift,
+                f0_method="rmvpe",
+                index_rate=index_rate,
+                protect=0.33,
+                filter_radius=3,
+                resample_sr=48000,
+                rms_mix_rate=0.25,
+            )
 
         if os.path.exists(tmp_out):
             with open(tmp_out, "rb") as f:

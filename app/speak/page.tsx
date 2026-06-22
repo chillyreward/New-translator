@@ -41,14 +41,6 @@ const ENGINES = [
     badge: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
     active: "border-blue-500 bg-blue-50 dark:bg-blue-900/20",
   },
-  {
-    id: "rvc",
-    name: "R",
-    desc: "Speaker voice conversion",
-    color: "amber",
-    badge: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
-    active: "border-amber-500 bg-amber-50 dark:bg-amber-900/20",
-  },
 ];
 
 type State = "idle" | "loading" | "playing" | "error";
@@ -166,7 +158,7 @@ function SpeakContent() {
             </div>
 
             {/* Engine selector */}
-            <div className="grid grid-cols-3 gap-2 mb-6">
+            <div className="grid grid-cols-2 gap-2 mb-4">
               {ENGINES.map(eng => (
                 <button
                   key={eng.id}
@@ -194,6 +186,18 @@ function SpeakContent() {
                   </span>
                 </button>
               ))}
+            </div>
+
+            {/* How to use hint */}
+            <div className="flex items-start gap-2 px-3 py-2 mb-5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+              <span className="text-slate-400 dark:text-slate-500 mt-0.5 shrink-0">💡</span>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">How to use:</span>{" "}
+                First select <span className="font-bold text-violet-600 dark:text-violet-400">M</span> and click{" "}
+                <span className="font-semibold">Speak</span> to hear the base Kikuyu phonemes.
+                Then switch to <span className="font-bold text-blue-600 dark:text-blue-400">O</span> and click{" "}
+                <span className="font-semibold">Speak</span> to hear the voice clone.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
