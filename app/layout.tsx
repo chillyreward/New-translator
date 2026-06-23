@@ -18,31 +18,30 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "NeuroGrowthTech — AI Marketing for African Languages",
-  description: "AI-powered translation and marketing tools. Reach Kikuyu, Swahili, and African language speakers with intelligent content. Translate English and Kiswahili into Gikuyu instantly.",
+  title: "Jambo TV — AI Kikuyu Model",
+  description: "AI-powered Kikuyu language tools. Translate English and Kiswahili into Gĩkũyũ instantly. Powered by Jambo TV.",
   keywords: [
-    "NeuroGrowthTech",
-    "AI marketing Africa",
+    "Jambo TV",
+    "Kikuyu AI",
     "Kikuyu translation",
-    "African language AI",
     "Gikuyu translator",
     "AI translation Kenya",
-    "Kiswahili translation",
-    "neuro marketing technology",
-    "African language marketing",
-    "Kikuyu AI tools"
+    "Kiswahili to Kikuyu",
+    "African language AI",
+    "Kikuyu language tools",
+    "Gĩkũyũ AI model",
   ],
   openGraph: {
-    title: "NeuroGrowthTech — AI Marketing for African Languages",
-    description: "AI-powered translation and marketing tools. Reach Kikuyu, Swahili, and African language speakers.",
-    url: "https://neurogrowthtech.com",
-    siteName: "NeuroGrowthTech",
+    title: "Jambo TV — AI Kikuyu Model",
+    description: "AI-powered Kikuyu language tools. Translate English and Kiswahili into Gĩkũyũ instantly.",
+    url: "https://jambokikuyu.com",
+    siteName: "Jambo TV",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "NeuroGrowthTech — AI Marketing for African Languages",
-    description: "AI-powered translation and marketing tools for African language speakers.",
+    title: "Jambo TV — AI Kikuyu Model",
+    description: "AI-powered Kikuyu language tools by Jambo TV.",
   },
   icons: {
     icon: "/icon.png",
