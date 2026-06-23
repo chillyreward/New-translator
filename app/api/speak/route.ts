@@ -87,7 +87,7 @@ async function synthesizeOpenVoice(text: string, speed: number): Promise<Buffer>
   const formData = new FormData();
   formData.append('text', text);
   formData.append('speed', speed.toString());
-  formData.append('source_audio', new Blob([sourceAudio], { type: 'audio/wav' }), 'source.wav');
+  formData.append('source_audio', new Blob([new Uint8Array(sourceAudio)], { type: 'audio/wav' }), 'source.wav');
 
   const res = await fetch(`${openvoiceUrl}/convert`, {
     method: 'POST',
@@ -124,7 +124,7 @@ async function synthesizeRVC(text: string, speed: number): Promise<Buffer> {
   formData.append('f0_method', 'rmvpe');         // best pitch extraction method
   formData.append('index_rate', '0.75');         // voice similarity to training data
   if (sourceAudio.length > 0) {
-    formData.append('audio', new Blob([sourceAudio], { type: 'audio/wav' }), 'input.wav');
+    formData.append('audio', new Blob([new Uint8Array(sourceAudio)], { type: 'audio/wav' }), 'input.wav');
   }
 
   const res = await fetch(`${rvcUrl}/convert`, {
