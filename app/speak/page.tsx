@@ -23,12 +23,20 @@ const SPEEDS = [
   { value: 1.1,  label: "Faster" },
 ];
 
-// Voice engines — only OpenVoice shown (MMS runs silently in the pipeline first)
+// Voice engines — each has a different character
 const ENGINES = [
+  {
+    id: "mms",
+    name: "M",
+    desc: "Best Kikuyu phonemes",
+    color: "violet",
+    badge: "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
+    active: "border-violet-500 bg-violet-50 dark:bg-violet-900/20",
+  },
   {
     id: "openvoice",
     name: "O",
-    desc: "Voice clone",
+    desc: "Zero-shot voice clone",
     color: "blue",
     badge: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
     active: "border-blue-500 bg-blue-50 dark:bg-blue-900/20",
@@ -49,7 +57,7 @@ function SpeakContent() {
   const searchParams = useSearchParams();
   const [text, setText]         = useState(searchParams.get("q") ?? "");
   const [speed, setSpeed]       = useState(0.75);
-  const [engine, setEngine]     = useState("openvoice");
+  const [engine, setEngine]     = useState("mms");
   const [state, setState]       = useState<State>("idle");
   const [error, setError]       = useState<string | null>(null);
   const [copied, setCopied]     = useState(false);
@@ -184,9 +192,11 @@ function SpeakContent() {
             <div className="flex items-start gap-2 px-3 py-2 mb-5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
               <span className="text-slate-400 dark:text-slate-500 mt-0.5 shrink-0">💡</span>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">How it works:</span>{" "}
-                Type Kikuyu text and click <span className="font-semibold">Speak</span>.
-                The system generates phonemes then applies the voice clone automatically.
+                <span className="font-semibold text-slate-700 dark:text-slate-300">How to use:</span>{" "}
+                First select <span className="font-bold text-violet-600 dark:text-violet-400">M</span> and click{" "}
+                <span className="font-semibold">Speak</span> to hear the base Kikuyu phonemes.
+                Then switch to <span className="font-bold text-blue-600 dark:text-blue-400">O</span> and click{" "}
+                <span className="font-semibold">Speak</span> to hear the voice clone.
               </p>
             </div>
 
