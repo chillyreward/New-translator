@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 // A warm, natural-sounding voice. Options: alloy, echo, fable, onyx, nova, shimmer
 const DEFAULT_VOICE = "nova" as const;
 
 export async function POST(req: NextRequest) {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   try {
     const body = await req.json();
     const { text, voice } = body;
