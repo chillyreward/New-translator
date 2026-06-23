@@ -77,17 +77,20 @@ async function synthesizeOpenVoice(text: string, speed: number): Promise<Buffer>
     sourceAudio = Buffer.alloc(0);
   }
 
-  // Stage 2 — OpenVoice converts voice to c-elo
   if (sourceAudio.length === 0) {
     throw new Error('MMS returned no audio — cannot run OpenVoice conversion');
   }
 
-  // Stage 2 — send MMS audio to OpenVoice for voice conversion to c-elo
-  // The server already has the target speaker embedding loaded at startup.
+  // Prepend 0.3s of silence to the MMS audio before sending to OpenVoice.
+  // This prevents the first syllable from being clipped during voice conversion
+  // because OpenVoice needs a small audio context window to initialize correctly.
+  const prependedAudio = prependSilenceToWav(sourceAudio, 0.3);
+
+  // Stage 2 — send MMS audio to OpenVoice for voice conversion
   const formData = new FormData();
   formData.append('text', text);
   formData.append('speed', speed.toString());
-  formData.append('source_audio', new Blob([new Uint8Array(sourceAudio)], { type: 'audio/wav' }), 'source.wav');
+  formData.append('source_audio', new Blob([new Uint8Array(prependedAudio)], { type: 'audio/wav' }), 'source.wav');
 
   const res = await fetch(`${openvoiceUrl}/convert`, {
     method: 'POST',
@@ -96,6 +99,40 @@ async function synthesizeOpenVoice(text: string, speed: number): Promise<Buffer>
   });
   if (!res.ok) throw new Error(`OpenVoice error: ${res.status}`);
   return Buffer.from(await res.arrayBuffer());
+}
+
+/**
+ * Prepend N seconds of silence to a WAV buffer.
+ * Reads the sample rate from the WAV header and inserts zero-filled PCM samples.
+ */
+function prependSilenceToWav(wavBuffer: Buffer, seconds: number): Buffer {
+  try {
+    // WAV header: bytes 24-27 = sample rate (little-endian uint32)
+    //             bytes 34-35 = bits per sample
+    //             bytes 22-23 = num channels
+    const sampleRate   = wavBuffer.readUInt32LE(24);
+    const numChannels  = wavBuffer.readUInt16LE(22);
+    const bitsPerSample = wavBuffer.readUInt16LE(34);
+    const bytesPerSample = bitsPerSample / 8;
+    const silenceSamples = Math.floor(sampleRate * seconds);
+    const silenceBytes   = silenceSamples * numChannels * bytesPerSample;
+    const silence        = Buffer.alloc(silenceBytes, 0);
+
+    // Update the data chunk size and RIFF chunk size in the header
+    const originalDataSize = wavBuffer.readUInt32LE(40);
+    const newDataSize      = originalDataSize + silenceBytes;
+    const newRiffSize      = wavBuffer.readUInt32LE(4) + silenceBytes;
+
+    const newHeader = Buffer.from(wavBuffer.subarray(0, 44));
+    newHeader.writeUInt32LE(newRiffSize, 4);
+    newHeader.writeUInt32LE(newDataSize, 40);
+
+    // data starts at byte 44 in a standard WAV
+    return Buffer.concat([newHeader, silence, wavBuffer.subarray(44)]);
+  } catch {
+    // If header parsing fails, just return original
+    return wavBuffer;
+  }
 }
 
 // ── Engine 4: RVC (local, port 5005) ──────────────────────────────────────────
