@@ -15,8 +15,8 @@ export interface LocalPhrase {
 // Map: English phrase (lowercase) → LocalPhrase
 const LIBRARY: Record<string, LocalPhrase> = {
   // Greetings
-  "hello":                    { kikuyu: "Wee mwega",                        wav: "/audio/chunks/hello.wav" },
-  "hi":                       { kikuyu: "Wee mwega",                        wav: "/audio/chunks/hello.wav" },
+  "hello":                    { kikuyu: "Uhana atia",                       wav: "/audio/chunks/hello.wav" },
+  "hi":                       { kikuyu: "Uhana atia",                       wav: "/audio/chunks/hello.wav" },
   "how are you":              { kikuyu: "Wĩ mwega?",                        wav: "/audio/chunks/how are you.wav" },
   "thank you":                { kikuyu: "Nĩ ngatho",                        wav: "/audio/chunks/thank you.wav" },
   "thank you so much":        { kikuyu: "Nĩ ngatho mũno",                   wav: "/audio/chunks/thank you so much.wav" },
