@@ -114,10 +114,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Text is required.' }, { status: 400 });
     }
 
-    // 1. Check local library FIRST — if we have a WAV for this phrase, note it
-    //    We still get the Kikuyu translation from Gemma/GPT for accuracy,
-    //    but attach the local WAV path so the frontend can play it instantly.
+    // 1. Check local library FIRST — if match found, return local translation + WAV instantly
     const localMatch = lookupLocal(text.trim());
+    if (localMatch) {
+      console.log('[Translate] Local library hit:', text.trim());
+      return NextResponse.json({
+        translation: localMatch.kikuyu,
+        source: 'local',
+        wav: localMatch.wav,
+      });
+    }
 
     // 2. Check cache
     const cacheKey = `${mode ?? 'translate'}:${sourceLang ?? 'en'}:${text}`;
