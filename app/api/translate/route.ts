@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCached, setCached } from '@/lib/translationCache';
+import { lookupLocal } from '@/lib/localLibrary';
 
 export const maxDuration = 300;
 
@@ -113,12 +114,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Text is required.' }, { status: 400 });
     }
 
-    // 1. Check cache
+    // 1. Check local library FIRST — instant, no API call
+    const localMatch = lookupLocal(text.trim());
+    if (localMatch) {
+      console.log('[Translate] Local library hit:', text.trim());
+      return NextResponse.json({
+        translation: localMatch.kikuyu,
+        source: 'local',
+        wav: localMatch.wav,   // front-end uses this for Speak button
+      });
+    }
+
+    // 2. Check cache
     const cacheKey = `${mode ?? 'translate'}:${sourceLang ?? 'en'}:${text}`;
     const cached = getCached(cacheKey);
     if (cached) return NextResponse.json({ translation: cached, cached: true });
 
-    // 2. Gemma — PRIMARY for ALL requests (no local dictionary bypass)
+    // 3. Gemma — PRIMARY for ALL requests (no local dictionary bypass)
     const gemmaResult = await translateWithGemma(text, sourceLang ?? 'en');
     if (gemmaResult && gemmaResult !== text && gemmaResult.length > 2) {
       console.log('[Translate] Gemma result:', gemmaResult.slice(0, 100));
@@ -126,7 +138,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ translation: gemmaResult, source: 'gemma' });
     }
 
-    // 3. GPT-4o — fallback only when Gemma is unreachable
+    // 4. GPT-4o — fallback only when Gemma is unreachable
     if (!apiKey) {
       return NextResponse.json({
         error: 'No translation available. Check GEMMA_TRANSLATE_URL or add OPENAI_API_KEY.'

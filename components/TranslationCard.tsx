@@ -21,6 +21,7 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
   const targetLang                           = "Gikuyu";
   const [sourceText, setSourceText]         = useState(initialText);
   const [translatedText, setTranslatedText] = useState("");
+  const [localWav, setLocalWav]             = useState<string | null>(null);
   const [isSaved, setIsSaved]               = useState(false);
   const [loadingState, setLoadingState]     = useState<LoadingState>("idle");
   const [error, setError]                   = useState<string | null>(null);
@@ -58,6 +59,7 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Translation failed.");
       setTranslatedText(data.translation ?? "");
+      setLocalWav(data.wav ?? null);  // set local WAV if returned
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Translation failed.");
     } finally {
@@ -225,7 +227,7 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
               "Type, paste, or speak text here..."
             }
             value={sourceText}
-            onChange={e => { setSourceText(e.target.value); setIsSaved(false); clearError(); }}
+            onChange={e => { setSourceText(e.target.value); setIsSaved(false); clearError(); setLocalWav(null); }}
             disabled={isBusy}
           />
 
@@ -368,18 +370,33 @@ export function TranslationCard({ initialText = "" }: { initialText?: string }) 
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href={translatedText ? `/speak?q=${encodeURIComponent(translatedText)}` : "/speak"}
+          <button
+            onClick={() => {
+              if (!translatedText) return;
+              if (localWav) {
+                // Play local WAV directly
+                const audio = new Audio(localWav);
+                audio.play().catch(() => {
+                  // Fallback to speak page if WAV fails
+                  window.location.href = `/speak?q=${encodeURIComponent(translatedText)}`;
+                });
+              } else {
+                // No local WAV — go to speak page for MMS/OpenVoice
+                window.location.href = `/speak?q=${encodeURIComponent(translatedText)}`;
+              }
+            }}
+            disabled={!translatedText}
+            title={localWav ? "Play local audio" : "Speak via TTS"}
             className={cn(
               "inline-flex items-center gap-2 px-5 h-12 rounded-xl text-sm font-semibold border transition-all",
               translatedText
                 ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800/50 hover:bg-primary-100 dark:hover:bg-primary-900/40"
-                : "text-slate-300 dark:text-slate-700 border-slate-100 dark:border-slate-800 pointer-events-none"
+                : "text-slate-300 dark:text-slate-700 border-slate-100 dark:border-slate-800 opacity-40 cursor-not-allowed"
             )}
           >
             <Volume2 size={15} />
-            Speak
-          </Link>
+            {localWav ? "Play" : "Speak"}
+          </button>
 
           <Button
             onClick={handleTranslate}

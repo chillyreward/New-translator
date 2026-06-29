@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed-cache": "npx tsx scripts/seed-phrase-cache.ts"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.3.0",
