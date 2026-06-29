@@ -114,16 +114,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Text is required.' }, { status: 400 });
     }
 
-    // 1. Check local library FIRST — instant, no API call
+    // 1. Check local library FIRST — if we have a WAV for this phrase, note it
+    //    We still get the Kikuyu translation from Gemma/GPT for accuracy,
+    //    but attach the local WAV path so the frontend can play it instantly.
     const localMatch = lookupLocal(text.trim());
-    if (localMatch) {
-      console.log('[Translate] Local library hit:', text.trim());
-      return NextResponse.json({
-        translation: localMatch.kikuyu,
-        source: 'local',
-        wav: localMatch.wav,   // front-end uses this for Speak button
-      });
-    }
 
     // 2. Check cache
     const cacheKey = `${mode ?? 'translate'}:${sourceLang ?? 'en'}:${text}`;
@@ -135,7 +129,11 @@ export async function POST(request: Request) {
     if (gemmaResult && gemmaResult !== text && gemmaResult.length > 2) {
       console.log('[Translate] Gemma result:', gemmaResult.slice(0, 100));
       setCached(cacheKey, gemmaResult);
-      return NextResponse.json({ translation: gemmaResult, source: 'gemma' });
+      return NextResponse.json({
+        translation: gemmaResult,
+        source: 'gemma',
+        wav: localMatch?.wav ?? null,
+      });
     }
 
     // 4. GPT-4o — fallback only when Gemma is unreachable
@@ -154,7 +152,7 @@ export async function POST(request: Request) {
     }
 
     setCached(cacheKey, result);
-    return NextResponse.json({ translation: result, source: 'gpt-4o' });
+    return NextResponse.json({ translation: result, source: 'gpt-4o', wav: localMatch?.wav ?? null });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Unknown server error' }, { status: 500 });
